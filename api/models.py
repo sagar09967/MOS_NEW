@@ -52,7 +52,7 @@ class CustomerMaster(AbstractUser):
 # ------------------------Member Master
 class MemberMaster(models.Model):
     memberId=models.BigAutoField(primary_key=True)
-    group=models.CharField(max_length=10)
+    group=models.CharField(max_length=10,default=0)
     code=models.CharField(max_length=10)
     name=models.CharField(max_length=30)
     emailId=models.EmailField(max_length=30)

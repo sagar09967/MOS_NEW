@@ -188,6 +188,25 @@ class RetHolding(APIView):
 # -------------------------- SaveMember api
 class SaveMember(APIView):
     def post(self, request, format=None):
+        mem=MemberMaster.objects.latest('code')
+        print("Member-->",mem)
+
+        if mem==None or 0:
+            me=mem+1
+            code=me.zfill(5)
+        else:
+            cp=mem
+            cpp=str(cp)
+            cpp=int(cpp)+1
+            code=str(cpp).zfill(5)
+        request.data['code'] = code
+
+        # print("Code --->",code) 
+        # print("requ code",request.data.get("code"))
+        
+       
+
+        
         serializer = SaveMemberSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -210,16 +229,11 @@ class MemberUpdadeDelete(generics.RetrieveUpdateDestroyAPIView):
 
 # -------------------------- SaveCutomer api
 class SaveCustomer(APIView):
-    
-    # dict_ls =  copy.deepcopy(stu)
-    # print("DDDDD",dict_ls)
     def post(self, request, format=None):       
-        # print("Stuuu11",self.stu)
         stu=CustomerMaster.objects.latest('group')
         if stu==None or 0:
             ss=stu+1
             group=ss.zfill(5)
-   
         else:
             gp=stu
             gpp=str(gp)
@@ -249,7 +263,12 @@ class RetCustomer(APIView):
         serializer=SavecustomerSerializer(customer,many=True)
         return Response({'status':True,'msg':'done','data':serializer.data})
 
-    
+# ---------------------------- updated delete api Customer
+class CustomerUpdadeDelete(generics.RetrieveUpdateDestroyAPIView):
+    queryset=MemberMaster.objects.all()
+    serializer_class=SavecustomerSerializer
+
+
 # ---------------------------- updated delete api Customer
 class CustomerUpdadeDelete(generics.RetrieveUpdateDestroyAPIView):
     queryset=CustomerMaster.objects.all()

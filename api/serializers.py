@@ -30,7 +30,7 @@ class TranSumRetrivesc2Serializer(serializers.ModelSerializer):
 class SaveMemberSerializer(serializers.ModelSerializer):
     class Meta:
         model=MemberMaster
-        fields=['group','name','emailId','contactNo']
+        fields=['group','name','code','emailId','contactNo']
 
 # # -----------------------RetMember api
 class RetMemberSerializer(serializers.ModelSerializer):
