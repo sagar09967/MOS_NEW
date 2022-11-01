@@ -1,4 +1,5 @@
 from django.db import models
+from traitlets import default
 from .manager import CustomerUserManager
 from decimal import Decimal
 from django.contrib.auth.models import AbstractUser
@@ -16,7 +17,7 @@ class CustomerMaster(AbstractUser):
             'unique': ("A user with that username already exists."),
         }, 
     )
-    group=models.CharField(max_length=10)
+    group=models.CharField(max_length=10,blank=True,default=0)
     firstName = models.CharField('first name', max_length=30, blank=True)
     lastName = models.CharField('last name', max_length=30, blank=True)
     emailId = models.EmailField(

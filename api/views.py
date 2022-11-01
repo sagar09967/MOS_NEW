@@ -210,11 +210,32 @@ class MemberUpdadeDelete(generics.RetrieveUpdateDestroyAPIView):
 
 # -------------------------- SaveCutomer api
 class SaveCustomer(APIView):
-    def post(self, request, format=None):
+    
+    # dict_ls =  copy.deepcopy(stu)
+    # print("DDDDD",dict_ls)
+    def post(self, request, format=None):       
+        # print("Stuuu11",self.stu)
+        stu=CustomerMaster.objects.latest('group')
+        if stu==None or 0:
+            ss=stu+1
+            group=ss.zfill(5)
+   
+        else:
+            gp=stu
+            gpp=str(gp)
+            gpp=int(gpp)+1
+            group=str(gpp).zfill(5)
+        # print(group,type(group))
+        # print("groupp",group)
+           
+        # request.data['group'] = group 
+        request.data['group'] = group       
+        # print("requ grp",request.data.get("group"))
         serializer = SavecustomerSerializer(data=request.data)
        
         if serializer.is_valid():
             serializer.save()
+        #     # print("Serializer---->",serializer.data)
             return Response({'status':True,'msg': 'You have successfully Created','data':serializer.data}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
