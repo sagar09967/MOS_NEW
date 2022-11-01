@@ -1,3 +1,4 @@
+from pyexpat import model
 from rest_framework import serializers
 from .models import TranSum,CustomerMaster,MemberMaster
 from django.contrib.auth.hashers import make_password
@@ -37,6 +38,13 @@ class RetMemberSerializer(serializers.ModelSerializer):
     class Meta:
         model=MemberMaster
         fields=['memberId','name','emailId','contactNo']
+
+# ------------------------- Retchange Default Api serializer
+
+class RetChangeDefaultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=MemberMaster
+        fields=['code','name']
 
 class SavecustomerSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(style={"input_type": "password"}, write_only=True)

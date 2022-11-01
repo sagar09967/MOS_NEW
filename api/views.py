@@ -9,7 +9,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.http import Http404
 from rest_framework.views import APIView
 from .serializers import (SavePurchSerializer,RetTransSumSerializer,
-SaveMemberSerializer,RetMemberSerializer,SavecustomerSerializer)
+SaveMemberSerializer,RetMemberSerializer,SavecustomerSerializer,RetChangeDefaultSerializer)
 import copy
 
 # -------------------- SavePurch API
@@ -206,9 +206,6 @@ class SaveMember(APIView):
         # print("Code --->",code) 
         # print("requ code",request.data.get("code"))
         
-       
-
-        
         serializer = SaveMemberSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -258,7 +255,7 @@ class SaveCustomer(APIView):
  # -------------------------- RetCustomer API
 class RetCustomer(APIView):
     # queryset=CustomerMaster.objects.all()
-    serializer_class=SavecustomerSerializer
+    # serializer_class=SavecustomerSerializer
     def get(self, request, format=None):
         username = self.request.query_params.get('username')
         customer=CustomerMaster.objects.filter(username=username)
@@ -275,3 +272,12 @@ class CustomerUpdadeDelete(generics.RetrieveUpdateDestroyAPIView):
 class CustomerUpdadeDelete(generics.RetrieveUpdateDestroyAPIView):
     queryset=CustomerMaster.objects.all()
     serializer_class=SavecustomerSerializer
+
+class RetChangeDefault(APIView):
+    def get(self, request, format=None):
+        group = self.request.query_params.get('group')
+        member=MemberMaster.objects.filter(group=group)
+        serializer=RetChangeDefaultSerializer(member,many=True)
+        return Response({'status':True,'msg':'done','data':serializer.data})
+
+
