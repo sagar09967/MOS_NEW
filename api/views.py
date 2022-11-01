@@ -188,9 +188,11 @@ class RetHolding(APIView):
 # -------------------------- SaveMember api
 class SaveMember(APIView):
     def post(self, request, format=None):
-        mem=MemberMaster.objects.latest('code')
+        try:
+            mem=MemberMaster.objects.filter(group=request.data['group']).latest('code')
+        except:
+          mem ='00000'
         print("Member-->",mem)
-
         if mem==None or 0:
             me=mem+1
             code=me.zfill(5)
