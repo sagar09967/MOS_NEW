@@ -23,10 +23,6 @@ class SavePurch(APIView):
     def post(self, request, format=None):
         dic = copy.deepcopy(request.data)
         dic["balQty"] = request.data["qty"]
-        grocod=TranSum.objects.values('group','code').latest('group','code')
-        print('groyp and code -->',grocod)
-           
-        
         serializer = SavePurchSerializer(data=dic)
         if serializer.is_valid():
             serializer.save() 
