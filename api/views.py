@@ -19,7 +19,7 @@ from rest_framework.permissions import IsAuthenticated
 
 # -------------------- SavePurch API
 class SavePurch(APIView):
-    renderer_classes=[UserRender]   
+    # renderer_classes=[UserRender]   
     def post(self, request, format=None):
         dic = copy.deepcopy(request.data)
         dic["balQty"] = request.data["qty"]
@@ -197,7 +197,7 @@ class RetHolding(APIView):
 
 # -------------------------- SaveMember api
 class SaveMember(APIView):
-    renderer_classes=[UserRender]
+    # renderer_classes=[UserRender]
     def post(self, request, format=None):
         try:
             mem=MemberMaster.objects.filter(group=request.data['group']).latest('code')
@@ -249,7 +249,7 @@ class MemberUpdadeDelete(generics.RetrieveUpdateDestroyAPIView):
 # -------------------------- SaveCutomer api
 class SaveCustomer(APIView):
    
-    renderer_classes=[UserRender]
+    # renderer_classes=[UserRender]
     def post(self, request,format=None):       
         stu=CustomerMaster.objects.latest('group')
         if stu==None or 0:
