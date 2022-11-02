@@ -9,18 +9,28 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.http import Http404
 from rest_framework.views import APIView
 from .serializers import (SavePurchSerializer,RetTransSumSerializer,
-SaveMemberSerializer,RetMemberSerializer,SavecustomerSerializer,RetChangeDefaultSerializer)
+SaveMemberSerializer,RetMemberSerializer,SavecustomerSerializer,RetChangeDefaultSerializer,CustomerLoginSerializer)
 import copy
+from django.contrib.auth import authenticate
+from .renderers import UserRender
+from rest_framework.authentication import BasicAuthentication
+from rest_framework.permissions import IsAuthenticated
+
 
 # -------------------- SavePurch API
-class SavePurch(APIView):   
+class SavePurch(APIView):
+    renderer_classes=[UserRender]   
     def post(self, request, format=None):
         dic = copy.deepcopy(request.data)
         dic["balQty"] = request.data["qty"]
+        grocod=TranSum.objects.values('group','code').latest('group','code')
+        print('groyp and code -->',grocod)
+           
+        
         serializer = SavePurchSerializer(data=dic)
         if serializer.is_valid():
             serializer.save() 
-            return Response({'status':True,'Message': 'You have successfully Created','data':serializer.data}, status=status.HTTP_201_CREATED)
+            return Response({'status':True,'msg': 'You have successfully Created','data':serializer.data}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # -------------------------- RetTransSum API
@@ -187,6 +197,7 @@ class RetHolding(APIView):
 
 # -------------------------- SaveMember api
 class SaveMember(APIView):
+    renderer_classes=[UserRender]
     def post(self, request, format=None):
         try:
             mem=MemberMaster.objects.filter(group=request.data['group']).latest('code')
@@ -225,10 +236,21 @@ class MemberUpdadeDelete(generics.RetrieveUpdateDestroyAPIView):
     queryset=MemberMaster.objects.all()
     serializer_class=SaveMemberSerializer
 
+# ----------------------Generate Token Manually
+# def get_tokens_for_user(user):
+#     refresh = RefreshToken.for_user(user)
+
+#     return {
+#         'refresh': str(refresh),
+#         'access': str(refresh.access_token),
+#     }
+
 
 # -------------------------- SaveCutomer api
 class SaveCustomer(APIView):
-    def post(self, request, format=None):       
+   
+    renderer_classes=[UserRender]
+    def post(self, request,format=None):       
         stu=CustomerMaster.objects.latest('group')
         if stu==None or 0:
             ss=stu+1
@@ -248,7 +270,9 @@ class SaveCustomer(APIView):
        
         if serializer.is_valid():
             serializer.save()
-        #     # print("Serializer---->",serializer.data)
+            # calling function token
+            # token=get_tokens_for_user(user)
+             # print("Serializer---->",serializer.data)
             return Response({'status':True,'msg': 'You have successfully Created','data':serializer.data}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -262,18 +286,37 @@ class RetCustomer(APIView):
         serializer=SavecustomerSerializer(customer,many=True)
         return Response({'status':True,'msg':'done','data':serializer.data})
 
-# ---------------------------- updated delete api Customer
-class CustomerUpdadeDelete(generics.RetrieveUpdateDestroyAPIView):
-    queryset=MemberMaster.objects.all()
-    serializer_class=SavecustomerSerializer
-
 
 # ---------------------------- updated delete api Customer
 class CustomerUpdadeDelete(generics.RetrieveUpdateDestroyAPIView):
     queryset=CustomerMaster.objects.all()
     serializer_class=SavecustomerSerializer
 
+# --------------------------------- Login Customer Master Api
+
+class CustomerLogin(APIView):
+    # authentication_classes = [SessionAuthentication]
+    # permission_classes = [IsAuthenticated]
+    renderer_classes=[UserRender]
+    def post(self,request,format=None):
+        serializer=CustomerLoginSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            username=serializer.data.get('username')
+            password=serializer.data.get('password')
+            user=authenticate(username=username,password=password)
+
+            if user is not None: 
+                # token=get_tokens_for_user(user)
+                return Response({'status':True,'msg':'Login Success'},status=status.HTTP_200_OK)
+            else:
+                return Response({'errors':{'non_field_errors':['Username or Password is not Valid']}},status=status.HTTP_404_NOT_FOUND)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+                
+
+
 class RetChangeDefault(APIView):
+    # authentication_classes = [BasicAuthentication]
+    # permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
         group = self.request.query_params.get('group')
         member=MemberMaster.objects.filter(group=group)

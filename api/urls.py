@@ -13,7 +13,8 @@ urlpatterns = [
     path('saveCustomer/',views.SaveCustomer.as_view()),
     path('retCustomer/',views.RetCustomer.as_view()),
     path('updateCustomer/<int:pk>',views.CustomerUpdadeDelete.as_view()),
-    path('saveCustomer/<int:pk>',views.CustomerUpdadeDelete.as_view()),
+    path('updateCustomer/<int:pk>',views.CustomerUpdadeDelete.as_view()),
+    path('customerLogin/',views.CustomerLogin.as_view()),
     path('retChangeDefault/',views.RetChangeDefault.as_view())
     # path('RetSalesSum/',sales.RetSalesSum.as_view()),   
 ]

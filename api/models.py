@@ -28,7 +28,7 @@ class CustomerMaster(AbstractUser):
     )
     contactNo=models.CharField(max_length=30,null = True, blank = True)
     dob=models.DateField(blank=True,null=True)
-    photo=models.ImageField(upload_to='customer_photo',blank=True,default='')
+    photo=models.ImageField(upload_to='customer_photo',blank=True,default='-')
     address=models.TextField(blank=True,null=True)
     active = models.BooleanField(default=False)
     companyCode = models.CharField(max_length=30,blank=True,null=True)

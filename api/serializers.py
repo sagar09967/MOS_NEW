@@ -70,6 +70,14 @@ class SavecustomerSerializer(serializers.ModelSerializer):
         validated_data.pop('password2') # add this
         return super(SavecustomerSerializer, self).create(validated_data)
 
+# -------------------------------Customer Login Serializer
+
+class CustomerLoginSerializer(serializers.ModelSerializer):
+    username=serializers.CharField(max_length=30)
+    class Meta:
+        model=CustomerMaster
+        fields=['username','password']
+
 # ------------------------------- Sales Api Serializer (Sales)
 class RetTransSumSalesSerializer(serializers.ModelSerializer):
     class Meta:
