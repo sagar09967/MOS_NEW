@@ -76,7 +76,7 @@ class CustomerLoginSerializer(serializers.ModelSerializer):
     username=serializers.CharField(max_length=30)
     class Meta:
         model=CustomerMaster
-        fields=['username','password']
+        fields=['username','password','firstName']
 
 # ------------------------------- Sales Api Serializer (Sales)
 class RetTransSumSalesSerializer(serializers.ModelSerializer):

@@ -159,16 +159,16 @@ class RetScriptSum(APIView):
         # print("avgRate----->",avgRate)
            
         context={
-            'isinCode':isinCode,
-            'fmr':fmr,
+            # 'isinCode':isinCode,
+            # 'fmr':fmr,
             'opening':varop,
             'addition':varadd,
             'sales':0,
             'closing':closing,
             'invValue':InvValue,
             'avgRate':avgRate,
-            'marketRate':mktRate,
-            'mktvalue':mktvalue
+            # 'marketRate':mktRate,
+            # 'mktvalue':mktvalue
         }
         return Response({'status':True,'msg':'done','data':context})
 
@@ -303,11 +303,14 @@ class CustomerLogin(APIView):
         if serializer.is_valid(raise_exception=True):
             username=serializer.data.get('username')
             password=serializer.data.get('password')
-            user=authenticate(username=username,password=password)
-
+            firstName=serializer.data.get('firstName')
+            print("fies name",firstName)
+            user=authenticate(username=username,password=password,firstName=firstName)
+           
+          
             if user is not None: 
                 # token=get_tokens_for_user(user)
-                return Response({'status':True,'msg':'Login Success'},status=status.HTTP_200_OK)
+                return Response({'status':True,'msg':'Login Success','data':serializer.data},status=status.HTTP_200_OK)
             else:
                 return Response({'errors':{'non_field_errors':['Username or Password is not Valid']}},status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
