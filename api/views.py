@@ -15,6 +15,7 @@ from django.contrib.auth import authenticate
 from .renderers import UserRender
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
+from collections import Counter
 
 
 # -------------------- SavePurch API
@@ -66,10 +67,14 @@ class RetTransSumUpdate(generics.RetrieveUpdateAPIView):
        balqty = self.request.query_params.get('balqty')
     #    transid = self.request.query_params.get('transid')
  
-    #    print(oldqty,balqty,transid)
+    #    print(oldqty,balqty)
+       old = 0 if oldqty is None else oldqty
+       balQ = 0 if balqty is None else balqty
+
        
        dict_ls =  copy.deepcopy(request.data)
-       dict_ls["balQty"] = float(balqty) - float(oldqty) + float(dict_ls["qty"])
+       print(dict_ls)
+       dict_ls["balQty"] = int(balQ) - int(old) + ((dict_ls["qty"]))
 
     #    print(dict)
 
@@ -155,16 +160,16 @@ class RetScriptSum(APIView):
         # print("avgRate----->",avgRate)
            
         context={
-            # 'isinCode':isinCode,
-            # 'fmr':fmr,
+            'isinCode':isinCode,
+            'fmr':fmr,
             'opening':varop,
             'addition':varadd,
             'sales':0,
             'closing':closing,
             'invValue':InvValue,
             'avgRate':avgRate,
-            # 'marketRate':mktRate,
-            # 'mktvalue':mktvalue
+            'marketRate':mktRate,
+            'mktvalue':mktvalue
         }
         return Response({'status':True,'msg':'done','data':context})
 
@@ -173,11 +178,23 @@ class RetHolding(APIView):
     def get(self,request,format=None):
         group = self.request.query_params.get('group')
         code = self.request.query_params.get('code')
-        # dfy = self.request.query_params.get('dfy')
+        dfy = self.request.query_params.get('dfy')
         againstType = self.request.query_params.get('againstType')
-        all_data = TranSum.objects.filter(group=group,code=code,againstType=againstType).values_list('rate','balQty','marketRate','part')
+        all_data = TranSum.objects.filter(group=group,code=code,againstType=againstType,fy=dfy).values_list('rate','balQty','marketRate','part')
+        # all_data = TranSum.objects.filter(group=group,code=code,againstType=againstType,fy=dfy).values('part','rate','balQty','marketRate')
+        # print('ALLL',all_data,type(all_data))
+        # data=list(all_data)
+        # print("data",data,type(data))
+
+        # for d in data:
+        #     print(str(d),type(d))
+
+
+        # for data in all_data:
+        #     dict={}
+        #     dict['part']:int(data[0])
+       
         data_ls = []
-        # print("Daaaaa",all_data)
         for data in all_data:
             dic = {'part': data[3], "holdQty": int(data[1])}
             data_1 = 0 if data[1] is None else data[1]
@@ -186,7 +203,8 @@ class RetHolding(APIView):
             dic["mktvalue"] = data_1 * (data_2)
             # print("Dataaaa--->",dic)
             data_ls.append(dic)
-        # print("dataaaaa---->",dic)
+        print(data_ls)
+      
         return Response({'status':True,'msg':'done','data':data_ls})
 
 
