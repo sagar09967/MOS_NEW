@@ -73,7 +73,7 @@ class RetTransSumUpdate(generics.RetrieveUpdateAPIView):
        
        dict_ls =  copy.deepcopy(request.data)
        print(dict_ls)
-       dict_ls["balQty"] = int(balQ) - int(old) + ((dict_ls["qty"]))
+       dict_ls["balQty"] = int(balQ) - int(old) + int((dict_ls["qty"]))
 
     #    print(dict)
 
@@ -184,7 +184,7 @@ class RetHolding(APIView):
             dic = {'part': data[3], "holdQty": int(data[1])}
             data_1 = 0 if data[1] is None else data[1]
             data_2 = 0 if data[2] is None else data[2]
-            dic["InvValue"] = float((data[0])* (data_1))
+            dic["InvValue"] = int((data[0])* (data_1))
             dic["mktvalue"] = int(data_1 * (data_2))
             # print("Dataaaa--->",dic)
             data_ls.append(dic)
@@ -195,8 +195,11 @@ class RetHolding(APIView):
         # df = df.groupby('part', as_index=False).sum()
        
         final_data = [(a, list(b)) for a, b in itertools.groupby([i.items() for i in data_ls], key=lambda x:dict(x)["part"])] 
-        new_final_data = [{i[0][0]:sum(c[-1] for c in i if isinstance(c[-1],float)) if i[0][0] != "part" else i[0][-1] for i in zip(*b)} for a, b in final_data]
-
+        new_final_data = [{i[0][0]:sum(c[-1] for c in i if isinstance(c[-1], int)) if i[0][0] != "part" else i[0][-1] for i in zip(*b)} for a, b in final_data]
+        print('---------------------------')
+        print('Data------>',new_final_data)
+        print('---------------------------')
+      
         return Response({'status':True,'msg':'done','data':new_final_data})
 
 
