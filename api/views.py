@@ -1,6 +1,5 @@
 from decimal import Decimal
 from .models import TranSum,MemberMaster,CustomerMaster
-from django.db.models import Sum
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
@@ -15,7 +14,7 @@ from django.contrib.auth import authenticate
 from .renderers import UserRender
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
-from collections import Counter
+import itertools
 
 
 # -------------------- SavePurch API
@@ -174,38 +173,32 @@ class RetScriptSum(APIView):
         return Response({'status':True,'msg':'done','data':context})
 
 class RetHolding(APIView):
-
     def get(self,request,format=None):
         group = self.request.query_params.get('group')
         code = self.request.query_params.get('code')
         dfy = self.request.query_params.get('dfy')
         againstType = self.request.query_params.get('againstType')
         all_data = TranSum.objects.filter(group=group,code=code,againstType=againstType,fy=dfy).values_list('rate','balQty','marketRate','part')
-        # all_data = TranSum.objects.filter(group=group,code=code,againstType=againstType,fy=dfy).values('part','rate','balQty','marketRate')
-        # print('ALLL',all_data,type(all_data))
-        # data=list(all_data)
-        # print("data",data,type(data))
-
-        # for d in data:
-        #     print(str(d),type(d))
-
-
-        # for data in all_data:
-        #     dict={}
-        #     dict['part']:int(data[0])
-       
         data_ls = []
         for data in all_data:
             dic = {'part': data[3], "holdQty": int(data[1])}
             data_1 = 0 if data[1] is None else data[1]
             data_2 = 0 if data[2] is None else data[2]
-            dic["InvValue"] = (data[0])* (data_1)
-            dic["mktvalue"] = data_1 * (data_2)
+            dic["InvValue"] = float((data[0])* (data_1))
+            dic["mktvalue"] = int(data_1 * (data_2))
             # print("Dataaaa--->",dic)
             data_ls.append(dic)
         print(data_ls)
+        
+        # import pandas as pd
+        # df = pd.DataFrame(data_ls)
+        # df = df.groupby('part', as_index=False).sum()
+       
+        final_data = [(a, list(b)) for a, b in itertools.groupby([i.items() for i in data_ls], key=lambda x:dict(x)["part"])] 
+        new_final_data = [{i[0][0]:sum(c[-1] for c in i if isinstance(c[-1],float)) if i[0][0] != "part" else i[0][-1] for i in zip(*b)} for a, b in final_data]
+
       
-        return Response({'status':True,'msg':'done','data':data_ls})
+        return Response({'status':True,'msg':'done','data':new_final_data})
 
 
 
