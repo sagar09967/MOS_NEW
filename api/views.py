@@ -159,16 +159,16 @@ class RetScriptSum(APIView):
         # print("avgRate----->",avgRate)
            
         context={
-            'isinCode':isinCode,
-            'fmr':fmr,
+            # 'isinCode':isinCode,
+            # 'fmr':fmr,
             'opening':varop,
             'addition':varadd,
             'sales':0,
             'closing':closing,
             'invValue':InvValue,
             'avgRate':avgRate,
-            'marketRate':mktRate,
-            'mktvalue':mktvalue
+            # 'marketRate':mktRate,
+            # 'mktvalue':mktvalue
         }
         return Response({'status':True,'msg':'done','data':context})
 
@@ -197,7 +197,6 @@ class RetHolding(APIView):
         final_data = [(a, list(b)) for a, b in itertools.groupby([i.items() for i in data_ls], key=lambda x:dict(x)["part"])] 
         new_final_data = [{i[0][0]:sum(c[-1] for c in i if isinstance(c[-1],float)) if i[0][0] != "part" else i[0][-1] for i in zip(*b)} for a, b in final_data]
 
-      
         return Response({'status':True,'msg':'done','data':new_final_data})
 
 
