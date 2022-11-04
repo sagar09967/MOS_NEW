@@ -2,6 +2,8 @@ from decimal import Decimal
 from .models import TranSum,MemberMaster,CustomerMaster
 from rest_framework import generics
 from rest_framework import status
+from django.db.models import Sum,Q
+
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
@@ -12,8 +14,7 @@ SaveMemberSerializer,RetMemberSerializer,SavecustomerSerializer,RetChangeDefault
 import copy
 from django.contrib.auth import authenticate
 from .renderers import UserRender
-from rest_framework.authentication import BasicAuthentication
-from rest_framework.permissions import IsAuthenticated
+
 import itertools
 
 
@@ -109,68 +110,137 @@ class RetScriptSum(APIView):
         except:
             raise Http404
         # --------------------- Opening
-        opening = TranSum.objects.filter(trDate__lt=start_fy,group=group,code=code,againstType=againstType,part=part).values_list('qty','sVal','isinCode','fmr')
-        op_list=list(opening)
-        varop=0
-        varopval=0
-        for i in op_list:
-            op=int(i[0])
-            opval=int(i[1])
-            varop=varop+op
-            # varopval=varopval+opval 
-            varopval=varopval+opval
-        # print(varop) 
-        # print(varopval)  
-        # --------------------- Additions
-        addition = TranSum.objects.filter(trDate__range=(start_fy,end_fy),group=group,code=code,againstType=againstType,part=part).values_list('qty','sVal','marketRate','marketValue','isinCode','fmr','avgRate')
-        # print("Daaaa",addition)
-        b=list(addition)
-        varadd=0
-        varaddval=0
-        for i in b:
-            ad=int(i[0])
-            addval=int(i[1])
-            mktRate=float(i[2])
-            i3 = 0 if i[3] is None else i[3]
-            mktvalue=float(i3)
-            isinCode=i[4]
-            fmr=i[5]
-            varadd=varadd+ad
-            varaddval=varaddval+addval
-            
-        # ------------------------- Closing
-        closing=varadd+varop
-        #-------------------------- opening and addition all values Sum
-        InvValue=varaddval+varopval
-       
-        InvValue=float(InvValue)
+        opening=TranSum.objects.values('qty','sVal','marketRate','marketValue','isinCode','fmr','avgRate').order_by().annotate(opening=Sum("qty"),opval=Sum("sVal")).filter(trDate__lt=start_fy,group=group,code=code,againstType=againstType,part=part)
+        addition=TranSum.objects.values('qty','sVal','marketRate','marketValue','isinCode','fmr','avgRate').order_by().annotate(addition=Sum("qty"),adval=Sum("sVal")).filter(trDate__range=(start_fy,end_fy),group=group,code=code,againstType=againstType,part=part)
+        
+        print('----------------')
+        for opp in opening:
+            opdic={'opening':opp['opening'],'opval':int(opp['opval']),'isinCode':opp['isinCode'],'fmr':opp['fmr']}
 
-        # print("InvValue",InvValue1,type(InvValue1))
 
-        # -------------------------- Average Rate(total values / total qty)(InvValue/closing)
+        # -------------------- all_opening
+        all_opening=opdic['opening']
+        #---------------------- all opening value Addition
+        val_add_opening=opdic['opval']
+        # print("value addtion--->",vall_add)
+
+        #---------------- isin Code
+        isin_Code=opdic['isinCode']
+
+        # -------------- Fmr Code
+        fmr_l=opdic['fmr']
+
+        for add in addition:
+            adddic={'addition':add['addition'],'addval':int(add['adval'])}
+        # print("adddd",adddic)
+         
+        # -------------------->all_addition
+        # all_addition = 0 if add['addition'] is None else add['addition']
         try:
-            avgRate=InvValue / closing
-            avgRate=round(avgRate,2)
-        except ZeroDivisionError:
-            avgRate=0
-        # print('Avg',avgRate,type(avgRate))
+            all_addition=adddic['addition']
+        except:
+            all_addition=0
+
+        # -------------------> all Addition value
+        try:
+            all_add_value=adddic['addval']
+        except:
+            all_add_value=0
+
+        # print("All Value--->",all_add_value)
+    
+        # ----------------------> closing
+        try:
+            closing=all_opening+all_addition
+            print("Closing---->",closing)
+        except:
+            closing=0
+
+
+        # ---------------------->opening_addition_value(Investment Value)
+        opening_addition_val=val_add_opening+all_add_value
+        opening_addition_val=float(opening_addition_val)
+        # print(opening_addition_val)
+
+        #------------------------->Average Rate
+        avg_Rate=opening_addition_val/closing
+
+        # ------------------------ Market 
+        data={
+            "isin_Code":isin_Code,
+            "fmr":fmr_l,
+            "opening":all_opening,
+            "addition":all_addition,
+            "closing":closing,
+            "InvValue":opening_addition_val,
+            "avgRate":avg_Rate
+        }
+        return Response({'status':True,'msg':'done','data':data})
+
+       
+        # opening = TranSum.objects.filter(trDate__lt=start_fy,group=group,code=code,againstType=againstType,part=part).values_list('qty','sVal','isinCode','fmr')
+        # op_list=list(opening)
+        # varop=0
+        # varopval=0
+        # for i in op_list:
+        #     op=int(i[0])
+        #     opval=int(i[1])
+        #     varop=varop+op
+        #     # varopval=varopval+opval 
+        #     varopval=varopval+opval
+
+     
+        # # --------------------- Additions
+        # addition = TranSum.objects.filter(trDate__range=(start_fy,end_fy),group=group,code=code,againstType=againstType,part=part).values_list('qty','sVal','marketRate','marketValue','isinCode','fmr','avgRate')
+        # # print("Daaaa",addition)
+        # b=list(addition)
+        # # print(b)
+        # varadd=0
+        # varaddval=0
+        # for i in b:
+        #     ad=int(i[0])
+        #     addval=int(i[1])
+        #     mktRate=(i[2])
+        #     mktvalue = 0 if i[3] is None else i[3]
+    
+        #     iscode = 0 if i[4] is None  else i[3]
+        #     fmr=i[5]
+        #     varadd=varadd+ad
+        #     varaddval=varaddval+addval
+      
+
+            
+        # # ------------------------- Closing
+        # closing=varadd+varop
+        # # #-------------------------- opening and addition all values Sum
+        # InvValue=varaddval+varopval
+       
+        # InvValue=float(InvValue)
+
+        # # -------------------------- Average Rate(total values / total qty)(InvValue/closing)
+        # try:
+        #     avgRate=InvValue / closing
+        #     avgRate=round(avgRate,2)
+        # except ZeroDivisionError:
+        #     avgRate=0
+        # # print('Avg',avgRate,type(avgRate))
        
 
-        # print("avgRate----->",avgRate)
-           
-        context={
-            # 'isinCode':isinCode,
-            # 'fmr':fmr,
-            'opening':varop,
-            'addition':varadd,
-            'sales':0,
-            'closing':closing,
-            'invValue':InvValue,
-            'avgRate':avgRate,
-            # 'marketRate':mktRate,
-            # 'mktvalue':mktvalue
-        }
-        return Response({'status':True,'msg':'done','data':context})
+        # # print("avgRate----->",avgRate)
+        
+        # context={
+        #     # 'isinCode':iscode,
+        #     # 'fmr':fmr,
+        #     'opening':varop,
+        #     'addition':varadd,
+        #     'sales':0,
+        #     'closing':closing,
+        #     'invValue':InvValue,
+        #     'avgRate':avgRate,
+        #     # 'marketRate':mktRate,
+        #     # 'mktvalue':mktvalue
+        # }
+        # return Response({'status':True,'msg':'done','data':data})
 
 class RetHolding(APIView):
     def get(self,request,format=None):
@@ -178,29 +248,66 @@ class RetHolding(APIView):
         code = self.request.query_params.get('code')
         dfy = self.request.query_params.get('dfy')
         againstType = self.request.query_params.get('againstType')
-        all_data = TranSum.objects.filter(group=group,code=code,againstType=againstType,fy=dfy).values_list('rate','balQty','marketRate','part')
+        # all_data = TranSum.objects.filter(group=group,code=code,againstType=againstType,fy=dfy).values_list('rate','balQty','marketRate','part')
+        holding=TranSum.objects.values('part','rate','marketRate').order_by().annotate(HoldQty=Sum("balQty")).filter(group=group,code=code,againstType=againstType,fy=dfy)
         data_ls = []
-        for data in all_data:
-            dic = {'part': data[3], "holdQty": int(data[1])}
-            data_1 = 0 if data[1] is None else data[1]
-            data_2 = 0 if data[2] is None else data[2]
-            dic["InvValue"] = float((data[0])* (data_1))
-            dic["mktvalue"] = float(data_1 * (data_2))
-            # print("Dataaaa--->",dic)
+        for data in holding:
+            dic = {'part': data['part'],'holdQty':int(data['HoldQty'])}
+            hodQty = 0 if data['HoldQty'] is None else data['HoldQty']
+            mktrate = 0 if data['marketRate'] is None else data['marketRate']
+            dic["InvValue"] = (hodQty)*data['rate']
+            dic["mktValue"] = (hodQty)*(mktrate)
             data_ls.append(dic)
-        print(data_ls)
+        print('------------------------------')
+        print("Holding---_",data_ls)
+        print('------------------------------')
+        return Response({'status':True,'msg':'done','data':data_ls})
+
+
+        # data_ls = []
+        # for data in all_data:
+        #     dic = {'part': data[3], "holdQty": int(data[1])}
+        #     data_1 = 0 if data[1] is None else data[1]
+        #     data_2 = 0 if data[2] is None else data[2]
+        #     dic["InvValue"] = float((data[0]))* (int(data_1))
+        #     dic["mktvalue"] = float(data_1 * (data_2))
+        #     # print("Dataaaa--->",dic)
+        #     data_ls.append(dic)
+        # print(data_ls)
         
         # import pandas as pd
+        # import json
         # df = pd.DataFrame(data_ls)
-        # df = df.groupby('part', as_index=False).sum()
+        # df = df.groupby('part').sum()
+        # print(df,type(df))
+
+        # df = pd.DataFrame(data_ls)
+        # print(df)
+        # df = df.groupby('part').sum()
+        # print(df,type(df))
+        # df2 = df.to_json(orient ='values')
+        # df2 = df.to_json(orient = 'table')
+        # df2 = df.to_json(orient = 'split')
+        # df2 = df.to_json(orient ='index')
+        # df = df.to_json(orient = 'records')
+        # df2 = df.to_json(orient = 'columns')  
+
+        # print(df,type(df))
+        # ss=df.to_json(orient='records')
+        # print("------------------")
+        # print(ss,type(ss))
        
-        final_data = [(a, list(b)) for a, b in itertools.groupby([i.items() for i in data_ls], key=lambda x:dict(x)["part"])] 
-        new_final_data = [{i[0][0]:sum(c[-1] for c in i if isinstance(c[-1], float)) if i[0][0] != "part" else i[0][-1] for i in zip(*b)} for a, b in final_data]
-        print('---------------------------')
-        print('Data------>',new_final_data)
-        print('---------------------------')
-      
-        return Response({'status':True,'msg':'done','data':new_final_data})
+        # final_data = [(a, list(b)) for a, b in itertools.groupby([i.items() for i in data_ls], key=lambda x:dict(x)["part"])] 
+        # new_final_data = [{i[0][0]:sum(c[-1] for c in i if isinstance(c[-1],Decimal)) if i[0][0] != "part" else i[0][-1] for i in zip(*b)} for a, b in final_data]
+        # # print('---------------------------')
+        # print('Data------>',new_final_data)
+        # print('---------------------------')
+       
+        # holding=df.groupby('part').sum()
+       
+        # print('out---',out)
+
+        # return Response({'status':True,'msg':'done'})
 
 
 
