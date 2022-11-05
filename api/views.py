@@ -207,7 +207,7 @@ class RetScriptSum(APIView):
             varop=varop+op
             varopval=varopval+opval 
         # print(varop) 
-        # print(varopval)  
+        print(varopval)  
         # --------------------- Additions
         addition = TranSum.objects.filter(trDate__range=(start_fy,end_fy),group=group,code=code,againstType=againstType,part=part).values_list('qty','sVal','marketRate','marketValue','isinCode','fmr','avgRate')
         # print("Daaaa",addition)
@@ -219,6 +219,9 @@ class RetScriptSum(APIView):
             ad=int(i[0])
             addval=int(i[1])
             mktRate=float(i[2])
+            varadd=varadd+ad
+            varaddval=varaddval+addval
+            print(varaddval)
             if i[3] == None:
                 i3=0
             else:
@@ -234,8 +237,7 @@ class RetScriptSum(APIView):
             except:
                 fmr=0
 
-            varadd=varadd+ad
-            varaddval=varaddval+addval
+           
         # print(varadd)
         # print(varaddval)  
         # ------------------------- Closing
@@ -243,7 +245,6 @@ class RetScriptSum(APIView):
             closing=varadd+varop
         except:
             closing=0
-
         #-------------------------- opening and addition all values Sum
         try:
             InvValue=varaddval+varopval
