@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import TranSum,CustomerMaster,MemberMaster
+from .models import TranSum,CustomerMaster,MemberMaster,MOS_Sales
 from django.contrib.auth.models import Group,User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 # Register your models here.
@@ -41,3 +41,9 @@ class MemberMasterAdmin(admin.ModelAdmin):
 @admin.register(TranSum)
 class TranSumAdmin(admin.ModelAdmin):
     list_display=('trId','group','code','fy','againstType','sp','part','fmr','isinCode','trDate','qty','balQty','rate','sVal','sttCharges','otherCharges','noteAdd')
+
+
+
+@admin.register(MOS_Sales)
+class TranSumAdmin(admin.ModelAdmin):
+    list_display=('trId','group','code','ay','againstType','scriptSno','purSno','sDate','srate','sqty','sVal','stt_Paid','stt','other','speculation','stgc','ltgc','fno','empCode')

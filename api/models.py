@@ -123,6 +123,38 @@ class TranSum(models.Model):
     strategyDate=models.DateField(null=True,blank=True)
     strategyTrigger=models.DecimalField(max_digits=65, decimal_places=2,blank=True,null=True)
 
+   
+class MOS_Sales(models.Model):
+    AY=(
+        
+        ('2021-2022','2021-2022'),
+        ('2022-2023','2022-2023'),
+        ('2023-2024','2023-2024'),
+        ('2024-2025','2024-2025'),
+        ('2025-2026','2025-2026'),
+        ('2026-2027','2026-2027'),
+        ('2027-2028','2027-2028'),
+        ('2028-2029','2028-2029')
+    )
+    trId = models.BigAutoField(primary_key=True)
+    group=models.CharField(max_length=10)
+    code=models.CharField(max_length=10)
+    ay=models.CharField(max_length=9,choices=AY)
+    againstType=models.CharField(max_length=15)
+    scriptSno=models.IntegerField()
+    purSno=models.IntegerField()
+    sDate=models.DateField(blank=True,null=True)
+    srate=models.DecimalField(max_digits=65, decimal_places=2)
+    sqty=models.IntegerField()
+    sVal=models.DecimalField(max_digits=65, decimal_places=2)
+    stt_Paid=models.BooleanField(blank=True,null=True)
+    stt=models.DecimalField(max_digits=65, decimal_places=2)
+    other=models.DecimalField(max_digits=65, decimal_places=2)
+    speculation=models.DecimalField(max_digits=65, decimal_places=2)
+    stgc=models.DecimalField(max_digits=65, decimal_places=2)
+    ltgc=models.DecimalField(max_digits=65, decimal_places=2)
+    fno=models.DecimalField(max_digits=65, decimal_places=2)
+    empCode=models.CharField(max_length=10)
 
 
     
