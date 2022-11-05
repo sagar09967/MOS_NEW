@@ -102,16 +102,31 @@ class RetScriptSum(APIView):
             opdic={'opening':opp['opening'],'opval':int(opp['opval']),'isinCode':opp['isinCode'],'fmr':opp['fmr']}
 
         # -------------------- all_opening
-        all_opening=opdic['opening']
+        try:
+            all_opening=opdic['opening']
+        except:
+            all_opening=0
+
         #---------------------- all opening value Addition
-        val_add_opening=opdic['opval']
+        try:
+            val_add_opening=opdic['opval']
+        except:
+            val_add_opening=0
+
         # print("value addtion--->",vall_add)
 
         #---------------- isin Code
-        isin_Code=opdic['isinCode']
+        try: 
+            isin_Code=opdic['isinCode']
+        except:
+            isin_Code=0
 
         # -------------- Fmr Code
-        fmr_l=opdic['fmr']
+        try:
+            fmr_l=opdic['fmr']
+        except:
+            fmr_l=0
+
 
         for add in addition:
             adddic={'addition':add['addition'],'addval':int(add['adval'])}
