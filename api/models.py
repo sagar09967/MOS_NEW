@@ -156,6 +156,10 @@ class MOS_Sales(models.Model):
     fno=models.DecimalField(max_digits=65, decimal_places=2)
     empCode=models.CharField(max_length=10)
 
+    class Meta:
+        verbose_name = ('MOS_Sales')
+        verbose_name_plural = ('MOS_Sales')
+
 
     
   
