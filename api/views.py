@@ -444,5 +444,15 @@ class RetChangeDefault(APIView):
     
    #-------------------------- hellll
    #-------------------------- hellll
+    
+  
+class RetChangeDefault(APIView):
+    # authentication_classes = [BasicAuthentication]
+    # permission_classes = [IsAuthenticated]
+    def get(self, request, format=None):
+        group = self.request.query_params.get('group')
+        member=MemberMaster.objects.filter(group=group)
+        serializer=RetChangeDefaultSerializer(member,many=True)
+        return Response({'status':True,'msg':'done','data':serializer.data})
 
 
