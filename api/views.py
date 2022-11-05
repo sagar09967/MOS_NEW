@@ -81,6 +81,108 @@ class RetTransSumUpdate(generics.RetrieveUpdateAPIView):
 
  # -------------------------- Retrive API Screen No Two
  
+# class RetScriptSum(APIView):
+#     def get(self, request, format=None):
+#         # ------------ fetching parameter in  Url
+#         group = self.request.query_params.get('group')
+#         code = self.request.query_params.get('code')
+#         againstType = self.request.query_params.get('againstType')
+#         part = self.request.query_params.get('part')
+#         dfy = self.request.query_params.get('dfy')
+#         try:
+#             start_fy = f"{dfy[:4]}-04-01"
+#             end_fy = f"{dfy[5:]}-03-31"
+#         except:
+#             raise Http404
+#         # --------------------- Opening
+#         opening=TranSum.objects.values('qty','sVal','marketRate','marketValue','isinCode','fmr','avgRate').order_by().annotate(opening=Sum("qty"),opval=Sum("sVal")).filter(trDate__lt=start_fy,group=group,code=code,againstType=againstType,part=part)
+#         addition=TranSum.objects.values('qty','sVal','marketRate','marketValue','isinCode','fmr','avgRate').order_by().annotate(addition=Sum("qty"),adval=Sum("sVal")).filter(trDate__range=(start_fy,end_fy),group=group,code=code,againstType=againstType,part=part)
+        
+#         for opp in opening:
+#             opdic={'opening':opp['opening'],'opval':int(opp['opval']),'isinCode':opp['isinCode'],'fmr':opp['fmr']}
+#             print("alllopen----->",opdic)
+
+#         # -------------------- all_opening
+#         try:
+#             all_opening=opdic['opening']
+#             print("Alll Opening",all_opening)
+#         except:
+#             all_opening=0
+
+#         #---------------------- all opening value Addition
+#         try:
+#             val_add_opening=opdic['opval']
+#         except:
+#             val_add_opening=0
+
+#         # print("value addtion--->",vall_add)
+
+#         #---------------- isin Code
+#         try: 
+#             isin_Code=opdic['isinCode']
+#         except:
+#             isin_Code=0
+
+#         # -------------- Fmr Code
+#         try:
+#             fmr_l=opdic['fmr']
+#         except:
+#             fmr_l=0
+
+
+#         for add in addition:
+#             adddic={'addition':add['addition'],'addval':int(add['adval'])}
+#             print("adddic----->",adddic)
+#         # print("adddd",adddic)
+         
+#         # -------------------->all_addition
+#         # all_addition = 0 if add['addition'] is None else add['addition']
+#         try:
+#             all_addition=adddic['addition']
+#             print("Alll Addition",all_addition)
+#         except:
+#             all_addition=0
+
+#         # -------------------> all Addition value
+#         try:
+#             all_add_value=adddic['addval']
+#         except:
+#             all_add_value=0
+
+#         # print("All Value--->",all_add_value)
+    
+#         # ----------------------> closing
+#         try:
+#             closing=all_opening+all_addition
+#             # print("Closing---->",closing)
+#         except:
+#             closing=0
+
+
+#         # ---------------------->opening_addition_value(Investment Value)
+#         opening_addition_val=val_add_opening+all_add_value
+#         opening_addition_val=float(opening_addition_val)
+#         # print(opening_addition_val)
+
+#         #------------------------->Average Rate
+#         try:
+#             avg_Rate=opening_addition_val/closing
+#         except:
+#             avg_Rate=0
+#         # ------------------------ Market 
+#         data={
+#             "isin_Code":isin_Code,
+#             "fmr":fmr_l,
+#             "opening":all_opening,
+#             "addition":all_addition,
+#             "closing":closing,
+#             "InvValue":opening_addition_val,
+#             "avgRate":avg_Rate
+#         }
+#         # print("RetTranSum----->",data)
+#         return Response({'status':True,'msg':'done','data':data})
+
+
 class RetScriptSum(APIView):
     def get(self, request, format=None):
         # ------------ fetching parameter in  Url
@@ -90,93 +192,94 @@ class RetScriptSum(APIView):
         part = self.request.query_params.get('part')
         dfy = self.request.query_params.get('dfy')
         try:
-            start_fy = f"{dfy[:4]}-04-01"
-            end_fy = f"{dfy[5:]}-03-31"
+            start_fy=dfy[:4]+"-04-01"
+            end_fy=dfy[5:]+"-03-31"
         except:
             raise Http404
         # --------------------- Opening
-        opening=TranSum.objects.values('qty','sVal','marketRate','marketValue','isinCode','fmr','avgRate').order_by().annotate(opening=Sum("qty"),opval=Sum("sVal")).filter(trDate__lt=start_fy,group=group,code=code,againstType=againstType,part=part)
-        addition=TranSum.objects.values('qty','sVal','marketRate','marketValue','isinCode','fmr','avgRate').order_by().annotate(addition=Sum("qty"),adval=Sum("sVal")).filter(trDate__range=(start_fy,end_fy),group=group,code=code,againstType=againstType,part=part)
-        
-        for opp in opening:
-            opdic={'opening':opp['opening'],'opval':int(opp['opval']),'isinCode':opp['isinCode'],'fmr':opp['fmr']}
+        opening = TranSum.objects.filter(trDate__lt=start_fy,group=group,code=code,againstType=againstType,part=part).values_list('qty','sVal','isinCode','fmr')
+        open=list(opening)
+        varop=0
+        varopval=0
+        for i in open:
+            op=int(i[0])
+            opval=int(i[1])
+            varop=varop+op
+            varopval=varopval+opval 
+        # print(varop) 
+        # print(varopval)  
+        # --------------------- Additions
+        addition = TranSum.objects.filter(trDate__range=(start_fy,end_fy),group=group,code=code,againstType=againstType,part=part).values_list('qty','sVal','marketRate','marketValue','isinCode','fmr','avgRate')
+        # print("Daaaa",addition)
+        b=list(addition)
+        # print("Daaaa",b)
+        varadd=0
+        varaddval=0
+        for i in b:
+            ad=int(i[0])
+            addval=int(i[1])
+            mktRate=float(i[2])
+            if i[3] == None:
+                i3=0
+            else:
+                i3=i[3]
+            mktvalue=float(i3)
+            try:
+                isinCode=i[4]
+            except:
+                isinCode=0
 
-        # -------------------- all_opening
+            try:
+                fmr=i[5]
+            except:
+                fmr=0
+
+            varadd=varadd+ad
+            varaddval=varaddval+addval
+        # print(varadd)
+        # print(varaddval)  
+        # ------------------------- Closing
         try:
-            all_opening=opdic['opening']
-        except:
-            all_opening=0
-
-        #---------------------- all opening value Addition
-        try:
-            val_add_opening=opdic['opval']
-        except:
-            val_add_opening=0
-
-        # print("value addtion--->",vall_add)
-
-        #---------------- isin Code
-        try: 
-            isin_Code=opdic['isinCode']
-        except:
-            isin_Code=0
-
-        # -------------- Fmr Code
-        try:
-            fmr_l=opdic['fmr']
-        except:
-            fmr_l=0
-
-
-        for add in addition:
-            adddic={'addition':add['addition'],'addval':int(add['adval'])}
-        # print("adddd",adddic)
-         
-        # -------------------->all_addition
-        # all_addition = 0 if add['addition'] is None else add['addition']
-        try:
-            all_addition=adddic['addition']
-        except:
-            all_addition=0
-
-        # -------------------> all Addition value
-        try:
-            all_add_value=adddic['addval']
-        except:
-            all_add_value=0
-
-        # print("All Value--->",all_add_value)
-    
-        # ----------------------> closing
-        try:
-            closing=all_opening+all_addition
-            # print("Closing---->",closing)
+            closing=varadd+varop
         except:
             closing=0
 
-
-        # ---------------------->opening_addition_value(Investment Value)
-        opening_addition_val=val_add_opening+all_add_value
-        opening_addition_val=float(opening_addition_val)
-        # print(opening_addition_val)
-
-        #------------------------->Average Rate
+        #-------------------------- opening and addition all values Sum
         try:
-            avg_Rate=opening_addition_val/closing
+            InvValue=varaddval+varopval
         except:
-            avg_Rate=0
-        # ------------------------ Market 
-        data={
-            "isin_Code":isin_Code,
-            "fmr":fmr_l,
-            "opening":all_opening,
-            "addition":all_addition,
-            "closing":closing,
-            "InvValue":opening_addition_val,
-            "avgRate":avg_Rate
+            InvValue=0
+
+       
+        InvValue=float(InvValue)
+        # InvValue1=round(InvValue,2)
+
+        # print("InvValue",InvValue1,type(InvValue1))
+
+        # -------------------------- Average Rate(total values / total qty)(InvValue/closing)
+        try:
+            avgRate=InvValue / closing
+            avgRate=round(avgRate,2)
+        except ZeroDivisionError:
+            avgRate=0
+        # print('Avg',avgRate,type(avgRate))
+       
+
+        # print("avgRate----->",avgRate)
+           
+        context={
+            # 'isinCode':isinCode,
+            # 'fmr':fmr,
+            'opening':varop,
+            'addition':varadd,
+            'sales':0,
+            'closing':closing,
+            'invValue':InvValue,
+            'avgRate':avgRate,
+            # 'marketRate':mktRate,
+            # 'mktvalue':mktvalue
         }
-        # print("RetTranSum----->",data)
-        return Response({'status':True,'msg':'done','data':data})
+        return Response({'status':True,'msg':'done','data':context})
 
 class RetHolding(APIView):
     def get(self,request,format=None):
@@ -184,13 +287,13 @@ class RetHolding(APIView):
         code = self.request.query_params.get('code')
         dfy = self.request.query_params.get('dfy')
         againstType = self.request.query_params.get('againstType')
-        holding=TranSum.objects.values('part','rate','marketRate').order_by().annotate(HoldQty=Sum("balQty")).filter(group=group,code=code,againstType=againstType,fy=dfy)
+        holding=TranSum.objects.values('part','rate','marketRate').order_by().annotate(HoldQty=Sum("balQty")).filter(group=group,code=code,againstType=againstType)
         data_ls = []
         for data in holding:
             dic = {'part': data['part'],'holdQty':int(data['HoldQty'])}
             hodQty = 0 if data['HoldQty'] is None else data['HoldQty']
             mktrate = 0 if data['marketRate'] is None else data['marketRate']
-            dic["InvValue"] = (hodQty)*data['rate']
+            dic["invValue"] = (hodQty)*data['rate']
             dic["mktValue"] = (hodQty)*(mktrate)
             data_ls.append(dic)
         print('------------------------------')

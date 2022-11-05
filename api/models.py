@@ -123,7 +123,7 @@ class TranSum(models.Model):
     strategyDate=models.DateField(null=True,blank=True)
     strategyTrigger=models.DecimalField(max_digits=65, decimal_places=2,blank=True,null=True)
 
-    
+
 
     
   
