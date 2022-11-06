@@ -105,6 +105,8 @@ class RetScriptSum(APIView):
         addition_su = 0 if addition['addition_sum'] is None else addition['addition_sum']
         opening_val = 0 if opening['opening_values'] is None else opening['opening_values']
         addition_val = 0 if addition['addition_values'] is None else addition['addition_values']
+       
+
         context={
             "opening":opening_su,
             "addition":addition_su,
