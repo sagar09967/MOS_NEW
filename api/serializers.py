@@ -1,6 +1,6 @@
 from pyexpat import model
 from rest_framework import serializers
-from .models import TranSum,CustomerMaster,MemberMaster
+from .models import TranSum,CustomerMaster,MemberMaster,MOS_Sales
 from django.contrib.auth.hashers import make_password
 
 
@@ -83,6 +83,22 @@ class RetTransSumSalesSerializer(serializers.ModelSerializer):
     class Meta:
         model=TranSum
         fields=['trId','trDate','qty','rate','sVal','balQty']
+
+
+# ------------------------------------------salesSave API in serializer
+
+class SaleSaveAPISerializer(serializers.ModelSerializer):
+    class Meta:
+        model=MOS_Sales
+        fields=['trId','group','code','ay','againstType','sDate','sqty','srate','sVal','stt','other']
+
+
+# --------------------------------------------RetSalesDetSerializer
+class RetSalesDetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=MOS_Sales
+        fields=['trId','sDate','sqty','srate','sVal','stt','other']
+
 
 
 
