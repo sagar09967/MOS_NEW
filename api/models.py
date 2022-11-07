@@ -125,7 +125,7 @@ class TranSum(models.Model):
     # balQty=models.IntegerField(blank=True,null=True,default=0)
     dayTrade=models.DecimalField(max_digits=65, decimal_places=2,blank=True,null=True,default=0)
     strategyDate=models.DateField(null=True,blank=True)
-    strategyTrigger=models.DecimalField(max_digits=65, decimal_places=2,blank=True,null=True)
+    strategyTrigger=models.DecimalField(max_digits=65, decimal_places=2,blank=True,null=True,default=0)
 
     class Meta:
         verbose_name = ('MOS_TransSum')
