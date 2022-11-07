@@ -43,7 +43,7 @@ class CustomerMaster(AbstractUser):
 
     class Meta:
         verbose_name = ('CustomerMaster')
-        verbose_name_plural = ('CustomerMasters')
+        verbose_name_plural = ('CustomerMaster')
 
     def __str__(self):
         return self.group 
@@ -56,6 +56,10 @@ class MemberMaster(models.Model):
     name=models.CharField(max_length=30)
     emailId=models.EmailField(max_length=30)
     contactNo=models.CharField(max_length=30,null = True, blank = True)
+
+    class Meta:
+        verbose_name = ('MemberMaster')
+        verbose_name_plural = ('MemberMaster')
 
     def __str__(self):
         return self.code
@@ -122,6 +126,10 @@ class TranSum(models.Model):
     dayTrade=models.DecimalField(max_digits=65, decimal_places=2,blank=True,null=True,default=0)
     strategyDate=models.DateField(null=True,blank=True)
     strategyTrigger=models.DecimalField(max_digits=65, decimal_places=2,blank=True,null=True)
+
+    class Meta:
+        verbose_name = ('MOS_TransSum')
+        verbose_name_plural = ('MOS_TransSum')
 
    
 class MOS_Sales(models.Model):

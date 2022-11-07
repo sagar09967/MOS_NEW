@@ -1,4 +1,4 @@
-from .models import TranSum
+from .models import TranSum,MOS_Sales
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
@@ -34,6 +34,6 @@ class RetSalesDet(APIView):
         code = self.request.query_params.get('code')
         dfy = self.request.query_params.get('dfy')
         againstType = self.request.query_params.get('againstType')
-        mos_transum=TranSum.objects.filter(group=group,code=code,fy=dfy,againstType=againstType)
+        mos_transum=MOS_Sales.objects.filter(group=group,code=code,ay=dfy,againstType=againstType)
         serializer=RetSalesDetSerializer(mos_transum,many=True)
         return Response({'status':True,'msg':'done','data':serializer.data})

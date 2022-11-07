@@ -40,10 +40,10 @@ class MemberMasterAdmin(admin.ModelAdmin):
 
 @admin.register(TranSum)
 class TranSumAdmin(admin.ModelAdmin):
-    list_display=('trId','group','code','fy','againstType','sp','part','fmr','isinCode','trDate','qty','balQty','rate','sVal','sttCharges','otherCharges','noteAdd')
+    list_display=('trId','group','code','fy','againstType','sp','part','fmr','isinCode','trDate','qty','balQty','rate','sVal','sttCharges','otherCharges','noteAdd','marketRate','marketValue','HoldingValue','avgRate','scriptSno','empCode','clDate','clRate','clQTY','clValue','clsttCharges','clOtherCharges')
 
 
 
 @admin.register(MOS_Sales)
-class TranSumAdmin(admin.ModelAdmin):
+class MOS_SalesAdmin(admin.ModelAdmin):
     list_display=('trId','group','code','ay','againstType','scriptSno','purSno','sDate','srate','sqty','sVal','stt_Paid','stt','other','speculation','stgc','ltgc','fno','empCode')
