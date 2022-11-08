@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.views import APIView
 from .serializers import RetTransSumSalesSerializer,RetSalesDetSerializer,SaleSaveAPISerializer
 
-# ------------------------------- RetSalesSum API
+# <---------------------- RetSalesSum API ------------------->
 class RetSaleSum(APIView):
     def get(self,request,format=None):
         group = self.request.query_params.get('group')
@@ -18,7 +18,7 @@ class RetSaleSum(APIView):
         serializer = RetTransSumSalesSerializer(sales, many=True)
         return Response({'status':True,'msg': 'done','data':serializer.data})
 
-#---------------------------------SalesSaveAPI
+#<------------------------ SalesSaveAPI ------------------------>
 class SaleSaveAPI(APIView):
     def post(self, request, format=None):
         serializer = SaleSaveAPISerializer(data=request.data)
@@ -27,7 +27,7 @@ class SaleSaveAPI(APIView):
             return Response({'status':True,'msg': 'You have successfully Created','data':serializer.data}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# -------------------------------RetSalesDet API
+# <---------------------- RetSalesDet API ------------------->
 class RetSalesDet(APIView):
     def get(self,request,format=None):
         group = self.request.query_params.get('group')

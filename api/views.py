@@ -15,25 +15,55 @@ import copy
 from django.contrib.auth import authenticate
 from .renderers import UserRender
 
-# -------------------- SavePurch API
+# <-------------------- SavePurch API ---------------------->
 class SavePurch(APIView):
     def post(self, request, format=None):
+        try:
+            sn=TranSum.objects.latest('sno','scriptSno')
+            print("Summm",sn)
+        except:
+            sn=0
+        try:
+            scripno=TranSum.objects.latest('scriptSno')
+        except:
+            scripno=0
+
+
+        if scripno==0 or None:
+            sp=scripno+0
+           
+        else:
+            sp=scripno.scriptSno+1 or 0
+            print("SP",sp)
+        
+        if sn==0 or  None:
+            sn=sn+1
+        else:
+            sn=sn.sno+1 or 0
+    
+        request.data['sno'] = sn
+        request.data['scriptSno'] = sp
+        # print('ss',request.data.get('sno'))
+        print('Script no--->',request.data.get('scriptSno'))
         dic = copy.deepcopy(request.data)
         dic["balQty"] = request.data["qty"]
+       
+     
         serializer = SavePurchSerializer(data=dic)
+        # print('Dictionary=====>',dict)
         if serializer.is_valid():
             serializer.save() 
             return Response({'status':True,'msg': 'You have successfully Created','data':serializer.data}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# -------------------------- RetTransSum API
+# <--------------------RetTransSum API --------------------->
 class RetTransSum(generics.ListAPIView):
     queryset=TranSum.objects.all()
     serializer_class=RetTransSumSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['group','code','againstType','part']
 
-    # -------------------- Overriding Queryset
+    # <-------------------- Overriding Queryset --------------->
     def get_queryset(self):
         option = self.request.query_params.get('option')
         dfy = self.request.query_params.get('dfy')
@@ -52,7 +82,7 @@ class RetTransSum(generics.ListAPIView):
             return self.queryset.filter(trDate__range=(start_fy,end_fy))
              
              
-#   ------------------------- Update and Retrive API
+# <------------------------- Update and Retrive API ------------------->
 class RetTransSumUpdate(generics.RetrieveUpdateAPIView):
     queryset=TranSum.objects.all()
     serializer_class=RetTransSumSerializer
@@ -80,7 +110,7 @@ class RetTransSumUpdate(generics.RetrieveUpdateAPIView):
        }
        return Response(result)
 
- # -------------------------- Retrive API Screen No Two
+ # <-------------------------- Retrive API Screen No Two ------------->
  
 class RetScriptSum(APIView):
     def get(self, request, format=None):
@@ -137,7 +167,7 @@ class RetHolding(APIView):
         return Response({'status':True,'msg':'done','data':ls})
 
 
-# -------------------------- SaveMember api
+# <-------------------------- SaveMember api ----------------------->
 class SaveMember(APIView):
     def post(self, request, format=None):
         try:
@@ -164,7 +194,7 @@ class SaveMember(APIView):
             return Response({'status':True,'Message': 'You have successfully Created','data':serializer.data}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# # -------------------------- RetMember API
+# <-------------------------- RetMember API -------------------->
 class RetMember(APIView):
     def get(self, request, format=None):
         group = self.request.query_params.get('group')
@@ -172,12 +202,12 @@ class RetMember(APIView):
         serializer=RetMemberSerializer(member,many=True)
         return Response({'status':True,'msg':'done','data':serializer.data})
 
-# ---------------------------- updated delete api mrmber
+# <---------------------------- updated delete api mrmber ----------------->
 class MemberUpdadeDelete(generics.RetrieveUpdateDestroyAPIView):
     queryset=MemberMaster.objects.all()
     serializer_class=SaveMemberSerializer
 
-# -------------------------- SaveCutomer api
+# <-------------------------- SaveCutomer api ---------------------------->
 class SaveCustomer(APIView):
     def post(self, request,format=None):       
         gro=CustomerMaster.objects.latest('group')
@@ -199,7 +229,7 @@ class SaveCustomer(APIView):
             return Response({'status':True,'msg': 'You have successfully Created','data':serializer.data}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
- # -------------------------- RetCustomer API
+ # <---------------- RetCustomer API -------------------->
 class RetCustomer(APIView):
     def get(self, request, format=None):
         username = self.request.query_params.get('username')
@@ -207,12 +237,12 @@ class RetCustomer(APIView):
         serializer=SavecustomerSerializer(customer,many=True)
         return Response({'status':True,'msg':'done','data':serializer.data})
 
-# ---------------------------- updated delete api Customer
+# <------------ updated delete api Customer ---------------->
 class CustomerUpdadeDelete(generics.RetrieveUpdateDestroyAPIView):
     queryset=CustomerMaster.objects.all()
     serializer_class=SavecustomerSerializer
 
-# --------------------------------- Login Customer Master Api
+# < --------------- Login Customer Master Api ---------------->
 
 class CustomerLogin(APIView):
     def post(self,request,format=None):
@@ -227,7 +257,7 @@ class CustomerLogin(APIView):
                 return Response({'errors':{'non_field_errors':['Username or Password is not Valid']}},status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
-# -----------------------------------RetChangeDefault          
+# <----------------- RetChangeDefault ----------------->        
 class RetChangeDefault(APIView):
     def get(self, request, format=None):
         group = self.request.query_params.get('group')

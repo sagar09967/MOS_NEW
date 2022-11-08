@@ -4,7 +4,9 @@ from decimal import Decimal
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 # from phonenumber_field.modelfields import PhoneNumberField
-# Create your models here.
+
+
+# <-----------------------> CustomerMaster <----------------------->
 class CustomerMaster(AbstractUser):
     userId=models.BigAutoField(primary_key=True)
     username = models.CharField(
@@ -48,7 +50,7 @@ class CustomerMaster(AbstractUser):
     def __str__(self):
         return self.group 
 
-# ------------------------Member Master
+# <---------------> Member Master <-------------------->
 class MemberMaster(models.Model):
     memberId=models.BigAutoField(primary_key=True)
     group=models.CharField(max_length=10,default=0)
@@ -64,7 +66,7 @@ class MemberMaster(models.Model):
     def __str__(self):
         return self.code
 
-
+# <----------------------> TranSum  <------------------------>
 class TranSum(models.Model):
     TYPE=(
         ('Shares','Shares'),
@@ -91,7 +93,7 @@ class TranSum(models.Model):
     againstType=models.CharField(max_length=20,choices=TYPE)
     sp=models.CharField(max_length=2)
     part=models.CharField(max_length=30)
-    sno=models.IntegerField(blank=True,null=True)
+    sno=models.IntegerField(blank=True,null=True,default=0)
     fmr=models.FloatField(null=True, blank=True)
     isinCode=models.CharField(max_length=30,null=True, blank=True)
     trDate=models.DateField()
@@ -113,7 +115,7 @@ class TranSum(models.Model):
     marketValue=models.FloatField(validators=[validate_decimals],blank=True,null=True)
     HoldingValue=models.DecimalField(max_digits=65, decimal_places=2,blank=True,null=True,default=0)
     avgRate=models.DecimalField(max_digits=65, decimal_places=2,blank=True,null=True,default=0)
-    scriptSno=models.IntegerField(blank=True,null=True)
+    scriptSno=models.IntegerField(blank=True,null=True,default=0)
     empCode=models.CharField(max_length=10,blank=True,null=True)
     clDate=models.DateField(null=True,blank=True)
     clRate=models.DecimalField(max_digits=65, decimal_places=2,blank=True,null=True,default=0)
@@ -131,7 +133,7 @@ class TranSum(models.Model):
         verbose_name = ('MOS_TransSum')
         verbose_name_plural = ('MOS_TransSum')
 
-   
+# <--------------------> MOS_Sales <---------------------> 
 class MOS_Sales(models.Model):
     AY=(
         
