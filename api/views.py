@@ -104,6 +104,7 @@ class RetPrimaryAPI(APIView):
         # print("Primaryyy data---->",primary)
         # isincode1=primary1[0]['isinCode']
         # Fmr=primary1[1]['fmr']
+        print('--------')
         hold_val=primary['holding_Val']
         bal_Qt=primary['total_balQty']
         avg_rate=round(primary['holding_Val'] / primary['total_balQty'],2)
