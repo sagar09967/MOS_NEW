@@ -361,9 +361,25 @@ class TranSumViewSet(viewsets.ViewSet):
 
     def list(self, request):
         data = request.query_params.dict()
+        data.pop('sp')
         data['fy'] = data['dfy']
         data.pop('dfy')
         queryset = TranSum.objects.filter(**data)
+        sp = request.query_params.get('sp')
+        dfy = request.query_params.get('dfy')
+        try:
+            start_fy = f"{dfy[:4]}-04-01"
+            end_fy = f"{dfy[5:]}-03-31"
+        except:
+            raise Http404
+
+        if sp == 'O':
+            queryset = queryset.filter(trDate__lt=start_fy)
+        # data = request.query_params.dict()
+        elif sp == 'A':
+            queryset = queryset.filter(trDate__range=(start_fy, end_fy))
+
+        # queryset = TranSum.objects.filter(**data)
         serializer = serializers.TranSumSerializer(queryset, many=True)
         return Response(serializer.data)
 
