@@ -360,8 +360,10 @@ class RetChangeDefault(APIView):
 class TranSumViewSet(viewsets.ViewSet):
 
     def list(self, request):
-        data = request.query_params
-        queryset = TranSum.objects.filter(**data.dict())
+        data = request.query_params.dict()
+        data['fy'] = data['dfy']
+        data.pop('dfy')
+        queryset = TranSum.objects.filter(**data)
         serializer = serializers.TranSumSerializer(queryset, many=True)
         return Response(serializer.data)
 
