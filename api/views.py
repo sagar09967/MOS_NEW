@@ -19,6 +19,7 @@ import copy
 from django.contrib.auth import authenticate
 from .renderers import UserRender
 from django.db import transaction
+import decimal
 
 
 # <-------------------- SavePurch API ---------------------->
@@ -400,9 +401,9 @@ class TranSumViewSet(viewsets.ViewSet):
             againstType=purchase_record_data['againstType']).filter(part=purchase_record_data['part']).first()
 
         if master_record:
-            master_record.balQty = float(master_record.balQty) + float(purchase_record_data['qty'])
-            master_record.marketValue = master_record.balQty * float(master_record.marketRate)
-            master_record.HoldingValue = float(master_record.HoldingValue) + float(purchase_record_data['sVal'])
+            master_record.balQty = master_record.balQty + decimal.Decimal(purchase_record_data['qty'])
+            master_record.marketValue = master_record.balQty * master_record.marketRate
+            master_record.HoldingValue = master_record.HoldingValue + decimal.Decimal(purchase_record_data['sVal'])
             master_record.avgRate = master_record.HoldingValue / master_record.balQty
             master_record.fmr = purchase_record_data['fmr']
             master_record.isinCode = purchase_record_data['isinCode']
@@ -416,7 +417,7 @@ class TranSumViewSet(viewsets.ViewSet):
                                     isinCode=purchase_record_data['isinCode'])
             master_record.balQty = sum_by_key(existing_purchase_records, 'balQty') + int(purchase_record_data['qty'])
             master_record.marketValue = master_record.balQty * master_record.marketRate  # TO BE CHECKED
-            master_record.HoldingValue = sum_by_key(existing_purchase_records, 'HoldingValue') + float(
+            master_record.HoldingValue = sum_by_key(existing_purchase_records, 'HoldingValue') + decimal.Decimal(
                 purchase_record_data[
                     'sVal'])
             latest_existing_script = TranSum.objects.all().filter(group=purchase_record_data['group']).filter(
@@ -439,8 +440,8 @@ class TranSumViewSet(viewsets.ViewSet):
         new_purchase_record.scriptSno = master_record.sno
         new_purchase_record.balQty = new_purchase_record.qty
         new_purchase_record.marketValue = float(new_purchase_record.balQty) * float(new_purchase_record.marketRate)
-        new_purchase_record.HoldingValue = float(new_purchase_record.balQty) * float(new_purchase_record.rate)
-        new_purchase_record.avgRate = new_purchase_record.HoldingValue / float(new_purchase_record.balQty)
+        new_purchase_record.HoldingValue = decimal.Decimal(new_purchase_record.sVal)
+        new_purchase_record.avgRate = new_purchase_record.HoldingValue / decimal.Decimal(new_purchase_record.balQty)
 
         new_purchase_record.save()
         result_serializer = serializers.TranSumSerializer([new_purchase_record], many=True)
