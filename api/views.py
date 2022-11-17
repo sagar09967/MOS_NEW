@@ -404,14 +404,16 @@ class TranSumViewSet(viewsets.ViewSet):
             master_record.marketValue = master_record.balQty * float(master_record.marketRate)
             master_record.HoldingValue = float(master_record.HoldingValue) + float(purchase_record_data['sVal'])
             master_record.avgRate = master_record.HoldingValue / master_record.balQty
-
+            master_record.fmr = purchase_record_data['fmr']
+            master_record.isinCode = purchase_record_data['isinCode']
             master_record.save()
             # update master record
         else:
 
             master_record = TranSum(group=purchase_record_data['group'], code=purchase_record_data['code'],
                                     fy=purchase_record_data['fy'], againstType=purchase_record_data['againstType'],
-                                    sp='M', part=purchase_record_data['part'])
+                                    sp='M', part=purchase_record_data['part'], fmr=purchase_record_data['fmr'],
+                                    isinCode=purchase_record_data['isinCode'])
             master_record.balQty = sum_by_key(existing_purchase_records, 'balQty') + int(purchase_record_data['qty'])
             master_record.marketValue = master_record.balQty * master_record.marketRate  # TO BE CHECKED
             master_record.HoldingValue = sum_by_key(existing_purchase_records, 'HoldingValue') + float(
