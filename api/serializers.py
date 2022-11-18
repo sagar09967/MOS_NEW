@@ -129,6 +129,7 @@ class RetSalesDetSerializer(serializers.ModelSerializer):
 
 
 class TranSumSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = TranSum
         fields = ['trId', 'group', 'code', 'fy', 'againstType', 'sp', 'part', 'fmr', 'isinCode', 'trDate', 'qty',

@@ -382,71 +382,29 @@ class TranSumViewSet(viewsets.ViewSet):
 
         # queryset = TranSum.objects.filter(**data)
         serializer = serializers.TranSumSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response({"status": True, "message": "Retrieved Purchases", "data": serializer.data})
 
     @transaction.atomic
     def create(self, request):
-        purchase_record_data = request.data
-        serializer = serializers.TranSumSerializer(data=purchase_record_data)
-        valid = serializer.is_valid()
+        data = request.data
+        serializer = serializers.TranSumSerializer(data=data)
+        serializer.is_valid()
+        serializer.save()
+        response = {"status": True, "message": "Purchase Record Added", "data": serializer.data}
+        return Response(response)
 
-        existing_purchase_records = TranSum.objects.all().filter(group=purchase_record_data['group']).filter(
-            group=purchase_record_data['group']).filter(code=purchase_record_data['code']).filter(
-            fy=purchase_record_data['fy']).filter(againstType=purchase_record_data['againstType']).filter(
-            part=purchase_record_data['part']).exclude(sp='M')
-
-        # SP = M
-        master_record = TranSum.objects.all().filter(group=purchase_record_data['group']).filter(
-            code=purchase_record_data['code']).filter(fy=purchase_record_data['fy']).filter(sp='M').filter(
-            againstType=purchase_record_data['againstType']).filter(part=purchase_record_data['part']).first()
-
-        if master_record:
-            master_record.balQty = master_record.balQty + decimal.Decimal(purchase_record_data['qty'])
-            master_record.marketValue = master_record.balQty * master_record.marketRate
-            master_record.HoldingValue = master_record.HoldingValue + decimal.Decimal(purchase_record_data['sVal'])
-            master_record.avgRate = master_record.HoldingValue / master_record.balQty
-            master_record.fmr = purchase_record_data['fmr']
-            master_record.isinCode = purchase_record_data['isinCode']
-            master_record.save()
-            # update master record
-        else:
-
-            master_record = TranSum(group=purchase_record_data['group'], code=purchase_record_data['code'],
-                                    fy=purchase_record_data['fy'], againstType=purchase_record_data['againstType'],
-                                    sp='M', part=purchase_record_data['part'], fmr=purchase_record_data['fmr'],
-                                    isinCode=purchase_record_data['isinCode'])
-            master_record.balQty = sum_by_key(existing_purchase_records, 'balQty') + int(purchase_record_data['qty'])
-            master_record.marketValue = master_record.balQty * master_record.marketRate  # TO BE CHECKED
-            master_record.HoldingValue = sum_by_key(existing_purchase_records, 'HoldingValue') + decimal.Decimal(
-                purchase_record_data[
-                    'sVal'])
-            latest_existing_script = TranSum.objects.all().filter(group=purchase_record_data['group']).filter(
-                code=purchase_record_data['code']).filter(fy=purchase_record_data['fy']).filter(
-                againstType=purchase_record_data['againstType']).filter(sp='M').last()
-            if latest_existing_script:
-                master_record.sno = latest_existing_script.sno + 1
-            else:
-                master_record.sno = 1
-            master_record.avgRate = master_record.HoldingValue / master_record.balQty
-
-            master_record.save()
-            # create master record
-        latest_purchase_record = existing_purchase_records.last()
-        new_purchase_record = TranSum(**purchase_record_data)
-        if latest_purchase_record:
-            new_purchase_record.sno = latest_purchase_record.sno + 1
-        else:
-            new_purchase_record.sno = 1
-        new_purchase_record.scriptSno = master_record.sno
-        new_purchase_record.balQty = new_purchase_record.qty
-        new_purchase_record.marketValue = float(new_purchase_record.balQty) * float(new_purchase_record.marketRate)
-        new_purchase_record.HoldingValue = decimal.Decimal(new_purchase_record.sVal)
-        new_purchase_record.avgRate = new_purchase_record.HoldingValue / decimal.Decimal(new_purchase_record.balQty)
-
-        new_purchase_record.save()
-        result_serializer = serializers.TranSumSerializer([new_purchase_record], many=True)
-
-        return Response(result_serializer.data)
+    @transaction.atomic
+    def update(self, request, pk):
+        data = request.data
+        purchase_record = TranSum.purchase_objects.filter(group=data['group']).filter(code=data['code']).filter(
+            pk=pk).first()
+        if purchase_record:
+            serializer = serializers.TranSumSerializer(purchase_record, data=data)
+            serializer.is_valid()
+            serializer.save()
+            response = {"status": True, "message": "Purchase Record Updated", "data": serializer.data}
+            return Response(response)
+        return Response({"status": False, "message": "Purchase record does not exist"})
 
 
 def sum_by_key(records, key):
