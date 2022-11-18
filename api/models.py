@@ -200,6 +200,14 @@ class TranSum(models.Model):
                     source_master_record.refresh_master_record()
                 self.balQty = self.balQty - (existing_record.qty - self.qty)
 
+            self.scriptSno = master_record.sno
+            last_purchase_record = TranSum.purchase_objects.filter(group=self.group, code=self.code,
+                                                                   scriptSno=self.scriptSno).last()
+            self.scriptSno = master_record.sno
+            if last_purchase_record:
+                self.sno = last_purchase_record.sno + 1
+            else:
+                self.sno = 1
             self.HoldingValue = self.balQty * self.rate
             self.marketValue = self.balQty * self.marketRate
             self.avgRate = self.HoldingValue / self.balQty
