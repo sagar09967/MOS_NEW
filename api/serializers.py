@@ -143,7 +143,7 @@ class RetrieveTranSumSerializer(serializers.ModelSerializer):
     otherCharges = serializers.SerializerMethodField()
     marketValue = serializers.SerializerMethodField()
     HoldingValue = serializers.SerializerMethodField()
-
+    balQty = serializers.SerializerMethodField()
     class Meta:
         model = TranSum
         fields = ['trId', 'group', 'code', 'fy', 'againstType', 'sp', 'part', 'fmr', 'isinCode', 'trDate', 'qty',
@@ -178,4 +178,9 @@ class RetrieveTranSumSerializer(serializers.ModelSerializer):
     def get_HoldingValue(self, object):
         if object.HoldingValue:
             return "{:.2f}".format(object.HoldingValue)
+        return None
+
+    def get_balQty(self, object):
+        if object.balQty:
+            return "{:.2f}".format(object.balQty)
         return None
