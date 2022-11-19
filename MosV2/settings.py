@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-ugzlz_p%ibedc-l0aenjzggl-)w#n#@)8-_x4e3$bl$)npe=*m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['mosversion2.sinewave.co.in', 'localhost', '127.0.0.1']
 
 # Application definition
 
@@ -96,7 +96,8 @@ DATABASES = {
         'NAME': 'mosversion2',
         'USER': 'dbmasteruser',
         'PASSWORD': 'F1Sa;Z*=d98<|}w)k_nYi!z[~08guTG,',
-        'HOST': 'ls-bccc2fac76b6dd4422d627d7bee601b73ebd77c1.cm6oxswmcm8k.ap-south-1.rds.amazonaws.com',   # Or an IP Address that your DB is hosted on
+        'HOST': 'ls-bccc2fac76b6dd4422d627d7bee601b73ebd77c1.cm6oxswmcm8k.ap-south-1.rds.amazonaws.com',
+        # Or an IP Address that your DB is hosted on
         'PORT': '3306',
     }
 }
