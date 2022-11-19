@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-ugzlz_p%ibedc-l0aenjzggl-)w#n#@)8-_x4e3$bl$)npe=*m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['mosversion2.sinewave.co.in', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['mosversion2.sinewave.co.in', 'localhost', '127.0.0.1','mosv2.sinewave.co.in']
 
 # Application definition
 
