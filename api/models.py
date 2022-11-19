@@ -174,7 +174,7 @@ class TranSum(models.Model):
 
             else:
                 existing_record = TranSum.objects.filter(pk=self.trId).first()
-                if existing_record.part is not self.part:
+                if existing_record.part != self.part:
                     source_master_record = TranSum.master_objects.filter(group=self.group, code=self.code,
                                                                          sno=self.scriptSno).last()
                     target_master_record = TranSum.master_objects.filter(group=self.group, code=self.code,

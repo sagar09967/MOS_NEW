@@ -381,7 +381,7 @@ class TranSumViewSet(viewsets.ViewSet):
             queryset = queryset.filter(trDate__range=(start_fy, end_fy))
 
         # queryset = TranSum.objects.filter(**data)
-        serializer = serializers.TranSumSerializer(queryset, many=True)
+        serializer = serializers.RetrieveTranSumSerializer(queryset, many=True)
         return Response({"status": True, "message": "Retrieved Purchases", "data": serializer.data})
 
     @transaction.atomic
@@ -401,7 +401,8 @@ class TranSumViewSet(viewsets.ViewSet):
         if purchase_record:
             serializer = serializers.TranSumSerializer(purchase_record, data=data)
             serializer.is_valid()
-            serializer.save()
+            purchase_record = serializer.save()
+            serializer = serializers.RetrieveTranSumSerializer(purchase_record)
             response = {"status": True, "message": "Purchase Record Updated", "data": serializer.data}
             return Response(response)
         return Response({"status": False, "message": "Purchase record does not exist"})
