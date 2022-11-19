@@ -137,8 +137,45 @@ class TranSumSerializer(serializers.ModelSerializer):
 
 
 class RetrieveTranSumSerializer(serializers.ModelSerializer):
+    rate = serializers.SerializerMethodField()
+    sVal = serializers.SerializerMethodField()
+    sttCharges = serializers.SerializerMethodField()
+    otherCharges = serializers.SerializerMethodField()
+    marketValue = serializers.SerializerMethodField()
+    HoldingValue = serializers.SerializerMethodField()
+
     class Meta:
         model = TranSum
         fields = ['trId', 'group', 'code', 'fy', 'againstType', 'sp', 'part', 'fmr', 'isinCode', 'trDate', 'qty',
                   'rate', 'sVal', 'sttCharges', 'otherCharges', 'noteAdd', 'HoldingValue', 'marketValue', 'balQty',
                   'sno', 'scriptSno']
+
+    def get_rate(self, object):
+        if object.rate:
+            return "{:.2f}".format(object.rate)
+        return None
+
+    def get_sVal(self, object):
+        if object.sVal:
+            return "{:.2f}".format(object.sVal)
+        return None
+
+    def get_sttCharges(self, object):
+        if object.sttCharges:
+            return "{:.2f}".format(object.sttCharges)
+        return None
+
+    def get_otherCharges(self, object):
+        if object.otherCharges:
+            return "{:.2f}".format(object.otherCharges)
+        return None
+
+    def get_marketValue(self, object):
+        if object.marketValue:
+            return "{:.2f}".format(object.marketValue)
+        return None
+
+    def get_HoldingValue(self, object):
+        if object.HoldingValue:
+            return "{:.2f}".format(object.HoldingValue)
+        return None

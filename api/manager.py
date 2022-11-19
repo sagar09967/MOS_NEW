@@ -44,6 +44,7 @@ class MasterTranSumManager(models.Manager):
             master_record.sno = last_master.sno + 1
         else:
             master_record.sno = 1
+        master_record.save(refresh_master=False)
         for purchase in purchases_list:
             purchase.scriptSno = master_record.sno
             purchase.save(refresh_master=False)

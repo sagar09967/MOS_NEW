@@ -198,6 +198,23 @@ class TranSum(models.Model):
                         self.sno = 1
                     super(TranSum, self).save(*args, **kwargs)
                     source_master_record.refresh_master_record()
+                if master_record is None:
+                    # else create new master record from new purchase record and existing master records
+                    master_record = TranSum.master_objects.create_master_from_purchase(self,
+                                                                                       TranSum.master_objects.filter(
+                                                                                           code=self.code).filter(
+                                                                                           group=self.group),
+                                                                                       TranSum.purchase_objects.filter(
+                                                                                           part=self.part).filter(
+                                                                                           group=self.group).filter(
+                                                                                           code=self.code))
+                    last_purchase_record = TranSum.purchase_objects.filter(group=self.group, code=self.code,
+                                                                           scriptSno=self.scriptSno).last()
+                    self.scriptSno = master_record.sno
+                    if last_purchase_record:
+                        self.sno = last_purchase_record.sno + 1
+                    else:
+                        self.sno = 1
                 self.balQty = self.balQty - (existing_record.qty - self.qty)
 
             self.scriptSno = master_record.sno

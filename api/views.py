@@ -389,7 +389,8 @@ class TranSumViewSet(viewsets.ViewSet):
         data = request.data
         serializer = serializers.TranSumSerializer(data=data)
         serializer.is_valid()
-        serializer.save()
+        object = serializer.save()
+        serializer = serializers.RetrieveTranSumSerializer(object)
         response = {"status": True, "message": "Purchase Record Added", "data": serializer.data}
         return Response(response)
 
