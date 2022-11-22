@@ -1,5 +1,5 @@
 from decimal import Decimal
-from .models import TranSum, MemberMaster, CustomerMaster
+from .models import TranSum, MemberMaster, CustomerMaster, MOS_Sales
 from rest_framework import generics
 from rest_framework import status
 from django.db.models import Sum, Q, F
@@ -363,7 +363,6 @@ class TranSumViewSet(viewsets.ViewSet):
     def list(self, request):
         data = request.query_params.dict()
         data.pop('sp')
-        data['fy'] = data['dfy']
         data.pop('dfy')
         queryset = TranSum.objects.filter(**data)
         sp = request.query_params.get('sp')
@@ -409,8 +408,64 @@ class TranSumViewSet(viewsets.ViewSet):
         return Response({"status": False, "message": "Purchase record does not exist"})
 
 
+class SalesViewSet(viewsets.ViewSet):
+
+    def list(self,request):
+        data = request.query_params.dict()
+        data.pop('sp')
+        data.pop('dfy')
+        queryset = MOS_Sales.objects.filter(**data)
+        sp = request.query_params.get('sp')
+        dfy = request.query_params.get('dfy')
+        try:
+            start_fy = f"{dfy[:4]}-04-01"
+            end_fy = f"{dfy[5:]}-03-31"
+        except:
+            raise Http404
+
+        if sp == 'O':
+            queryset = queryset.filter(sDate__lt=start_fy)
+        # data = request.query_params.dict()
+        elif sp == 'A':
+            queryset = queryset.filter(sDate__range=(start_fy, end_fy))
+
+        # queryset = TranSum.objects.filter(**data)
+        serializer = serializers.SaleSerializer(queryset, many=True)
+        return Response({"status": True, "message": "Retrieved Purchases", "data": serializer.data})
+
+    @transaction.atomic
+    def create(self, request):
+        data = request.data.copy()
+        purchase_record = TranSum.purchase_objects.get(pk=data['pur_trId'])
+        data.pop('pur_trId')
+        if purchase_record:
+            data['purSno'] = purchase_record.sno
+            data['scriptSno'] = purchase_record.scriptSno
+            serializer = serializers.SaleSerializer(data=data)
+            serializer.is_valid()
+            serializer.save()
+            response = {"status": True, "message": "Sales Record Created", "data": serializer.data}
+            return Response(response)
+
+    @transaction.atomic
+    def update(self, request, pk):
+        data = request.data.copy()
+        purchase_record = TranSum.purchase_objects.get(pk=data['pur_trId'])
+        sales_record = MOS_Sales.objects.get(pk=pk)
+        data.pop('pur_trId')
+        if purchase_record:
+            data['trId'] = pk
+            data['purSno'] = purchase_record.sno
+            data['scriptSno'] = purchase_record.scriptSno
+            serializer = serializers.SaleSerializer(sales_record,data=data)
+            serializer.is_valid()
+            serializer.save()
+            response = {"status": True, "message": "Sales Record Updated", "data": serializer.data}
+            return Response(response)
+
+
 def sum_by_key(records, key):
     sum_result = 0
     for record in records:
-        sum_result = sum_result + record[key]
+        sum_result = sum_result + getattr(record, key)
     return sum_result

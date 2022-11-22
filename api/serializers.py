@@ -147,3 +147,11 @@ class RetrieveTranSumSerializer(serializers.ModelSerializer):
         model = TranSum
         fields = ['trId', 'group', 'code', 'fy', 'againstType', 'sp', 'part', 'trDate', 'qty',
                   'rate', 'sVal', 'sttCharges', 'otherCharges', 'noteAdd']
+
+
+class SaleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MOS_Sales
+        fields = ['trId','group', 'code', 'ay', 'againstType', 'purSno', 'scriptSno', 'stt_Paid', 'stt', 'sDate', 'srate',
+                  'sqty', 'sVal',
+                  'stt', 'other']

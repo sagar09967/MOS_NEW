@@ -145,107 +145,142 @@ class TranSum(models.Model):
     purchase_objects = manager.PurchaseTranSumManager()
     master_objects = manager.MasterTranSumManager()
 
-    def save(self, refresh_master=True, *args, **kwargs):
+    # def save(self, refresh_master=True, *args, **kwargs):
+    #
+    #     master_record = TranSum.master_objects.filter(group=self.group, code=self.code, part=self.part).last()
+    #     if self.sp is not 'M':
+    #         # check if master record for current part exists
+    #
+    #         if self.trId is None:
+    #
+    #             self.balQty = self.qty
+    #             if master_record is None:
+    #                 # else create new master record from new purchase record and existing master records
+    #                 master_record = TranSum.master_objects.create_master_from_purchase(self,
+    #                                                                                    TranSum.master_objects.filter(
+    #                                                                                        code=self.code).filter(
+    #                                                                                        group=self.group),
+    #                                                                                    TranSum.purchase_objects.filter(
+    #                                                                                        part=self.part).filter(
+    #                                                                                        group=self.group).filter(
+    #                                                                                        code=self.code))
+    #                 last_purchase_record = TranSum.purchase_objects.filter(group=self.group, code=self.code,
+    #                                                                        scriptSno=self.scriptSno).last()
+    #                 self.scriptSno = master_record.sno
+    #                 if last_purchase_record:
+    #                     self.sno = last_purchase_record.sno + 1
+    #                 else:
+    #                     self.sno = 1
+    #
+    #         else:
+    #             existing_record = TranSum.objects.filter(pk=self.trId).first()
+    #             if existing_record.part != self.part:
+    #                 source_master_record = TranSum.master_objects.filter(group=self.group, code=self.code,
+    #                                                                      sno=self.scriptSno).last()
+    #                 target_master_record = TranSum.master_objects.filter(group=self.group, code=self.code,
+    #                                                                      part=self.part).last()
+    #                 if target_master_record is None:
+    #                     target_master_record = TranSum.master_objects.create_master_from_purchase(self,
+    #                                                                                               TranSum.master_objects.filter(
+    #                                                                                                   code=self.code).filter(
+    #                                                                                                   group=self.group),
+    #                                                                                               TranSum.purchase_objects.filter(
+    #                                                                                                   part=self.part).filter(
+    #                                                                                                   group=self.group).filter(
+    #                                                                                                   code=self.code))
+    #                 master_record = target_master_record
+    #                 self.scriptSno = master_record.sno
+    #                 last_purchase_record = TranSum.purchase_objects.filter(group=self.group, code=self.code,
+    #                                                                        scriptSno=self.scriptSno).last()
+    #                 if last_purchase_record:
+    #                     self.sno = last_purchase_record.sno + 1
+    #                 else:
+    #                     self.sno = 1
+    #                 super(TranSum, self).save(*args, **kwargs)
+    #                 source_master_record.refresh_master_record()
+    #             if master_record is None:
+    #                 # else create new master record from new purchase record and existing master records
+    #                 master_record = TranSum.master_objects.create_master_from_purchase(self,
+    #                                                                                    TranSum.master_objects.filter(
+    #                                                                                        code=self.code).filter(
+    #                                                                                        group=self.group),
+    #                                                                                    TranSum.purchase_objects.filter(
+    #                                                                                        part=self.part).filter(
+    #                                                                                        group=self.group).filter(
+    #                                                                                        code=self.code))
+    #                 last_purchase_record = TranSum.purchase_objects.filter(group=self.group, code=self.code,
+    #                                                                        scriptSno=self.scriptSno).last()
+    #                 self.scriptSno = master_record.sno
+    #                 if last_purchase_record:
+    #                     self.sno = last_purchase_record.sno + 1
+    #                 else:
+    #                     self.sno = 1
+    #             self.balQty = self.balQty - (existing_record.qty - self.qty)
+    #
+    #         self.scriptSno = master_record.sno
+    #         last_purchase_record = TranSum.purchase_objects.filter(group=self.group, code=self.code,
+    #                                                                scriptSno=self.scriptSno).last()
+    #         self.scriptSno = master_record.sno
+    #         if last_purchase_record:
+    #             self.sno = last_purchase_record.sno + 1
+    #         else:
+    #             self.sno = 1
+    #         self.HoldingValue = self.balQty * self.rate
+    #         self.marketValue = self.balQty * self.marketRate
+    #         self.avgRate = self.HoldingValue / self.balQty
+    #         super(TranSum, self).save(*args, **kwargs)
+    #     else:
+    #         super(TranSum, self).save(*args, **kwargs)
+    #     if refresh_master:
+    #         master_record.refresh_master_record()
 
-        master_record = TranSum.master_objects.filter(group=self.group, code=self.code, part=self.part).last()
-        if self.sp is not 'M':
-            # check if master record for current part exists
-
-            if self.trId is None:
-
-                self.balQty = self.qty
-                if master_record is None:
-                    # else create new master record from new purchase record and existing master records
-                    master_record = TranSum.master_objects.create_master_from_purchase(self,
-                                                                                       TranSum.master_objects.filter(
-                                                                                           code=self.code).filter(
-                                                                                           group=self.group),
-                                                                                       TranSum.purchase_objects.filter(
-                                                                                           part=self.part).filter(
-                                                                                           group=self.group).filter(
-                                                                                           code=self.code))
-                    last_purchase_record = TranSum.purchase_objects.filter(group=self.group, code=self.code,
-                                                                           scriptSno=self.scriptSno).last()
-                    self.scriptSno = master_record.sno
-                    if last_purchase_record:
-                        self.sno = last_purchase_record.sno + 1
-                    else:
-                        self.sno = 1
-
+    def save(self, *args, **kwargs):
+        super(TranSum, self).save(*args, **kwargs)
+        if self.sp == 'A' or self.sp == 'O':
+            master_record = TranSum.master_objects.filter(group=self.group, code=self.code, part=self.part).last()
+            if master_record is None:
+                master_record = TranSum.master_objects.create_master_from_purchase(self)
+            queryset = TranSum.purchase_objects.filter(pk=self.trId)  # this record itself
+            scriptSno = master_record.sno
+            last_purchase_for_part = TranSum.purchase_objects.filter(group=self.group, code=self.code,
+                                                                     scriptSno=master_record.sno, part=self.part).last()
+            if last_purchase_for_part:
+                sno = last_purchase_for_part.sno + 1
             else:
-                existing_record = TranSum.objects.filter(pk=self.trId).first()
-                if existing_record.part != self.part:
-                    source_master_record = TranSum.master_objects.filter(group=self.group, code=self.code,
-                                                                         sno=self.scriptSno).last()
-                    target_master_record = TranSum.master_objects.filter(group=self.group, code=self.code,
-                                                                         part=self.part).last()
-                    if target_master_record is None:
-                        target_master_record = TranSum.master_objects.create_master_from_purchase(self,
-                                                                                                  TranSum.master_objects.filter(
-                                                                                                      code=self.code).filter(
-                                                                                                      group=self.group),
-                                                                                                  TranSum.purchase_objects.filter(
-                                                                                                      part=self.part).filter(
-                                                                                                      group=self.group).filter(
-                                                                                                      code=self.code))
-                    master_record = target_master_record
-                    self.scriptSno = master_record.sno
-                    last_purchase_record = TranSum.purchase_objects.filter(group=self.group, code=self.code,
-                                                                           scriptSno=self.scriptSno).last()
-                    if last_purchase_record:
-                        self.sno = last_purchase_record.sno + 1
-                    else:
-                        self.sno = 1
-                    super(TranSum, self).save(*args, **kwargs)
-                    source_master_record.refresh_master_record()
-                if master_record is None:
-                    # else create new master record from new purchase record and existing master records
-                    master_record = TranSum.master_objects.create_master_from_purchase(self,
-                                                                                       TranSum.master_objects.filter(
-                                                                                           code=self.code).filter(
-                                                                                           group=self.group),
-                                                                                       TranSum.purchase_objects.filter(
-                                                                                           part=self.part).filter(
-                                                                                           group=self.group).filter(
-                                                                                           code=self.code))
-                    last_purchase_record = TranSum.purchase_objects.filter(group=self.group, code=self.code,
-                                                                           scriptSno=self.scriptSno).last()
-                    self.scriptSno = master_record.sno
-                    if last_purchase_record:
-                        self.sno = last_purchase_record.sno + 1
-                    else:
-                        self.sno = 1
-                self.balQty = self.balQty - (existing_record.qty - self.qty)
-
-            self.scriptSno = master_record.sno
-            last_purchase_record = TranSum.purchase_objects.filter(group=self.group, code=self.code,
-                                                                   scriptSno=self.scriptSno).last()
-            self.scriptSno = master_record.sno
-            if last_purchase_record:
-                self.sno = last_purchase_record.sno + 1
-            else:
-                self.sno = 1
-            self.HoldingValue = self.balQty * self.rate
-            self.marketValue = self.balQty * self.marketRate
-            self.avgRate = self.HoldingValue / self.balQty
-            super(TranSum, self).save(*args, **kwargs)
-        else:
-            super(TranSum, self).save(*args, **kwargs)
-        if refresh_master:
-            master_record.refresh_master_record()
-
-    def refresh_master_record(self):
-        purchase_list = TranSum.purchase_objects.filter(group=self.group, code=self.code, scriptSno=self.sno)
-        self.balQty = decimal.Decimal(0)
-        self.HoldingValue = decimal.Decimal(0)
-        for purchase in purchase_list:
-            self.balQty = self.balQty + purchase.balQty
-            self.HoldingValue = self.HoldingValue + purchase.HoldingValue
-        self.marketValue = self.balQty * self.marketRate
-        if self.balQty != 0:
-            self.avgRate = self.HoldingValue / self.balQty
-        self.save(refresh_master=False)
-        return self
+                sno = 1
+            sales_for_current_purchase = MOS_Sales.objects.filter(group=self.group, code=self.code, purSno=self.sno,
+                                                                  scriptSno=self.scriptSno)
+            balQty = self.qty - sum_by_key(sales_for_current_purchase, 'sqty')
+            marketValue = balQty * master_record.marketRate
+            HoldingValue = balQty * self.rate
+            avgRate = HoldingValue / balQty
+            values = {'scriptSno': scriptSno, 'sno': sno, 'balQty': balQty, 'marketValue': marketValue,
+                      'HoldingValue': HoldingValue, 'avgRate': avgRate}
+            queryset.update(**values)  # update this record with derived values
+            master_record.save()
+        if self.sp == 'M':
+            scriptSno = 0
+            sno = self.sno
+            if self.sno is None:
+                last_master_for_user = TranSum.master_objects.filter(group=self.group, code=self.code).exclude(
+                    pk=self.trId).last()
+                if last_master_for_user:
+                    sno = last_master_for_user.sno + 1
+                else:
+                    sno = 1
+            purchases_by_part = TranSum.purchase_objects.filter(group=self.group, code=self.code, part=self.part)
+            purchases_by_part.update(scriptSno=sno)
+            balQty = sum_by_key(purchases_by_part, 'balQty')
+            HoldingValue = sum_by_key(purchases_by_part, 'HoldingValue')
+            marketValue = 0
+            avgRate = 0
+            if balQty != 0:
+                marketValue = balQty * self.marketRate
+                avgRate = HoldingValue / balQty
+            values = {'scriptSno': scriptSno, 'sno': sno, 'balQty': balQty, 'marketValue': marketValue,
+                      'HoldingValue': HoldingValue, 'avgRate': avgRate}
+            queryset = TranSum.master_objects.filter(pk=self.trId)
+            queryset.update(**values)
 
     class Meta:
         verbose_name = ('MOS_TransSum')
@@ -285,6 +320,30 @@ class MOS_Sales(models.Model):
     fno = models.DecimalField(max_digits=65, decimal_places=2, blank=True, null=True)
     empCode = models.CharField(max_length=10)
 
+    def save(self, *args, **kwargs):
+        purchase_record = TranSum.purchase_objects.filter(sno=self.purSno, scriptSno=self.scriptSno, group=self.group,
+                                                          code=self.code).first()
+        if purchase_record.balQty - self.sqty < 0:
+            raise ValidationError(
+                "Balance Quantity on purchase record is not sufficient to record this sale against it.")
+        master_record = TranSum.master_objects.filter(group=self.group, code=self.code, sno=purchase_record.scriptSno).first()
+        purchase_record.clDate = self.sDate
+        purchase_record.clRate = self.srate
+        purchase_record.clQTY = self.sqty
+        purchase_record.clValue = self.sVal
+        purchase_record.clsttCharges = self.stt
+        purchase_record.clOtherCharges = self.other
+        self.scriptSno = master_record.sno
+        super(MOS_Sales, self).save(*args, **kwargs)
+        purchase_record.save()  # refreshes master
+
     class Meta:
         verbose_name = ('MOS_Sales')
         verbose_name_plural = ('MOS_Sales')
+
+
+def sum_by_key(records, key):
+    sum_result = 0
+    for record in records:
+        sum_result = sum_result + getattr(record, key)
+    return sum_result

@@ -32,23 +32,13 @@ class MasterTranSumManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(sp='M')
 
-    def create_master_from_purchase(self, purchase_record,existing_masters,purchases_list):
+    def create_master_from_purchase(self, purchase_record):
         master_record = self.model(code=purchase_record.code, group=purchase_record.group, fy=purchase_record.fy,
-                                fmr=purchase_record.fmr, isinCode=purchase_record.isinCode,
-                                balQty=purchase_record.balQty, HoldingValue=purchase_record.HoldingValue,
-                                againstType=purchase_record.againstType, part=purchase_record.part,
-                                sp='M', marketRate=purchase_record.rate)
-        master_record.marketValue = master_record.balQty * master_record.marketRate
-        last_master = existing_masters.last()
-        if last_master:
-            master_record.sno = last_master.sno + 1
-        else:
-            master_record.sno = 1
-        master_record.save(refresh_master=False)
-        for purchase in purchases_list:
-            purchase.scriptSno = master_record.sno
-            purchase.save(refresh_master=False)
-        master_record.save(refresh_master=False)
+                                   fmr=purchase_record.fmr, isinCode=purchase_record.isinCode,
+                                   againstType=purchase_record.againstType, part=purchase_record.part,
+                                   sp='M')
+
+        master_record.save()
         return master_record
 
 
