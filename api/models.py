@@ -138,8 +138,8 @@ class TranSum(models.Model):
     dayTrade = models.DecimalField(max_digits=65, decimal_places=2, blank=True, null=True, default=0)
     strategyDate = models.DateField(null=True, blank=True)
     strategyTrigger = models.DecimalField(max_digits=65, decimal_places=2, blank=True, null=True, default=0)
-    entry_created_at = models.DateTimeField(auto_now_add=True, null=True)
-    entry_modified_at = models.DateTimeField(auto_now=True, null=True)
+    # entry_created_at = models.DateTimeField(auto_now_add=True, null=True)
+    # entry_modified_at = models.DateTimeField(auto_now=True, null=True)
 
     objects = models.Manager()
     purchase_objects = manager.PurchaseTranSumManager()
@@ -242,12 +242,15 @@ class TranSum(models.Model):
                 master_record = TranSum.master_objects.create_master_from_purchase(self)
             queryset = TranSum.purchase_objects.filter(pk=self.trId)  # this record itself
             scriptSno = master_record.sno
-            last_purchase_for_part = TranSum.purchase_objects.filter(group=self.group, code=self.code,
+            sno = self.sno
+            if self.sno is 0:
+                last_purchase_for_part = TranSum.purchase_objects.filter(group=self.group, code=self.code,
                                                                      scriptSno=master_record.sno, part=self.part).last()
-            if last_purchase_for_part:
-                sno = last_purchase_for_part.sno + 1
-            else:
-                sno = 1
+                if last_purchase_for_part:
+                    sno = last_purchase_for_part.sno + 1
+                else:
+                    sno = 1
+
             sales_for_current_purchase = MOS_Sales.objects.filter(group=self.group, code=self.code, purSno=self.sno,
                                                                   scriptSno=self.scriptSno)
             balQty = self.qty - sum_by_key(sales_for_current_purchase, 'sqty')
@@ -261,7 +264,7 @@ class TranSum(models.Model):
         if self.sp == 'M':
             scriptSno = 0
             sno = self.sno
-            if self.sno is None:
+            if self.sno is 0:
                 last_master_for_user = TranSum.master_objects.filter(group=self.group, code=self.code).exclude(
                     pk=self.trId).last()
                 if last_master_for_user:
