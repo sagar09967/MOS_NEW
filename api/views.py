@@ -385,7 +385,7 @@ class TranSumViewSet(viewsets.ViewSet):
         for i in range(0, len(purchase_data)):
             sales = MOS_Sales.objects.filter(group=purchase_data[i]['group'], code=purchase_data[i]['code'],
                                              purSno=purchase_data[i]['sno'], scriptSno=purchase_data[i]['scriptSno'])
-            serializer = serializers.SaleSerializer(sales,many=True)
+            serializer = serializers.SaleSerializer(sales, many=True)
             purchase_data[i]['sales'] = serializer.data
 
         return Response({"status": True, "message": "Retrieved Purchases", "data": purchase_data})
@@ -419,26 +419,27 @@ class SalesViewSet(viewsets.ViewSet):
 
     def list(self, request):
         data = request.query_params.dict()
-        data.pop('sp')
+        data['fy'] = data['dfy']
         data.pop('dfy')
-        queryset = MOS_Sales.objects.filter(**data)
-        sp = request.query_params.get('sp')
+        queryset = TranSum.purchase_objects.filter(**data)
         dfy = request.query_params.get('dfy')
+
         try:
             start_fy = f"{dfy[:4]}-04-01"
             end_fy = f"{dfy[5:]}-03-31"
         except:
             raise Http404
 
-        if sp == 'O':
-            queryset = queryset.filter(sDate__lt=start_fy)
-        # data = request.query_params.dict()
-        elif sp == 'A':
-            queryset = queryset.filter(sDate__range=(start_fy, end_fy))
+        serializer = serializers.RetrieveTranSumSerializer(queryset, many=True)
+        purchase_data = serializer.data
+        for i in range(0, len(purchase_data)):
+            sales = MOS_Sales.objects.filter(group=purchase_data[i]['group'], code=purchase_data[i]['code'],
+                                             purSno=purchase_data[i]['sno'], scriptSno=purchase_data[i]['scriptSno'])
+            serializer = serializers.SaleSerializer(sales, many=True)
+            purchase_data[i]['sales'] = serializer.data
 
         # queryset = TranSum.objects.filter(**data)
-        serializer = serializers.SaleSerializer(queryset, many=True)
-        return Response({"status": True, "message": "Retrieved Purchases", "data": serializer.data})
+        return Response({"status": True, "message": "Retrieved Sales", "data": purchase_data})
 
     @transaction.atomic
     def create(self, request):
