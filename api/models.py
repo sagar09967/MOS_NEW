@@ -256,7 +256,10 @@ class TranSum(models.Model):
             balQty = self.qty - sum_by_key(sales_for_current_purchase, 'sqty')
             marketValue = balQty * master_record.marketRate
             HoldingValue = balQty * self.rate
-            avgRate = HoldingValue / balQty
+            if balQty > 0:
+                avgRate = HoldingValue / balQty
+            else:
+                avgRate = 0
             values = {'scriptSno': scriptSno, 'sno': sno, 'balQty': balQty, 'marketValue': marketValue,
                       'HoldingValue': HoldingValue, 'avgRate': avgRate}
             queryset.update(**values)  # update this record with derived values
