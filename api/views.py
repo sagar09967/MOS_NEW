@@ -381,7 +381,14 @@ class TranSumViewSet(viewsets.ViewSet):
 
         # queryset = TranSum.objects.filter(**data)
         serializer = serializers.RetrieveTranSumSerializer(queryset, many=True)
-        return Response({"status": True, "message": "Retrieved Purchases", "data": serializer.data})
+        purchase_data = serializer.data
+        for i in range(0, len(purchase_data)):
+            sales = MOS_Sales.objects.filter(group=purchase_data[i]['group'], code=purchase_data[i]['code'],
+                                             purSno=purchase_data[i]['sno'], scriptSno=purchase_data[i]['scriptSno'])
+            serializer = serializers.SaleSerializer(sales,many=True)
+            purchase_data[i]['sales'] = serializer.data
+
+        return Response({"status": True, "message": "Retrieved Purchases", "data": purchase_data})
 
     @transaction.atomic
     def create(self, request):
@@ -410,7 +417,7 @@ class TranSumViewSet(viewsets.ViewSet):
 
 class SalesViewSet(viewsets.ViewSet):
 
-    def list(self,request):
+    def list(self, request):
         data = request.query_params.dict()
         data.pop('sp')
         data.pop('dfy')
@@ -457,7 +464,7 @@ class SalesViewSet(viewsets.ViewSet):
             data['trId'] = pk
             data['purSno'] = purchase_record.sno
             data['scriptSno'] = purchase_record.scriptSno
-            serializer = serializers.SaleSerializer(sales_record,data=data)
+            serializer = serializers.SaleSerializer(sales_record, data=data)
             serializer.is_valid()
             serializer.save()
             response = {"status": True, "message": "Sales Record Updated", "data": serializer.data}
