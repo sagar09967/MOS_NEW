@@ -431,7 +431,7 @@ class SalesViewSet(viewsets.ViewSet):
         except:
             raise Http404
 
-        serializer = serializers.RetrieveTranSumSerializer(queryset, many=True)
+        serializer = serializers.SalePurchaseSerializer(queryset, many=True)
         purchase_data = serializer.data
         for i in range(0, len(purchase_data)):
             sales = MOS_Sales.objects.filter(group=purchase_data[i]['group'], code=purchase_data[i]['code'],
