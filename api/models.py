@@ -6,6 +6,7 @@ from decimal import Decimal
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from . import manager
+from dateutil.relativedelta import relativedelta
 
 
 # from phonenumber_field.modelfields import PhoneNumberField
@@ -245,7 +246,8 @@ class TranSum(models.Model):
             sno = self.sno
             if self.sno is 0:
                 last_purchase_for_part = TranSum.purchase_objects.filter(group=self.group, code=self.code,
-                                                                     scriptSno=master_record.sno, part=self.part).last()
+                                                                         scriptSno=master_record.sno,
+                                                                         part=self.part).last()
                 if last_purchase_for_part:
                     sno = last_purchase_for_part.sno + 1
                 else:
@@ -332,7 +334,8 @@ class MOS_Sales(models.Model):
         if purchase_record.balQty - self.sqty < 0:
             raise ValidationError(
                 "Balance Quantity on purchase record is not sufficient to record this sale against it.")
-        master_record = TranSum.master_objects.filter(group=self.group, code=self.code, sno=purchase_record.scriptSno).first()
+        master_record = TranSum.master_objects.filter(group=self.group, code=self.code,
+                                                      sno=purchase_record.scriptSno).first()
         purchase_record.clDate = self.sDate
         purchase_record.clRate = self.srate
         purchase_record.clQTY = self.sqty
@@ -340,6 +343,14 @@ class MOS_Sales(models.Model):
         purchase_record.clsttCharges = self.stt
         purchase_record.clOtherCharges = self.other
         self.scriptSno = master_record.sno
+        time_delta = self.sDate - purchase_record.trDate
+        time_delta = relativedelta(self.sDate, purchase_record.trDate)
+        if time_delta.years <= 1:
+            self.stgc = (self.sqty * self.srate) - (self.sqty * purchase_record.rate)
+            self.ltgc = 0
+        else:
+            self.stgc = 0
+            self.ltgc = (self.sqty * self.srate) - (self.sqty * purchase_record.rate)
         super(MOS_Sales, self).save(*args, **kwargs)
         purchase_record.save()  # refreshes master
 
