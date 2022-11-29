@@ -165,7 +165,7 @@ class SalePurchaseSerializer(serializers.ModelSerializer):
 class SaleSerializer(serializers.ModelSerializer):
     class Meta:
         model = MOS_Sales
-        fields = ['trId', 'group', 'code', 'ay', 'againstType', 'purSno', 'scriptSno', 'stt_Paid', 'stt', 'sDate',
+        fields = ['trId', 'group', 'code', 'fy', 'againstType', 'purSno', 'scriptSno', 'stt_Paid', 'stt', 'sDate',
                   'srate',
                   'sqty', 'sVal',
                   'stt', 'other']
