@@ -12,3 +12,7 @@ urlpatterns = router.urls
 urlpatterns.append(
     re_path('holdings', views.get_holdings_for_member)
 )
+
+urlpatterns.append(
+    re_path('capital', views.member_capital_gain)
+)

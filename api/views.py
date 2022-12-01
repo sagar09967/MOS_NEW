@@ -521,7 +521,22 @@ def get_holdings_for_member(request):
         holding['closing'] = holding['opening'] + holding['addition']
         holdings.append(holding)
 
-    return Response({'status': True, 'msg': 'Retrieved Holdings', 'data': holdings})
+    return Response({'status': True, 'message': 'Retrieved Holdings', 'data': holdings})
+
+
+@api_view(['GET'])
+def member_capital_gain(request):
+    group = request.query_params.get('group')
+    code = request.query_params.get('code')
+    dfy = request.query_params.get('dfy')
+
+    sales = MOS_Sales.objects.filter(group=group, code=code, fy=dfy)
+    sum_stcg = list(sales.aggregate(Sum('stcg')).values())[0]
+    sum_ltcg = list(sales.aggregate(Sum('ltcg')).values())[0]
+
+    result = {"group": group, "code": code, "fy": dfy, "stcg": sum_stcg, "ltcg": sum_ltcg}
+
+    return Response({"status": True, "message": "Retrieved Total Capital Gains", "data": result})
 
 
 def sum_by_key(records, key):
