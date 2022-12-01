@@ -346,11 +346,11 @@ class MOS_Sales(models.Model):
         time_delta = self.sDate - purchase_record.trDate
         time_delta = relativedelta(self.sDate, purchase_record.trDate)
         if time_delta.years <= 1:
-            self.stgc = (self.sqty * self.srate) - (self.sqty * purchase_record.rate)
+            self.stgc = self.sVal - (self.sqty * purchase_record.rate)
             self.ltgc = 0
         else:
             self.stgc = 0
-            self.ltgc = (self.sqty * self.srate) - (self.sqty * purchase_record.rate)
+            self.ltgc = self.sVal - (self.sqty * purchase_record.rate)
         super(MOS_Sales, self).save(*args, **kwargs)
         purchase_record.save()  # refreshes master
 
