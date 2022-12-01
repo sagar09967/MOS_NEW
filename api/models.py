@@ -286,7 +286,7 @@ class TranSum(models.Model):
             marketValue = 0
             avgRate = 0
             if balQty != 0:
-                marketValue = balQty * self.marketRate
+                marketValue = balQty * Decimal(self.marketRate)
                 avgRate = HoldingValue / balQty
             values = {'scriptSno': scriptSno, 'sno': sno, 'balQty': balQty, 'marketValue': marketValue,
                       'HoldingValue': HoldingValue, 'avgRate': avgRate}

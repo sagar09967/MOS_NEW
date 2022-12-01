@@ -22,6 +22,7 @@ from .renderers import UserRender
 from django.db import transaction
 from django.db.models import Sum
 import decimal
+from . import services
 
 
 # <-------------------- SavePurch API ---------------------->
@@ -534,9 +535,44 @@ def member_capital_gain(request):
     sum_stcg = list(sales.aggregate(Sum('stcg')).values())[0]
     sum_ltcg = list(sales.aggregate(Sum('ltcg')).values())[0]
 
-    result = {"group": group, "code": code, "fy": dfy, "stcg": sum_stcg, "ltcg": sum_ltcg}
+    result = {"group": group, "code": code, "fy": dfy, "stcg": sum_stcg, "ltcg": sum_ltcg, "speculation": sum_stcg}
 
     return Response({"status": True, "message": "Retrieved Total Capital Gains", "data": result})
+
+
+@api_view(['GET'])
+def get_market_rate(request):
+    request_dict = request.query_params.dict()
+    request_dict['fy'] = request_dict['dfy']
+    request_dict.pop('dfy')
+    if 'sp' in request_dict:
+        request_dict.pop('sp')
+
+    masters = TranSum.master_objects.filter(**request_dict)
+    for master in masters:
+        market_rate = services.get_market_rate(master.part)
+        if market_rate:
+            market_rate = market_rate['Adj Close']
+            master.marketRate = market_rate
+            master.save()
+            purchases = TranSum.purchase_objects.filter(group=request_dict['group'], code=request_dict['code'],
+                                                        fy=request_dict['fy'],
+                                                        scriptSno=master.sno,
+                                                        part=master.part)
+            for purchase in purchases:
+                purchase.save()
+
+    if request.query_params.get('sp') and request.query_params.get('part'):
+        temp_request = request.query_params.dict()
+        temp_request['sp'] = request.query_params.get('sp')
+        temp_request['dfy'] = request.query_params.get('dfy')
+        data = prepare_purchases_response(temp_request)
+    else:
+        temp_request = request.query_params.dict()
+        temp_request['againstType'] = "Shares"
+        data = prepare_holdings_response(temp_request)
+
+    return Response({"status": True, "message": "Retrieved Market Rates", "data": data})
 
 
 def sum_by_key(records, key):
@@ -544,3 +580,70 @@ def sum_by_key(records, key):
     for record in records:
         sum_result = sum_result + getattr(record, key)
     return sum_result
+
+
+def prepare_purchases_response(request):
+    data = request.copy()
+    data.pop('sp')
+    data.pop('dfy')
+    queryset = TranSum.objects.filter(**data)
+    sp = request['sp']
+    dfy = request['dfy']
+    try:
+        start_fy = f"{dfy[:4]}-04-01"
+        end_fy = f"{dfy[5:]}-03-31"
+    except:
+        raise Http404
+
+    if sp == 'O':
+        queryset = queryset.filter(trDate__lt=start_fy)
+    # data = request.query_params.dict()
+    elif sp == 'A':
+        queryset = queryset.filter(trDate__range=(start_fy, end_fy))
+
+    # queryset = TranSum.objects.filter(**data)
+    serializer = serializers.RetrieveTranSumSerializer(queryset, many=True)
+    purchase_data = serializer.data
+    return purchase_data
+
+def prepare_holdings_response(request):
+    group = request['group']
+    code = request['code']
+    dfy = request['dfy']
+    years = dfy.split("-")
+    from_date = years[0] + "-04-01"
+    to_date = years[1] + "-03-31"
+    againstType = request['againstType']
+
+    # holding = TranSum.objects.filter(group=group, code=code, againstType=againstType).values(
+    #     'part').order_by().annotate(total_balQty=Sum('balQty')).annotate(
+    #     invVal=Sum(F('rate') * F('balQty'))).annotate(mktVal=Sum(F('balQty') * F('marketRate')))
+    # print("Ballllllll--->",holding)
+    holdings = []
+    masters = TranSum.master_objects.filter(group=group, code=code, againstType=againstType)
+    for master in masters.values():
+        holding = {
+            "part": master['part'],
+            "balQty": int(master['balQty']),
+            "HoldingValue": master['HoldingValue'],
+            "marketValue": master['marketValue'],
+            "isinCode": master['isinCode'],
+            "fmr": master['fmr'],
+            "marketRate": master['marketRate'],
+            "avgRate": master['avgRate']
+        }
+        purchases = TranSum.purchase_objects.filter(group=group, code=code, againstType=againstType,
+                                                    scriptSno=master['sno'], part=master['part'])
+        openings = purchases.filter(trDate__lt=from_date)
+        sum_opening = list(openings.aggregate(Sum('balQty')).values())[0]
+        additions = purchases.filter(trDate__range=(from_date, to_date))
+        sum_addition = list(additions.aggregate(Sum('balQty')).values())[0]
+        sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'])
+        sum_sales = list(sales.aggregate(Sum('sqty')).values())[0]
+        holding['opening'] = 0 if sum_opening is None else int(sum_opening)
+        holding['addition'] = 0 if sum_addition is None else int(sum_addition)
+        holding['sales'] = 0 if sum_sales is None else int(sum_sales)
+        holding['closing'] = holding['opening'] + holding['addition']
+        holdings.append(holding)
+
+    return holdings

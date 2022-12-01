@@ -133,7 +133,8 @@ class TranSumSerializer(serializers.ModelSerializer):
     class Meta:
         model = TranSum
         fields = ['trId', 'group', 'code', 'fy', 'againstType', 'sp', 'part', 'fmr', 'isinCode', 'trDate', 'qty',
-                  'rate', 'sVal', 'sttCharges', 'otherCharges', 'noteAdd', 'HoldingValue', 'marketValue', 'balQty',
+                  'rate', 'sVal', 'sttCharges', 'otherCharges', 'noteAdd', 'HoldingValue', 'marketValue', 'marketRate',
+                  'balQty',
                   'sno', 'scriptSno']
 
 

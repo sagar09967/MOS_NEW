@@ -16,3 +16,7 @@ urlpatterns.append(
 urlpatterns.append(
     re_path('capital', views.member_capital_gain)
 )
+
+urlpatterns.append(
+    re_path('market_rate', views.get_market_rate)
+)
