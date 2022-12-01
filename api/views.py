@@ -4,6 +4,7 @@ from rest_framework import generics
 from rest_framework import status
 from django.db.models import Sum, Q, F
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import Http404
@@ -477,6 +478,50 @@ class SalesViewSet(viewsets.ViewSet):
             serializer.save()
             response = {"status": True, "message": "Sales Record Updated", "data": serializer.data}
             return Response(response)
+
+
+@api_view(['GET'])
+def get_holdings_for_member(request):
+    group = request.query_params.get('group')
+    code = request.query_params.get('code')
+    dfy = request.query_params.get('dfy')
+    years = dfy.split("-")
+    from_date = years[0] + "-04-01"
+    to_date = years[1] + "-03-31"
+    againstType = request.query_params.get('againstType')
+
+    # holding = TranSum.objects.filter(group=group, code=code, againstType=againstType).values(
+    #     'part').order_by().annotate(total_balQty=Sum('balQty')).annotate(
+    #     invVal=Sum(F('rate') * F('balQty'))).annotate(mktVal=Sum(F('balQty') * F('marketRate')))
+    # print("Ballllllll--->",holding)
+    holdings = []
+    masters = TranSum.master_objects.filter(group=group, code=code, againstType=againstType)
+    for master in masters.values():
+        holding = {
+            "part": master['part'],
+            "balQty": int(master['balQty']),
+            "HoldingValue": master['HoldingValue'],
+            "marketValue": master['marketValue'],
+            "isinCode": master['isinCode'],
+            "fmr": master['fmr'],
+            "marketRate": master['marketRate'],
+            "avgRate": master['avgRate']
+        }
+        purchases = TranSum.purchase_objects.filter(group=group, code=code, againstType=againstType,
+                                                    scriptSno=master['sno'], part=master['part'])
+        openings = purchases.filter(trDate__lt=from_date)
+        sum_opening = list(openings.aggregate(Sum('balQty')).values())[0]
+        additions = purchases.filter(trDate__range=(from_date, to_date))
+        sum_addition = list(additions.aggregate(Sum('balQty')).values())[0]
+        sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'])
+        sum_sales = list(sales.aggregate(Sum('sqty')).values())[0]
+        holding['opening'] = 0 if sum_opening is None else int(sum_opening)
+        holding['addition'] = 0 if sum_addition is None else int(sum_addition)
+        holding['sales'] = 0 if sum_sales is None else int(sum_sales)
+        holding['closing'] = holding['opening'] + holding['addition']
+        holdings.append(holding)
+
+    return Response({'status': True, 'msg': 'Retrieved Holdings', 'data': holdings})
 
 
 def sum_by_key(records, key):
