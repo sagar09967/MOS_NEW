@@ -266,6 +266,9 @@ class TranSum(models.Model):
                       'HoldingValue': HoldingValue, 'avgRate': avgRate}
             queryset.update(**values)  # update this record with derived values
             master_record.save()
+            for sale in sales_for_current_purchase:
+                sale.refresh_stcg_ltcg(queryset.first(), *args, **kwargs)
+
         if self.sp == 'M':
             scriptSno = 0
             sno = self.sno
@@ -323,8 +326,8 @@ class MOS_Sales(models.Model):
     stt = models.DecimalField(max_digits=65, decimal_places=2, blank=True, null=True)
     other = models.DecimalField(max_digits=65, decimal_places=2, blank=True, null=True)
     speculation = models.DecimalField(max_digits=65, decimal_places=2, blank=True, null=True)
-    stgc = models.DecimalField(max_digits=65, decimal_places=2, blank=True, null=True)
-    ltgc = models.DecimalField(max_digits=65, decimal_places=2, blank=True, null=True)
+    stcg = models.DecimalField(max_digits=65, decimal_places=2, blank=True, null=True)
+    ltcg = models.DecimalField(max_digits=65, decimal_places=2, blank=True, null=True)
     fno = models.DecimalField(max_digits=65, decimal_places=2, blank=True, null=True)
     empCode = models.CharField(max_length=10)
 
@@ -343,16 +346,19 @@ class MOS_Sales(models.Model):
         purchase_record.clsttCharges = self.stt
         purchase_record.clOtherCharges = self.other
         self.scriptSno = master_record.sno
-        time_delta = self.sDate - purchase_record.trDate
-        time_delta = relativedelta(self.sDate, purchase_record.trDate)
-        if time_delta.years <= 1:
-            self.stgc = self.sVal - (self.sqty * purchase_record.rate)
-            self.ltgc = 0
-        else:
-            self.stgc = 0
-            self.ltgc = self.sVal - (self.sqty * purchase_record.rate)
         super(MOS_Sales, self).save(*args, **kwargs)
+        self.refresh_stcg_ltcg(purchase_record,*args,**kwargs)
         purchase_record.save()  # refreshes master
+
+    def refresh_stcg_ltcg(self, purchase_record, *args, **kwargs):
+        time_delta = relativedelta(self.sDate, purchase_record.trDate)
+        if (time_delta.years * 12 + time_delta.months) <= 12:
+            self.stcg = self.sVal - (self.sqty * purchase_record.rate)
+            self.ltcg = 0
+        else:
+            self.stcg = 0
+            self.ltcg = self.sVal - (self.sqty * purchase_record.rate)
+        super(MOS_Sales, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = ('MOS_Sales')
