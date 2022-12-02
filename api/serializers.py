@@ -143,11 +143,11 @@ class RetrieveTranSumSerializer(serializers.ModelSerializer):
     sVal = serializers.DecimalField(max_digits=65, decimal_places=2)
     sttCharges = serializers.DecimalField(max_digits=65, decimal_places=2)
     otherCharges = serializers.DecimalField(max_digits=65, decimal_places=2)
-
+    balQty = serializers.IntegerField()
     class Meta:
         model = TranSum
         fields = ['trId', 'group', 'code', 'fy', 'againstType', 'sp', 'part', 'trDate', 'qty',
-                  'rate', 'sVal', 'sttCharges', 'otherCharges', 'noteAdd', 'sno', 'scriptSno']
+                  'rate', 'sVal', 'sttCharges', 'otherCharges', 'noteAdd', 'sno', 'scriptSno', 'balQty']
 
 
 class SalePurchaseSerializer(serializers.ModelSerializer):
