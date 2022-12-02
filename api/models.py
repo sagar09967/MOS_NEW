@@ -86,6 +86,7 @@ class TranSum(models.Model):
     )
     FY = (
 
+
         ('2021-2022', '2021-2022'),
         ('2022-2023', '2022-2023'),
         ('2023-2024', '2023-2024'),
@@ -358,7 +359,7 @@ class MOS_Sales(models.Model):
         else:
             self.stcg = 0
             self.ltcg = self.sVal - (self.sqty * purchase_record.rate)
-        super(MOS_Sales, self).save(*args, **kwargs)
+        super(MOS_Sales, self).save()
 
     class Meta:
         verbose_name = ('MOS_Sales')
