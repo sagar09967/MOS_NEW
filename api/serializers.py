@@ -169,4 +169,4 @@ class SaleSerializer(serializers.ModelSerializer):
         fields = ['trId', 'group', 'code', 'fy', 'againstType', 'purSno', 'scriptSno', 'stt_Paid', 'stt', 'sDate',
                   'srate',
                   'sqty', 'sVal',
-                  'stt', 'other']
+                  'stt', 'other', 'stcg', 'ltcg']

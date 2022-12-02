@@ -439,8 +439,8 @@ class SalesViewSet(viewsets.ViewSet):
             sales = MOS_Sales.objects.filter(group=purchase_data[i]['group'], code=purchase_data[i]['code'],
                                              purSno=purchase_data[i]['sno'], scriptSno=purchase_data[i]['scriptSno'])
             totalSoldQty = list(sales.aggregate(Sum('sqty')).values())[0]
-            stcg = list(sales.aggregate(Sum('stgc')).values())[0]
-            ltcg = list(sales.aggregate(Sum('ltgc')).values())[0]
+            stcg = list(sales.aggregate(Sum('stcg')).values())[0]
+            ltcg = list(sales.aggregate(Sum('ltcg')).values())[0]
             purchase_data[i]['totalSoldQty'] = totalSoldQty
             purchase_data[i]['stcg'] = stcg
             purchase_data[i]['ltcg'] = ltcg
