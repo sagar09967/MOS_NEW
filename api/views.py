@@ -426,7 +426,7 @@ class SalesViewSet(viewsets.ViewSet):
         data.pop('dfy')
         queryset = TranSum.purchase_objects.filter(**data)
         dfy = request.query_params.get('dfy')
-
+        againstType = request.query_params.get('againstType')
         try:
             start_fy = f"{dfy[:4]}-04-01"
             end_fy = f"{dfy[5:]}-03-31"
@@ -437,7 +437,7 @@ class SalesViewSet(viewsets.ViewSet):
         purchase_data = serializer.data
         for i in range(0, len(purchase_data)):
             sales = MOS_Sales.objects.filter(group=purchase_data[i]['group'], code=purchase_data[i]['code'],
-                                             purSno=purchase_data[i]['sno'], scriptSno=purchase_data[i]['scriptSno'])
+                                             purSno=purchase_data[i]['sno'], scriptSno=purchase_data[i]['scriptSno'],againstType=againstType)
             totalSoldQty = list(sales.aggregate(Sum('sqty')).values())[0]
             stcg = list(sales.aggregate(Sum('stcg')).values())[0]
             ltcg = list(sales.aggregate(Sum('ltcg')).values())[0]
