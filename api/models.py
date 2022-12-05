@@ -86,7 +86,6 @@ class TranSum(models.Model):
     )
     FY = (
 
-
         ('2021-2022', '2021-2022'),
         ('2022-2023', '2022-2023'),
         ('2023-2024', '2023-2024'),
@@ -239,7 +238,8 @@ class TranSum(models.Model):
     def save(self, *args, **kwargs):
         super(TranSum, self).save(*args, **kwargs)
         if self.sp == 'A' or self.sp == 'O':
-            master_record = TranSum.master_objects.filter(group=self.group, code=self.code, part=self.part).last()
+            master_record = TranSum.master_objects.filter(group=self.group, code=self.code, part=self.part,
+                                                          againstType=self.againstType).last()
             if master_record is None:
                 master_record = TranSum.master_objects.create_master_from_purchase(self)
             queryset = TranSum.purchase_objects.filter(pk=self.trId)  # this record itself
@@ -248,7 +248,8 @@ class TranSum(models.Model):
             if self.sno is 0:
                 last_purchase_for_part = TranSum.purchase_objects.filter(group=self.group, code=self.code,
                                                                          scriptSno=master_record.sno,
-                                                                         part=self.part).last()
+                                                                         part=self.part,
+                                                                         againstType=self.againstType).last()
                 if last_purchase_for_part:
                     sno = last_purchase_for_part.sno + 1
                 else:
@@ -274,13 +275,15 @@ class TranSum(models.Model):
             scriptSno = 0
             sno = self.sno
             if self.sno is 0:
-                last_master_for_user = TranSum.master_objects.filter(group=self.group, code=self.code).exclude(
+                last_master_for_user = TranSum.master_objects.filter(group=self.group, code=self.code,
+                                                                     againstType=self.againstType).exclude(
                     pk=self.trId).last()
                 if last_master_for_user:
                     sno = last_master_for_user.sno + 1
                 else:
                     sno = 1
-            purchases_by_part = TranSum.purchase_objects.filter(group=self.group, code=self.code, part=self.part)
+            purchases_by_part = TranSum.purchase_objects.filter(group=self.group, code=self.code, part=self.part,
+                                                                againstType=self.againstType)
             purchases_by_part.update(scriptSno=sno)
             balQty = sum_by_key(purchases_by_part, 'balQty')
             HoldingValue = sum_by_key(purchases_by_part, 'HoldingValue')
@@ -334,12 +337,12 @@ class MOS_Sales(models.Model):
 
     def save(self, *args, **kwargs):
         purchase_record = TranSum.purchase_objects.filter(sno=self.purSno, scriptSno=self.scriptSno, group=self.group,
-                                                          code=self.code).first()
+                                                          code=self.code, againstType=self.againstType).first()
         if purchase_record.balQty - self.sqty < 0:
             raise ValidationError(
                 "Balance Quantity on purchase record is not sufficient to record this sale against it.")
         master_record = TranSum.master_objects.filter(group=self.group, code=self.code,
-                                                      sno=purchase_record.scriptSno).first()
+                                                      sno=purchase_record.scriptSno,againstType=self.againstType).first()
         purchase_record.clDate = self.sDate
         purchase_record.clRate = self.srate
         purchase_record.clQTY = self.sqty
@@ -348,7 +351,7 @@ class MOS_Sales(models.Model):
         purchase_record.clOtherCharges = self.other
         self.scriptSno = master_record.sno
         super(MOS_Sales, self).save(*args, **kwargs)
-        self.refresh_stcg_ltcg(purchase_record,*args,**kwargs)
+        self.refresh_stcg_ltcg(purchase_record, *args, **kwargs)
         purchase_record.save()  # refreshes master
 
     def refresh_stcg_ltcg(self, purchase_record, *args, **kwargs):
