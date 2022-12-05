@@ -511,15 +511,15 @@ def get_holdings_for_member(request):
         purchases = TranSum.purchase_objects.filter(group=group, code=code, againstType=againstType,
                                                     scriptSno=master['sno'], part=master['part'])
         openings = purchases.filter(trDate__lt=from_date)
-        sum_opening = list(openings.aggregate(Sum('balQty')).values())[0]
+        sum_opening = list(openings.aggregate(Sum('qty')).values())[0]
         additions = purchases.filter(trDate__range=(from_date, to_date))
-        sum_addition = list(additions.aggregate(Sum('balQty')).values())[0]
+        sum_addition = list(additions.aggregate(Sum('qty')).values())[0]
         sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'])
         sum_sales = list(sales.aggregate(Sum('sqty')).values())[0]
         holding['opening'] = 0 if sum_opening is None else int(sum_opening)
         holding['addition'] = 0 if sum_addition is None else int(sum_addition)
         holding['sales'] = 0 if sum_sales is None else int(sum_sales)
-        holding['closing'] = holding['opening'] + holding['addition']
+        holding['closing'] = holding['opening'] + holding['addition'] - holding['sales']
         holdings.append(holding)
 
     return Response({'status': True, 'message': 'Retrieved Holdings', 'data': holdings})
