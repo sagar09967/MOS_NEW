@@ -514,7 +514,7 @@ def get_holdings_for_member(request):
         sum_opening = list(openings.aggregate(Sum('qty')).values())[0]
         additions = purchases.filter(trDate__range=(from_date, to_date))
         sum_addition = list(additions.aggregate(Sum('qty')).values())[0]
-        sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'])
+        sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'],againstType=againstType)
         sum_sales = list(sales.aggregate(Sum('sqty')).values())[0]
         holding['opening'] = 0 if sum_opening is None else int(sum_opening)
         holding['addition'] = 0 if sum_addition is None else int(sum_addition)
