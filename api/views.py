@@ -659,7 +659,7 @@ class DayTradingViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         purchase_serializer = serializers.TranSumSerializer(
-            data={'group': data['group'], 'code': data['code'], 'fy': data['dfy'], 'trDate': data['trDate'],
+            data={'group': data['group'], 'code': data['code'], 'fy': data['fy'], 'trDate': data['trDate'],
                   'qty': data['qty'], 'rate': data['rate'], 'sVal': data['purchaseValue'],
                   'part': data['part'], 'againstType': 'Day Trading', 'sp': 'A'})
         purchase_serializer.is_valid(raise_exception=True)
@@ -667,7 +667,7 @@ class DayTradingViewSet(viewsets.ModelViewSet):
         updated_purchase = TranSum.purchase_objects.filter(pk=purchase_record.pk).first()
 
         sale_serializer = serializers.DayTradingSaleSerializer(
-            data={'group': data['group'], 'code': data['code'], 'fy': data['dfy'], 'sDate': data['trDate'],
+            data={'group': data['group'], 'code': data['code'], 'fy': data['fy'], 'sDate': data['trDate'],
                   'sqty': data['qty'], 'srate': data['srate'], 'sVal': data['saleValue'],
                   'part': data['part'], 'purSno': updated_purchase.sno, 'scriptSno': updated_purchase.scriptSno,
                   'againstType': 'Day Trading', 'speculation': data['speculation']})
