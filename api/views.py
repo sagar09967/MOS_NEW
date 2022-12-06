@@ -660,7 +660,7 @@ class DayTradingViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         purchase_serializer = serializers.TranSumSerializer(
             data={'group': data['group'], 'code': data['code'], 'fy': data['dfy'], 'trDate': data['trDate'],
-                  'qty': data['qty'], 'rate': data['rate'], 'sVal': data['purchase_sVal'],
+                  'qty': data['qty'], 'rate': data['rate'], 'sVal': data['purchaseValue'],
                   'part': data['part'], 'againstType': 'Day Trading', 'sp': 'A'})
         purchase_serializer.is_valid(raise_exception=True)
         purchase_record = purchase_serializer.save()
@@ -668,7 +668,7 @@ class DayTradingViewSet(viewsets.ModelViewSet):
 
         sale_serializer = serializers.DayTradingSaleSerializer(
             data={'group': data['group'], 'code': data['code'], 'fy': data['dfy'], 'sDate': data['trDate'],
-                  'sqty': data['qty'], 'srate': data['srate'], 'sVal': data['sale_sVal'],
+                  'sqty': data['qty'], 'srate': data['srate'], 'sVal': data['saleValue'],
                   'part': data['part'], 'purSno': updated_purchase.sno, 'scriptSno': updated_purchase.scriptSno,
                   'againstType': 'Day Trading', 'speculation': data['speculation']})
         sale_serializer.is_valid(raise_exception=True)
@@ -696,8 +696,8 @@ class DayTradingViewSet(viewsets.ModelViewSet):
                 "trDate": purchase.trDate,
                 "rate": purchase.rate,
                 "srate": sale.srate,
-                "purchase_value": purchase.sVal,
-                "sale_value": sale.sVal
+                "purchaseValue": purchase.sVal,
+                "saleValue": sale.sVal
             }
             result.append(object)
 
