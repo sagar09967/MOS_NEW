@@ -7,6 +7,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from . import manager
 from dateutil.relativedelta import relativedelta
+from . import services
 
 
 # from phonenumber_field.modelfields import PhoneNumberField
@@ -258,18 +259,22 @@ class TranSum(models.Model):
             sales_for_current_purchase = MOS_Sales.objects.filter(group=self.group, code=self.code, purSno=self.sno,
                                                                   scriptSno=self.scriptSno)
             balQty = self.qty - sum_by_key(sales_for_current_purchase, 'sqty')
-            marketValue = balQty * master_record.marketRate
+            market_rate = services.get_market_rate(self.part)
+            if market_rate:
+                market_rate = market_rate['Adj Close']
+            marketValue = balQty * market_rate
             HoldingValue = balQty * self.rate
             if balQty > 0:
                 avgRate = HoldingValue / balQty
             else:
                 avgRate = 0
             values = {'scriptSno': scriptSno, 'sno': sno, 'balQty': balQty, 'marketValue': marketValue,
-                      'HoldingValue': HoldingValue, 'avgRate': avgRate}
-            queryset.update(**values)  # update this record with derived values
+                      'HoldingValue': HoldingValue, 'avgRate': avgRate, 'marketRate': market_rate}
+            update = queryset.update(**values)  # update this record with derived values
             master_record.save()
             for sale in sales_for_current_purchase:
                 sale.refresh_stcg_ltcg(queryset.first(), *args, **kwargs)
+            return self
 
         if self.sp == 'M':
             scriptSno = 0
@@ -287,15 +292,18 @@ class TranSum(models.Model):
             purchases_by_part.update(scriptSno=sno)
             balQty = sum_by_key(purchases_by_part, 'balQty')
             HoldingValue = sum_by_key(purchases_by_part, 'HoldingValue')
-            marketValue = 0
+            market_rate = services.get_market_rate(self.part)
+            if market_rate:
+                market_rate = Decimal(market_rate['Adj Close'])
+            marketValue = balQty * market_rate
             avgRate = 0
             if balQty != 0:
-                marketValue = balQty * Decimal(self.marketRate)
                 avgRate = HoldingValue / balQty
             values = {'scriptSno': scriptSno, 'sno': sno, 'balQty': balQty, 'marketValue': marketValue,
-                      'HoldingValue': HoldingValue, 'avgRate': avgRate}
+                      'HoldingValue': HoldingValue, 'avgRate': avgRate, 'marketRate': market_rate}
             queryset = TranSum.master_objects.filter(pk=self.trId)
             queryset.update(**values)
+            return self
 
     class Meta:
         verbose_name = ('MOS_TransSum')
@@ -342,7 +350,8 @@ class MOS_Sales(models.Model):
             raise ValidationError(
                 "Balance Quantity on purchase record is not sufficient to record this sale against it.")
         master_record = TranSum.master_objects.filter(group=self.group, code=self.code,
-                                                      sno=purchase_record.scriptSno,againstType=self.againstType).first()
+                                                      sno=purchase_record.scriptSno,
+                                                      againstType=self.againstType).first()
         purchase_record.clDate = self.sDate
         purchase_record.clRate = self.srate
         purchase_record.clQTY = self.sqty

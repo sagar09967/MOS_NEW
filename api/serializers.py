@@ -170,3 +170,11 @@ class SaleSerializer(serializers.ModelSerializer):
                   'srate',
                   'sqty', 'sVal',
                   'stt', 'other', 'stcg', 'ltcg']
+
+class DayTradingSaleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MOS_Sales
+        fields = ['trId', 'group', 'code', 'fy', 'againstType', 'purSno', 'scriptSno', 'stt_Paid', 'stt', 'sDate',
+                  'srate',
+                  'sqty', 'sVal',
+                  'stt', 'other', 'stcg', 'ltcg','speculation']

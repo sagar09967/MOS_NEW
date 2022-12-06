@@ -399,7 +399,8 @@ class TranSumViewSet(viewsets.ViewSet):
         serializer = serializers.TranSumSerializer(data=data)
         serializer.is_valid()
         object = serializer.save()
-        serializer = serializers.RetrieveTranSumSerializer(object)
+        updated_object = TranSum.purchase_objects.filter(pk=object.pk).first()
+        serializer = serializers.RetrieveTranSumSerializer(updated_object)
         response = {"status": True, "message": "Purchase Record Added", "data": serializer.data}
         return Response(response)
 
@@ -437,7 +438,8 @@ class SalesViewSet(viewsets.ViewSet):
         purchase_data = serializer.data
         for i in range(0, len(purchase_data)):
             sales = MOS_Sales.objects.filter(group=purchase_data[i]['group'], code=purchase_data[i]['code'],
-                                             purSno=purchase_data[i]['sno'], scriptSno=purchase_data[i]['scriptSno'],againstType=againstType)
+                                             purSno=purchase_data[i]['sno'], scriptSno=purchase_data[i]['scriptSno'],
+                                             againstType=againstType)
             totalSoldQty = list(sales.aggregate(Sum('sqty')).values())[0]
             stcg = list(sales.aggregate(Sum('stcg')).values())[0]
             ltcg = list(sales.aggregate(Sum('ltcg')).values())[0]
@@ -514,8 +516,9 @@ def get_holdings_for_member(request):
         sum_opening = list(openings.aggregate(Sum('qty')).values())[0]
         additions = purchases.filter(trDate__range=(from_date, to_date))
         sum_addition = list(additions.aggregate(Sum('qty')).values())[0]
-        sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'],againstType=againstType)
+        sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'], againstType=againstType)
         sum_sales = list(sales.aggregate(Sum('sqty')).values())[0]
+        holding['profit_loss'] = Decimal(master['marketValue']) - master['HoldingValue']
         holding['opening'] = 0 if sum_opening is None else int(sum_opening)
         holding['addition'] = 0 if sum_addition is None else int(sum_addition)
         holding['sales'] = 0 if sum_sales is None else int(sum_sales)
@@ -606,6 +609,7 @@ def prepare_purchases_response(request):
     purchase_data = serializer.data
     return purchase_data
 
+
 def prepare_holdings_response(request):
     group = request['group']
     code = request['code']
@@ -647,3 +651,54 @@ def prepare_holdings_response(request):
         holdings.append(holding)
 
     return holdings
+
+
+class DayTradingViewSet(viewsets.ModelViewSet):
+
+    @transaction.atomic()
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        purchase_serializer = serializers.TranSumSerializer(
+            data={'group': data['group'], 'code': data['code'], 'fy': data['dfy'], 'trDate': data['trDate'],
+                  'qty': data['qty'], 'rate': data['rate'], 'sVal': data['purchase_sVal'],
+                  'part': data['part'], 'againstType': 'Day Trading', 'sp': 'A'})
+        purchase_serializer.is_valid(raise_exception=True)
+        purchase_record = purchase_serializer.save()
+        updated_purchase = TranSum.purchase_objects.filter(pk=purchase_record.pk).first()
+
+        sale_serializer = serializers.DayTradingSaleSerializer(
+            data={'group': data['group'], 'code': data['code'], 'fy': data['dfy'], 'sDate': data['trDate'],
+                  'sqty': data['qty'], 'srate': data['srate'], 'sVal': data['sale_sVal'],
+                  'part': data['part'], 'purSno': updated_purchase.sno, 'scriptSno': updated_purchase.scriptSno,
+                  'againstType': 'Day Trading', 'speculation': data['speculation']})
+        sale_serializer.is_valid(raise_exception=True)
+        sale_serializer.save()
+
+        purchase_data = serializers.SalePurchaseSerializer(updated_purchase).data
+
+        purchase_data['sales'] = [sale_serializer.data]
+
+        response = {"status": True, "message": "Sales Record Created", "data": purchase_data}
+
+        return Response(response)
+
+    def list(self, request, *args, **kwargs):
+        data = request.query_params.dict()
+        data['fy'] = data.pop('dfy')
+        data['againstType'] = 'Day Trading'
+        purchase_queryset = TranSum.purchase_objects.filter(**data)
+        result = []
+        for purchase in purchase_queryset:
+            sale = MOS_Sales.objects.filter(**data, purSno=purchase.sno, scriptSno=purchase.scriptSno).first()
+            object = {
+                "part": purchase.part,
+                "qty": purchase.qty,
+                "trDate": purchase.trDate,
+                "rate": purchase.rate,
+                "srate": sale.srate,
+                "purchase_value": purchase.sVal,
+                "sale_value": sale.sVal
+            }
+            result.append(object)
+
+        return Response({"status": True, "message": "Retrieved Day Trades", "data": result})

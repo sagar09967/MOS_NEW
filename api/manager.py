@@ -1,5 +1,6 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
+from . import services
 
 
 class CustomerUserManager(BaseUserManager):
@@ -33,10 +34,15 @@ class MasterTranSumManager(models.Manager):
         return super().get_queryset().filter(sp='M')
 
     def create_master_from_purchase(self, purchase_record):
+        market_rate = services.get_market_rate(purchase_record.part)
+        if market_rate:
+            market_rate = market_rate['Adj Close']
+        else:
+            market_rate = 0
         master_record = self.model(code=purchase_record.code, group=purchase_record.group, fy=purchase_record.fy,
                                    fmr=purchase_record.fmr, isinCode=purchase_record.isinCode,
                                    againstType=purchase_record.againstType, part=purchase_record.part,
-                                   sp='M')
+                                   sp='M', marketRate=market_rate)
 
         master_record.save()
         return master_record
