@@ -498,6 +498,7 @@ def get_holdings_for_member(request):
     #     invVal=Sum(F('rate') * F('balQty'))).annotate(mktVal=Sum(F('balQty') * F('marketRate')))
     # print("Ballllllll--->",holding)
     holdings = []
+
     masters = TranSum.master_objects.filter(group=group, code=code, againstType=againstType)
     for master in masters.values():
         holding = {
@@ -518,11 +519,14 @@ def get_holdings_for_member(request):
         sum_addition = list(additions.aggregate(Sum('qty')).values())[0]
         sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'], againstType=againstType)
         sum_sales = list(sales.aggregate(Sum('sqty')).values())[0]
+
         holding['profitLoss'] = Decimal(master['marketValue']) - master['HoldingValue']
         holding['opening'] = 0 if sum_opening is None else int(sum_opening)
         holding['addition'] = 0 if sum_addition is None else int(sum_addition)
         holding['sales'] = 0 if sum_sales is None else int(sum_sales)
         holding['closing'] = holding['opening'] + holding['addition'] - holding['sales']
+        holding['stcg'] = list(sales.aggregate(Sum('stcg')).values())[0]
+        holding['ltcg'] = list(sales.aggregate(Sum('ltcg')).values())[0]
         holdings.append(holding)
 
     return Response({'status': True, 'message': 'Retrieved Holdings', 'data': holdings})
@@ -533,12 +537,12 @@ def member_capital_gain(request):
     group = request.query_params.get('group')
     code = request.query_params.get('code')
     dfy = request.query_params.get('dfy')
-
-    sales = MOS_Sales.objects.filter(group=group, code=code, fy=dfy)
+    againstType = request.query_params.get('againstType')
+    sales = MOS_Sales.objects.filter(group=group, code=code, fy=dfy, againstType=againstType)
     sum_stcg = list(sales.aggregate(Sum('stcg')).values())[0]
     sum_ltcg = list(sales.aggregate(Sum('ltcg')).values())[0]
-
-    result = {"group": group, "code": code, "fy": dfy, "stcg": sum_stcg, "ltcg": sum_ltcg, "speculation": sum_stcg}
+    sum_speculation = list(sales.aggregate(Sum('speculation')).values())[0]
+    result = {"group": group, "code": code, "fy": dfy, "stcg": sum_stcg, "ltcg": sum_ltcg, "speculation": sum_speculation}
 
     return Response({"status": True, "message": "Retrieved Total Capital Gains", "data": result})
 
@@ -644,10 +648,13 @@ def prepare_holdings_response(request):
         sum_addition = list(additions.aggregate(Sum('balQty')).values())[0]
         sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'])
         sum_sales = list(sales.aggregate(Sum('sqty')).values())[0]
+        holding['profitLoss'] = Decimal(master['marketValue']) - master['HoldingValue']
         holding['opening'] = 0 if sum_opening is None else int(sum_opening)
         holding['addition'] = 0 if sum_addition is None else int(sum_addition)
         holding['sales'] = 0 if sum_sales is None else int(sum_sales)
         holding['closing'] = holding['opening'] + holding['addition']
+        holding['stcg'] = list(sales.aggregate(Sum('stcg')).values())[0]
+        holding['ltcg'] = list(sales.aggregate(Sum('ltcg')).values())[0]
         holdings.append(holding)
 
     return holdings
