@@ -670,7 +670,7 @@ class DayTradingViewSet(viewsets.ModelViewSet):
             data={'group': data['group'], 'code': data['code'], 'fy': data['fy'], 'sDate': data['trDate'],
                   'sqty': data['qty'], 'srate': data['srate'], 'sVal': data['saleValue'],
                   'part': data['part'], 'purSno': updated_purchase.sno, 'scriptSno': updated_purchase.scriptSno,
-                  'againstType': 'Day Trading', 'speculation': data['speculation']})
+                  'againstType': 'Day Trading', 'speculation': data['saleValue'] - data['purchaseValue']})
         sale_serializer.is_valid(raise_exception=True)
         sale_serializer.save()
 
@@ -697,7 +697,8 @@ class DayTradingViewSet(viewsets.ModelViewSet):
                 "rate": purchase.rate,
                 "srate": sale.srate,
                 "purchaseValue": purchase.sVal,
-                "saleValue": sale.sVal
+                "saleValue": sale.sVal,
+                "speculation": sale.speculation
             }
             result.append(object)
 
