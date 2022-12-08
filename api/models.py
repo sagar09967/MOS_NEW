@@ -346,7 +346,12 @@ class MOS_Sales(models.Model):
     def save(self, *args, **kwargs):
         purchase_record = TranSum.purchase_objects.filter(sno=self.purSno, scriptSno=self.scriptSno, group=self.group,
                                                           code=self.code, againstType=self.againstType).first()
-        if purchase_record.balQty - self.sqty < 0:
+        existing_qty = 0
+        if self.trId:
+            existing_sale_record = MOS_Sales.objects.filter(pk=self.trId).first()
+            existing_qty = existing_sale_record.sqty
+
+        if purchase_record.balQty + existing_qty - self.sqty < 0:
             raise ValidationError(
                 "Balance Quantity on purchase record is not sufficient to record this sale against it.")
         master_record = TranSum.master_objects.filter(group=self.group, code=self.code,

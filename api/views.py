@@ -477,7 +477,7 @@ class SalesViewSet(viewsets.ViewSet):
             data['purSno'] = purchase_record.sno
             data['scriptSno'] = purchase_record.scriptSno
             serializer = serializers.SaleSerializer(sales_record, data=data)
-            serializer.is_valid()
+            serializer.is_valid(raise_exception=True)
             serializer.save()
             response = {"status": True, "message": "Sales Record Updated", "data": serializer.data}
             return Response(response)
