@@ -542,7 +542,8 @@ def member_capital_gain(request):
     sum_stcg = list(sales.aggregate(Sum('stcg')).values())[0]
     sum_ltcg = list(sales.aggregate(Sum('ltcg')).values())[0]
     sum_speculation = list(sales.aggregate(Sum('speculation')).values())[0]
-    result = {"group": group, "code": code, "fy": dfy, "stcg": sum_stcg, "ltcg": sum_ltcg, "speculation": sum_speculation}
+    result = {"group": group, "code": code, "fy": dfy, "stcg": sum_stcg, "ltcg": sum_ltcg,
+              "speculation": sum_speculation}
 
     return Response({"status": True, "message": "Retrieved Total Capital Gains", "data": result})
 
@@ -561,13 +562,16 @@ def get_market_rate(request):
         if market_rate:
             market_rate = market_rate['Adj Close']
             master.marketRate = market_rate
-            master.save()
+            master.marketValue = Decimal(market_rate) * master.balQty
+            super(TranSum, master).save()
             purchases = TranSum.purchase_objects.filter(group=request_dict['group'], code=request_dict['code'],
                                                         fy=request_dict['fy'],
                                                         scriptSno=master.sno,
                                                         part=master.part)
             for purchase in purchases:
-                purchase.save()
+                purchase.marketRate = market_rate
+                purchase.marketValue = Decimal(market_rate) * purchase.balQty
+                super(TranSum, purchase).save()
 
     if request.query_params.get('sp') and request.query_params.get('part'):
         temp_request = request.query_params.dict()
