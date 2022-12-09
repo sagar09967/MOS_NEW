@@ -139,10 +139,6 @@ class TranSumSerializer(serializers.ModelSerializer):
 
 
 class RetrieveTranSumSerializer(serializers.ModelSerializer):
-    rate = serializers.DecimalField(max_digits=65, decimal_places=2)
-    sVal = serializers.DecimalField(max_digits=65, decimal_places=2)
-    sttCharges = serializers.DecimalField(max_digits=65, decimal_places=2)
-    otherCharges = serializers.DecimalField(max_digits=65, decimal_places=2)
     balQty = serializers.IntegerField()
     class Meta:
         model = TranSum
