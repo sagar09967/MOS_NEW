@@ -397,7 +397,7 @@ class TranSumViewSet(viewsets.ViewSet):
     def create(self, request):
         data = request.data
         serializer = serializers.TranSumSerializer(data=data)
-        serializer.is_valid()
+        serializer.is_valid(raise_exception=True)
         object = serializer.save()
         updated_object = TranSum.purchase_objects.filter(pk=object.pk).first()
         serializer = serializers.RetrieveTranSumSerializer(updated_object)
