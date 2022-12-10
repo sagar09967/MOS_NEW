@@ -689,7 +689,7 @@ class DayTradingViewSet(viewsets.ModelViewSet):
 
         purchase_data['sales'] = [sale_serializer.data]
 
-        response = {"status": True, "message": "Sales Record Created", "data": purchase_data}
+        response = {"status": True, "message": "Day Trading Record Created", "data": purchase_data}
 
         return Response(response)
 
@@ -702,6 +702,7 @@ class DayTradingViewSet(viewsets.ModelViewSet):
         for purchase in purchase_queryset:
             sale = MOS_Sales.objects.filter(**data, purSno=purchase.sno, scriptSno=purchase.scriptSno).first()
             object = {
+                "trId": purchase.trId,
                 "part": purchase.part,
                 "qty": purchase.qty,
                 "trDate": purchase.trDate,
@@ -714,3 +715,43 @@ class DayTradingViewSet(viewsets.ModelViewSet):
             result.append(object)
 
         return Response({"status": True, "message": "Retrieved Day Trades", "data": result})
+
+    @transaction.atomic()
+    def update(self, request, pk, *args, **kwargs):
+        data = request.data.copy()
+        purchase_object = TranSum.purchase_objects.get(pk=pk)
+        purchase_serializer = serializers.TranSumSerializer(instance=purchase_object,
+                                                            data={'group': data['group'], 'code': data['code'],
+                                                                  'fy': data['fy'], 'trDate': data['trDate'],
+                                                                  'qty': data['qty'], 'rate': data['rate'],
+                                                                  'sVal': data['purchaseValue'],
+                                                                  'part': data['part'], 'againstType': 'Day Trading',
+                                                                  'sp': 'A'})
+        purchase_serializer.is_valid(raise_exception=True)
+        purchase_record = purchase_serializer.save()
+        updated_purchase = TranSum.purchase_objects.filter(pk=purchase_record.pk).first()
+        sale_object = MOS_Sales.objects.filter(group=data['group'], code=data['code'], fy=data['fy'],
+                                               purSno=purchase_object.sno, scriptSno=purchase_object.scriptSno,
+                                               againstType='Day Trading').first()
+
+        sale_serializer = serializers.DayTradingSaleSerializer(instance=sale_object,
+                                                               data={'group': data['group'], 'code': data['code'],
+                                                                     'fy': data['fy'], 'sDate': data['trDate'],
+                                                                     'sqty': data['qty'], 'srate': data['srate'],
+                                                                     'sVal': data['saleValue'],
+                                                                     'part': data['part'],
+                                                                     'purSno': updated_purchase.sno,
+                                                                     'scriptSno': updated_purchase.scriptSno,
+                                                                     'againstType': 'Day Trading',
+                                                                     'speculation': data['saleValue'] - data[
+                                                                         'purchaseValue']})
+        sale_serializer.is_valid(raise_exception=True)
+        sale_serializer.save()
+
+        purchase_data = serializers.SalePurchaseSerializer(updated_purchase).data
+
+        purchase_data['sales'] = [sale_serializer.data]
+
+        response = {"status": True, "message": "Day Trading Record Updated", "data": purchase_data}
+
+        return Response(response)
