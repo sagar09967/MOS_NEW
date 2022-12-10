@@ -747,8 +747,8 @@ class DayTradingViewSet(viewsets.ModelViewSet):
                                                                          'purchaseValue']})
         sale_serializer.is_valid(raise_exception=True)
         sale_serializer.save()
-
-        purchase_data = serializers.SalePurchaseSerializer(updated_purchase).data
+        purchase_object.refresh_from_db()
+        purchase_data = serializers.SalePurchaseSerializer(purchase_object).data
 
         purchase_data['sales'] = [sale_serializer.data]
 
