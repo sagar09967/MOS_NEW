@@ -22,5 +22,5 @@ urlpatterns.append(
 )
 
 urlpatterns.append(
-    re_path('holding_report_member', views.get_holding_report_by_member)
+    re_path('holding_report', views.get_holding_report)
 )

@@ -763,7 +763,7 @@ class DayTradingViewSet(viewsets.ModelViewSet):
 
 
 @api_view(['GET'])
-def get_holding_report_by_member(request):
+def get_holding_report(request):
     data = request.query_params.dict()
     data['fy'] = data.pop('dfy')
     name = ""
@@ -775,6 +775,9 @@ def get_holding_report_by_member(request):
         name = group.firstName + " " + group.lastName
 
     masters = TranSum.master_objects.filter(**data)
+    if len(masters) == 0:
+        return Response({"status": False, "message": "No data present for selected parameters"})
+
     total_holding_values_by_part = masters.values('part').annotate(total_holding_value=(Sum('HoldingValue')))
     total_holding = list(total_holding_values_by_part.aggregate(Sum('total_holding_value')).values())[0]
     total_qty_by_part = masters.values('part').annotate(total_qty=(Sum('balQty')))
@@ -796,7 +799,7 @@ def get_holding_report_by_member(request):
         'script': "Total",
         'qty': int(total_qty),
         'holding_perc': 100,
-        'holding_value': round(total_holding,2)
+        'holding_value': round(total_holding, 2)
     }
     titles = ['S.N.', 'Script', 'Qty', 'Holding%', 'Holding(Rs)']
     pre_table = "Report Date : " + datetime.date.today().strftime('%d/%m/%Y')
@@ -812,14 +815,12 @@ def get_holding_report_by_member(request):
         'post_table': " "
     }
 
-    html = render_to_string('reports/holding-report-member.html',context)
+    html = render_to_string('reports/holding-report-member.html', context)
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="Holding Report.pdf"'
 
     pisaStatus = pisa.CreatePDF(html, dest=response)
     return response
-
-
 
 
 def round_to_100_percent(number_set, digit_after_decimal=2):
@@ -829,6 +830,8 @@ def round_to_100_percent(number_set, digit_after_decimal=2):
         Notice: the algorithm we are using here is 'Largest Remainder'
         The down-side is that the results won't be accurate, but they are never accurate anyway:)
     """
+    if len(number_set) == 0:
+        return None
     unround_numbers = [x / Decimal(float(sum(number_set))) * 100 * 10 ** digit_after_decimal for x in number_set]
     decimal_part_with_index = sorted([(index, unround_numbers[index] % 1) for index in range(len(unround_numbers))],
                                      key=lambda y: y[1], reverse=True)
