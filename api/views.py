@@ -765,27 +765,30 @@ class DayTradingViewSet(viewsets.ModelViewSet):
 @api_view(['GET'])
 def get_holding_report_by_member(request):
     data = request.query_params.dict()
+    data['fy'] = data.pop('dfy')
     name = ""
-    if data['code']:
+    if data.get('code'):
         member = MemberMaster.objects.filter(group=data['group'], code=data['code']).first()
         name = member.name
     else:
-        group = CustomerMaster.objects.filter(group=data['group'])
+        group = CustomerMaster.objects.filter(group=data['group']).first()
         name = group.firstName + " " + group.lastName
 
     masters = TranSum.master_objects.filter(**data)
-    total_holding = list(masters.aggregate(Sum('HoldingValue')).values())[0]
-    total_qty = list(masters.aggregate(Sum('balQty')).values())[0]
-    list_holding_values = masters.values_list('HoldingValue', flat=True)
+    total_holding_values_by_part = masters.values('part').annotate(total_holding_value=(Sum('HoldingValue')))
+    total_holding = list(total_holding_values_by_part.aggregate(Sum('total_holding_value')).values())[0]
+    total_qty_by_part = masters.values('part').annotate(total_qty=(Sum('balQty')))
+    total_qty = list(total_qty_by_part.aggregate(Sum('total_qty')).values())[0]
+    list_holding_values = total_holding_values_by_part.values_list('total_holding_value', flat=True)
     percentages = round_to_100_percent(list_holding_values, 2)
     rows = []
     for i in range(0, len(masters)):
         row = {}
         row['sno'] = i + 1
         row['script'] = masters[i].part
-        row['qty'] = int(masters[i].balQty)
+        row['qty'] = int(total_qty_by_part[i]['total_qty'])
         row['holding_perc'] = str(percentages[i]) + '%'
-        row['holding_value'] = round(masters[i].HoldingValue, 2)
+        row['holding_value'] = round(total_holding_values_by_part[i]['total_holding_value'], 2)
         rows.append(row)
 
     total = {
