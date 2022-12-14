@@ -1,4 +1,8 @@
+import datetime
 from decimal import Decimal
+
+from xhtml2pdf import pisa
+
 from .models import TranSum, MemberMaster, CustomerMaster, MOS_Sales
 from rest_framework import generics
 from rest_framework import status
@@ -7,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from rest_framework.views import APIView
 from rest_framework import viewsets
 from .serializers import (SavePurchSerializer, RetTransSumSerializer,
@@ -23,6 +27,7 @@ from django.db import transaction
 from django.db.models import Sum
 import decimal
 from . import services
+from django.template.loader import render_to_string
 
 
 # <-------------------- SavePurch API ---------------------->
@@ -755,3 +760,79 @@ class DayTradingViewSet(viewsets.ModelViewSet):
         response = {"status": True, "message": "Day Trading Record Updated", "data": purchase_data}
 
         return Response(response)
+
+
+@api_view(['GET'])
+def get_holding_report_by_member(request):
+    data = request.query_params.dict()
+    name = ""
+    if data['code']:
+        member = MemberMaster.objects.filter(group=data['group'], code=data['code']).first()
+        name = member.name
+    else:
+        group = CustomerMaster.objects.filter(group=data['group'])
+        name = group.firstName + " " + group.lastName
+
+    masters = TranSum.master_objects.filter(**data)
+    total_holding = list(masters.aggregate(Sum('HoldingValue')).values())[0]
+    total_qty = list(masters.aggregate(Sum('balQty')).values())[0]
+    list_holding_values = masters.values_list('HoldingValue', flat=True)
+    percentages = round_to_100_percent(list_holding_values, 2)
+    rows = []
+    for i in range(0, len(masters)):
+        row = {}
+        row['sno'] = i + 1
+        row['script'] = masters[i].part
+        row['qty'] = int(masters[i].balQty)
+        row['holding_perc'] = str(percentages[i]) + '%'
+        row['holding_value'] = round(masters[i].HoldingValue, 2)
+        rows.append(row)
+
+    total = {
+        'sno': " ",
+        'script': "Total",
+        'qty': int(total_qty),
+        'holding_perc': 100,
+        'holding_value': round(total_holding,2)
+    }
+    titles = ['S.N.', 'Script', 'Qty', 'Holding%', 'Holding(Rs)']
+    pre_table = "Report Date : " + datetime.date.today().strftime('%d/%m/%Y')
+    heading = name + " (FY " + data['fy'] + ")"
+    description = 'Holding Report (' + data['againstType'] + ')'
+    context = {
+        'heading': heading,
+        'description': description,
+        'pre_table': pre_table,
+        'table': rows,
+        'titles': titles,
+        'total': total,
+        'post_table': " "
+    }
+
+    html = render_to_string('reports/holding-report-member.html',context)
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="Holding Report.pdf"'
+
+    pisaStatus = pisa.CreatePDF(html, dest=response)
+    return response
+
+
+
+
+def round_to_100_percent(number_set, digit_after_decimal=2):
+    """
+        This function take a list of number and return a list of percentage, which represents the portion of each number in sum of all numbers
+        Moreover, those percentages are adding up to 100%!!!
+        Notice: the algorithm we are using here is 'Largest Remainder'
+        The down-side is that the results won't be accurate, but they are never accurate anyway:)
+    """
+    unround_numbers = [x / Decimal(float(sum(number_set))) * 100 * 10 ** digit_after_decimal for x in number_set]
+    decimal_part_with_index = sorted([(index, unround_numbers[index] % 1) for index in range(len(unround_numbers))],
+                                     key=lambda y: y[1], reverse=True)
+    remainder = 100 * 10 ** digit_after_decimal - sum([int(x) for x in unround_numbers])
+    index = 0
+    while remainder > 0:
+        unround_numbers[decimal_part_with_index[index][0]] += 1
+        remainder -= 1
+        index = (index + 1) % len(number_set)
+    return [int(x) / float(10 ** digit_after_decimal) for x in unround_numbers]

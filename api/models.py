@@ -282,7 +282,10 @@ class MOS_Sales(models.Model):
 
     def refresh_stcg_ltcg(self, purchase_record, *args, **kwargs):
         time_delta = relativedelta(self.sDate, purchase_record.trDate)
-        if (time_delta.years * 12 + time_delta.months) <= 12:
+        if self.againstType == 'Day Trading':
+            self.stcg = 0
+            self.ltcg = 0
+        elif (time_delta.years * 12 + time_delta.months) <= 12:
             self.stcg = self.sVal - (self.sqty * purchase_record.rate)
             self.ltcg = 0
         else:

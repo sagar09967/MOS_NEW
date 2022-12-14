@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Holding Report</title>
+
+    <style>
+    @page {
+        size: letter portrait;
+        margin: 2cm;
+        @frame content_frame {
+            left: 30pt;
+            width: 532pt;
+            top: 30pt;
+            height: 712pt;
+            /*-pdf-frame-border: 1; */   /* for debugging the layout */
+        }
+    }
+        #customers {
+          font-family: "Trebuchet MS", Tahoma, sans-serif;
+          table-layout: fixed;
+          width:100%;
+          {% comment %} font-weight: bold; {% endcomment %}
+
+        }
+
+        #customers td, #customers th {
+          border: 1px solid black;
+
+        }
+
+        #customers th {
+          text-align:center;
+          background-color:#808080;
+          padding:4px;
+        }
+        td{
+          text-align: center;
+          padding:4px;
+          font-size:11px;
+        }
+
+        #date{
+          font-size:11px;
+          font-family: "Trebuchet MS", Tahoma, sans-serif;
+          text-align:left;
+        }
+    </style>
+</head>
+<body>
+
+
+<div id="header_content">
+    <h3 style="text-align:center;">{{heading}}</h3>
+    <h3 style="text-align:center;">{{description}}</h3>
+</div>
+
+<p id='date' >{{pre_table}}</p>
+<table id="customers" align="center">
+
+
+    <tr>
+        {% for title in titles %}
+        <th scope="col">{{title}}</th>
+        {% endfor %}
+
+    </tr>
+
+
+    {% for row in table %}
+    <tr>
+        {% for value in row.values %}
+        <td>{{value}}</td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+
+    <tr style='background-color:#808080'>
+        {% for value in total.values %}
+        <td>{{value}}</td>
+        {% endfor %}
+    </tr>
+
+
+</table>
+
+
+</body>
+</html>
