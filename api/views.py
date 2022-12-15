@@ -823,6 +823,101 @@ def get_holding_report(request):
     return response
 
 
+@api_view(['GET'])
+def get_scriptwise_profit_report(request):
+    data = request.query_params.dict()
+    data['fy'] = data.pop('dfy')
+    name = ""
+    if data.get('code'):
+        member = MemberMaster.objects.filter(group=data['group'], code=data['code']).first()
+        name = member.name
+    else:
+        group = CustomerMaster.objects.filter(group=data['group']).first()
+        name = group.firstName + " " + group.lastName
+
+    masters = TranSum.master_objects.filter(**data)
+    if len(masters) == 0:
+        return Response({"status": False, "message": "No data present for selected parameters"})
+
+    total_holding_values_by_part = masters.values('part', 'sno').annotate(total_holding_value=(Sum('HoldingValue')))
+    total_market_values_by_part = masters.values('part', 'sno').annotate(total_market_value=(Sum('marketValue')))
+    total_qty_by_part = masters.values('part').annotate(total_qty=(Sum('balQty')))
+    total_qty = list(total_qty_by_part.aggregate(Sum('total_qty')).values())[0]
+    list_profit_values = []
+    for i in range(0, len(total_holding_values_by_part)):
+        list_profit_values.append(
+            Decimal(total_market_values_by_part[i]['total_market_value']) - total_holding_values_by_part[i][
+                'total_holding_value'])
+    total_profit = sum(list_profit_values)
+    percentages = round_to_100_percent(list_profit_values, 2)
+    rows = []
+    total_stcg = Decimal(0)
+    total_ltcg = Decimal(0)
+    total_speculation = Decimal(0)
+    for i in range(0, len(total_holding_values_by_part)):
+        temp_masters = masters.filter(part=total_holding_values_by_part[i]['part'])
+        stcg = Decimal(0)
+        ltcg = Decimal(0)
+        speculation = Decimal(0)
+        for master in temp_masters:
+            sales = MOS_Sales.objects.filter(group=data['group'], fy=data['fy'], againstType=data['againstType'],
+                                             scriptSno=master.sno, code=master.code)
+            sum_stcg = list(sales.aggregate(Sum('stcg')).values())[0]
+            if sum_stcg:
+                stcg = stcg + sum_stcg
+            sum_ltcg = list(sales.aggregate(Sum('ltcg')).values())[0]
+            if sum_ltcg:
+                ltcg = ltcg + sum_ltcg
+            sum_speculation = list(sales.aggregate(Sum('speculation')).values())[0]
+            if sum_speculation:
+                speculation = speculation + sum_speculation
+        total_stcg = total_stcg + stcg
+        total_ltcg = total_ltcg + ltcg
+        total_speculation = total_speculation + speculation
+
+        row = {}
+        row['sno'] = i + 1
+        row['script'] = total_holding_values_by_part[i]['part']
+        row['qty'] = int(total_qty_by_part[i]['total_qty'])
+        row['profit_perc'] = str(percentages[i]) + '%'
+        row['profit_value'] = round(list_profit_values[i], 2)
+        row['stcg'] = round(stcg, 2)
+        row['ltcg'] = round(ltcg, 2)
+        row['speculation'] = round(speculation, 2)
+
+        rows.append(row)
+    total = {
+        'sno': " ",
+        'script': "Total",
+        'qty': int(total_qty),
+        'profit_perc': 100,
+        'profit_value': round(total_profit, 2),
+        'stcg': round(total_stcg, 2),
+        'ltcg': round(total_ltcg, 2),
+        'speculation': round(total_speculation, 2)
+    }
+    titles = ['S.N.', 'Script', 'Qty', 'Profit%', 'Profit(Rs)', 'STCG', 'LTCG', 'Speculation']
+    pre_table = "Report Date : " + datetime.date.today().strftime('%d/%m/%Y')
+    heading = name + " (FY " + data['fy'] + ")"
+    description = 'Scriptwise Profit Report (' + data['againstType'] + ')'
+    context = {
+        'heading': heading,
+        'description': description,
+        'pre_table': pre_table,
+        'table': rows,
+        'titles': titles,
+        'total': total,
+        'post_table': " "
+    }
+
+    html = render_to_string('reports/holding-report-member.html', context)
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="Scriptwise_Profit_Report.pdf"'
+
+    pisaStatus = pisa.CreatePDF(html, dest=response)
+    return response
+
+
 def round_to_100_percent(number_set, digit_after_decimal=2):
     """
         This function take a list of number and return a list of percentage, which represents the portion of each number in sum of all numbers
