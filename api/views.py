@@ -840,13 +840,15 @@ def get_scriptwise_profit_report(request):
         return Response({"status": False, "message": "No data present for selected parameters"})
 
     total_holding_values_by_part = masters.values('part', 'sno').annotate(total_holding_value=(Sum('HoldingValue')))
+    total_holding_values_by_script = masters.values('part').annotate(total_holding_value=(Sum('HoldingValue')))
     total_market_values_by_part = masters.values('part', 'sno').annotate(total_market_value=(Sum('marketValue')))
+    total_market_values_by_script = masters.values('part').annotate(total_market_value=(Sum('marketValue')))
     total_qty_by_part = masters.values('part').annotate(total_qty=(Sum('balQty')))
     total_qty = list(total_qty_by_part.aggregate(Sum('total_qty')).values())[0]
     list_profit_values = []
-    for i in range(0, len(total_holding_values_by_part)):
+    for i in range(0, len(total_holding_values_by_script)):
         list_profit_values.append(
-            Decimal(total_market_values_by_part[i]['total_market_value']) - total_holding_values_by_part[i][
+            Decimal(total_market_values_by_script[i]['total_market_value']) - total_holding_values_by_script[i][
                 'total_holding_value'])
     total_profit = sum(list_profit_values)
     percentages = round_to_100_percent(list_profit_values, 2)
@@ -854,8 +856,8 @@ def get_scriptwise_profit_report(request):
     total_stcg = Decimal(0)
     total_ltcg = Decimal(0)
     total_speculation = Decimal(0)
-    for i in range(0, len(total_holding_values_by_part)):
-        temp_masters = masters.filter(part=total_holding_values_by_part[i]['part'])
+    for i in range(0, len(total_holding_values_by_script)):
+        temp_masters = masters.filter(part=total_holding_values_by_script[i]['part'])
         stcg = Decimal(0)
         ltcg = Decimal(0)
         speculation = Decimal(0)
@@ -877,7 +879,7 @@ def get_scriptwise_profit_report(request):
 
         row = {}
         row['sno'] = i + 1
-        row['script'] = total_holding_values_by_part[i]['part']
+        row['script'] = total_holding_values_by_script[i]['part']
         row['qty'] = int(total_qty_by_part[i]['total_qty'])
         row['profit_perc'] = str(percentages[i]) + '%'
         row['profit_value'] = round(list_profit_values[i], 2)
