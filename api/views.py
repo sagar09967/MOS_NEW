@@ -785,10 +785,10 @@ def get_holding_report(request):
     list_holding_values = total_holding_values_by_part.values_list('total_holding_value', flat=True)
     percentages = round_to_100_percent(list_holding_values, 2)
     rows = []
-    for i in range(0, len(masters)):
+    for i in range(0, len(total_holding_values_by_part)):
         row = {}
         row['sno'] = i + 1
-        row['script'] = masters[i].part
+        row['script'] = total_holding_values_by_part[i]['part']
         row['qty'] = int(total_qty_by_part[i]['total_qty'])
         row['holding_perc'] = str(percentages[i]) + '%'
         row['holding_value'] = round(total_holding_values_by_part[i]['total_holding_value'], 2)
