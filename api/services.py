@@ -10,3 +10,11 @@ def get_market_rate(part):
         return data
     else:
         return None
+
+def get_market_rate_value(part):
+    data = get_market_rate(part)
+
+    if data:
+        return data['Adj Close']
+    else:
+        return None

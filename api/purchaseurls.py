@@ -28,3 +28,7 @@ urlpatterns.append(
 urlpatterns.append(
     re_path('scriptwise_profit_report', views.get_scriptwise_profit_report)
 )
+
+urlpatterns.append(
+    re_path('profit_adj_report', views.get_profit_adj_report)
+)

@@ -6,7 +6,7 @@ from xhtml2pdf import pisa
 from .models import TranSum, MemberMaster, CustomerMaster, MOS_Sales
 from rest_framework import generics
 from rest_framework import status
-from django.db.models import Sum, Q, F
+from django.db.models import Sum, Q, F, Avg
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
@@ -836,8 +836,13 @@ def get_scriptwise_profit_report(request):
         name = group.firstName + " " + group.lastName
 
     masters = TranSum.master_objects.filter(**data)
+
     if len(masters) == 0:
         return Response({"status": False, "message": "No data present for selected parameters"})
+
+    for i in range(0, len(masters)):
+        masters[i].save()
+        masters[i].refresh_from_db()
 
     total_holding_values_by_part = masters.values('part', 'sno').annotate(total_holding_value=(Sum('HoldingValue')))
     total_holding_values_by_script = masters.values('part').annotate(total_holding_value=(Sum('HoldingValue')))
@@ -915,6 +920,112 @@ def get_scriptwise_profit_report(request):
     html = render_to_string('reports/holding-report-member.html', context)
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="Scriptwise_Profit_Report.pdf"'
+
+    pisaStatus = pisa.CreatePDF(html, dest=response)
+    return response
+
+
+@api_view(['GET'])
+def get_profit_adj_report(request):
+    data = request.query_params.dict()
+    data['fy'] = data.pop('dfy')
+    name = ""
+    if data.get('code'):
+        member = MemberMaster.objects.filter(group=data['group'], code=data['code']).first()
+        name = member.name
+    else:
+        group = CustomerMaster.objects.filter(group=data['group']).first()
+        name = group.firstName + " " + group.lastName
+
+    masters = TranSum.master_objects.filter(**data)
+    if len(masters) == 0:
+        return Response({"status": False, "message": "No data present for selected parameters"})
+    for i in range(0, len(masters)):
+        masters[i].save()
+        masters[i].refresh_from_db()
+
+    total_holding_values_by_part = masters.values('part', 'sno').annotate(total_holding_value=(Sum('HoldingValue')))
+    total_holding_values_by_script = masters.values('part').annotate(total_holding_value=(Sum('HoldingValue')),
+                                                                     avg_mkt_rate=(Avg('marketRate')))
+
+    total_market_values_by_part = masters.values('part', 'sno').annotate(total_market_value=(Sum('marketValue')))
+    total_market_values_by_script = masters.values('part').annotate(total_market_value=(Sum('marketValue')))
+    total_qty_by_part = masters.values('part').annotate(total_qty=(Sum('balQty')))
+    total_qty = list(total_qty_by_part.aggregate(Sum('total_qty')).values())[0]
+    total_holding = list(total_holding_values_by_script.aggregate(Sum('total_holding_value')).values())[0]
+    list_profit_values = []
+    for i in range(0, len(total_holding_values_by_script)):
+        list_profit_values.append(
+            Decimal(total_market_values_by_script[i]['total_market_value']) - total_holding_values_by_script[i][
+                'total_holding_value'])
+    total_profit = sum(list_profit_values)
+    percentages = round_to_100_percent(list_profit_values, 2)
+    rows = []
+    total_stcg = Decimal(0)
+    total_ltcg = Decimal(0)
+    total_speculation = Decimal(0)
+    for i in range(0, len(total_holding_values_by_script)):
+        temp_masters = masters.filter(part=total_holding_values_by_script[i]['part'])
+        stcg = Decimal(0)
+        ltcg = Decimal(0)
+        speculation = Decimal(0)
+        for master in temp_masters:
+            sales = MOS_Sales.objects.filter(group=data['group'], fy=data['fy'], againstType=data['againstType'],
+                                             scriptSno=master.sno, code=master.code)
+            sum_stcg = list(sales.aggregate(Sum('stcg')).values())[0]
+            if sum_stcg:
+                stcg = stcg + sum_stcg
+            sum_ltcg = list(sales.aggregate(Sum('ltcg')).values())[0]
+            if sum_ltcg:
+                ltcg = ltcg + sum_ltcg
+            sum_speculation = list(sales.aggregate(Sum('speculation')).values())[0]
+            if sum_speculation:
+                speculation = speculation + sum_speculation
+        total_stcg = total_stcg + stcg
+        total_ltcg = total_ltcg + ltcg
+        total_speculation = total_speculation + speculation
+
+        row = {}
+        row['sno'] = i + 1
+        row['script'] = total_holding_values_by_script[i]['part']
+        row['qty'] = int(total_qty_by_part[i]['total_qty'])
+        row['profit_perc'] = str(percentages[i]) + '%'
+        row['profit_value'] = round(list_profit_values[i], 2)
+        row['purchase_price'] = round(total_holding_values_by_script[i]['total_holding_value'] / total_qty_by_part[i]['total_qty'],2)
+        row['purchase_value'] = round(total_holding_values_by_script[i]['total_holding_value'],2)
+        row['mkt_rate'] = round(total_holding_values_by_script[i]['avg_mkt_rate'],2)
+        row['adj_pur_rate'] = " "
+
+        rows.append(row)
+    total = {
+        'sno': " ",
+        'script': "Total",
+        'qty': int(total_qty),
+        'profit_perc': 100,
+        'profit_value': round(total_profit, 2),
+        'purchase_price': " ",
+        'purchase_value': round(total_holding,2),
+        'mkt_rate': " ",
+        'adj_pur_rate': " "
+    }
+    titles = ['S.N.', 'Script', 'Qty', 'Profit%', 'Profit(Rs)', 'Purchase Price', 'Purchase Value', 'Market Rate',
+              'Adjusted Purchase Rate']
+    pre_table = "Report Date : " + datetime.date.today().strftime('%d/%m/%Y')
+    heading = name + " (FY " + data['fy'] + ")"
+    description = 'Holding Report (Profit Adjusted - ' + data['againstType'] + ')'
+    context = {
+        'heading': heading,
+        'description': description,
+        'pre_table': pre_table,
+        'table': rows,
+        'titles': titles,
+        'total': total,
+        'post_table': " "
+    }
+
+    html = render_to_string('reports/holding-report-member.html', context)
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="Profit_Adjusted_Report.pdf"'
 
     pisaStatus = pisa.CreatePDF(html, dest=response)
     return response

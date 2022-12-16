@@ -207,6 +207,8 @@ class TranSum(models.Model):
             market_rate = services.get_market_rate(self.part)
             if market_rate:
                 market_rate = Decimal(market_rate['Adj Close'])
+            else:
+                market_rate=0
             marketValue = balQty * market_rate
             avgRate = 0
             if balQty != 0:
