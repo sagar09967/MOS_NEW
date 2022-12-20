@@ -598,6 +598,13 @@ def sum_by_key(records, key):
     return sum_result
 
 
+def sum_by_key(records: dict[str], key):
+    sum_result = 0
+    for record in records:
+        sum_result = sum_result + record[key]
+    return sum_result
+
+
 def prepare_purchases_response(request):
     data = request.copy()
     data.pop('sp')
@@ -991,9 +998,10 @@ def get_profit_adj_report(request):
         row['qty'] = int(total_qty_by_part[i]['total_qty'])
         row['profit_perc'] = str(percentages[i]) + '%'
         row['profit_value'] = round(list_profit_values[i], 2)
-        row['purchase_price'] = round(total_holding_values_by_script[i]['total_holding_value'] / total_qty_by_part[i]['total_qty'],2)
-        row['purchase_value'] = round(total_holding_values_by_script[i]['total_holding_value'],2)
-        row['mkt_rate'] = round(total_holding_values_by_script[i]['avg_mkt_rate'],2)
+        row['purchase_price'] = round(
+            total_holding_values_by_script[i]['total_holding_value'] / total_qty_by_part[i]['total_qty'], 2)
+        row['purchase_value'] = round(total_holding_values_by_script[i]['total_holding_value'], 2)
+        row['mkt_rate'] = round(total_holding_values_by_script[i]['avg_mkt_rate'], 2)
         row['adj_pur_rate'] = " "
 
         rows.append(row)
@@ -1004,7 +1012,7 @@ def get_profit_adj_report(request):
         'profit_perc': 100,
         'profit_value': round(total_profit, 2),
         'purchase_price': " ",
-        'purchase_value': round(total_holding,2),
+        'purchase_value': round(total_holding, 2),
         'mkt_rate': " ",
         'adj_pur_rate': " "
     }
@@ -1026,6 +1034,94 @@ def get_profit_adj_report(request):
     html = render_to_string('reports/holding-report-member.html', context)
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="Profit_Adjusted_Report.pdf"'
+
+    pisaStatus = pisa.CreatePDF(html, dest=response)
+    return response
+
+
+@api_view(['GET'])
+def get_transaction_report(request):
+    data = request.query_params.dict()
+    data['fy'] = data.pop('dfy')
+    name = ""
+    if data.get('code'):
+        member = MemberMaster.objects.filter(group=data['group'], code=data['code']).first()
+        name = member.name
+    else:
+        group = CustomerMaster.objects.filter(group=data['group']).first()
+        name = group.firstName + " " + group.lastName
+
+    masters = TranSum.master_objects.filter(**data)
+    if len(masters) == 0:
+        return Response({"status": False, "message": "No data present for selected parameters"})
+    for i in range(0, len(masters)):
+        masters[i].save()
+        masters[i].refresh_from_db()
+
+    purchases = TranSum.purchase_objects.filter(**data)
+    rows = []
+    i = 1
+    for purchase in purchases:
+        sales = MOS_Sales.objects.filter(group=data['group'], code=data['code'], fy=data['fy'], purSno=purchase.sno,
+                                         scriptSno=purchase.scriptSno)
+        temp_purchase = purchase
+        for sale in sales:
+            row = {}
+            row['sno'] = i
+            row['s_date'] = sale.sDate
+            row['part'] = purchase.part
+            row['s_qty'] = sale.sqty
+            row['s_rate'] = float(round(sale.srate, 2))
+            row['s_value'] = float(round(sale.sVal, 2))
+            row['s_stt'] = float(round(sale.stt, 2)) if sale.stt is not None else " "
+            row['s_other'] = float(round(sale.other, 2)) if sale.other is not None else " "
+            row['s_net'] = float(sale.sqty * temp_purchase.rate)
+
+            row['pur_qty'] = float(round(temp_purchase.qty, 2))
+            row['pur_rate'] = float(round(temp_purchase.rate, 2))
+            row['pur_value'] = float(round(temp_purchase.rate * temp_purchase.qty, 2))
+            row['pur_stt'] = float(round(temp_purchase.sttCharges, 2))
+            row['pur_other'] = float(round(temp_purchase.otherCharges, 2))
+            row['pur_net'] = float(round(row['pur_value'] + row['pur_stt'] + row['pur_other'], 2))
+            row['profit'] = float(round(temp_purchase.marketRate * temp_purchase.qty, 2))
+            rows.append(row)
+            i = i+1
+    total = {
+        'sno': " ",
+        's_date': "Total",
+        'part': " ",
+        's_qty': " ",
+        's_rate': " ",
+        's_value': " ",
+        's_stt': " ",
+        's_other': " ",
+        's_net': " ",
+        'pur_qty': " ",
+        'pur_rate': " ",
+        'pur_value': " ",
+        'pur_stt': " ",
+        'pur_other': " ",
+        'pur_net': " ",
+        'profit': sum_by_key(rows, 'profit')
+    }
+    titles = [' ', 'Date', 'Script', 'Qty', 'Rate', 'Value', 'STT', 'Other', 'Net',
+              'Qty', 'Rate', 'Value', 'STT', 'Other', 'Net', 'Profit']
+    pre_table = "Report Date : " + datetime.date.today().strftime('%d/%m/%Y')
+    heading = name + " (FY " + data['fy'] + ")"
+    description = 'Transaction Report ( ' + data['againstType'] + ')'
+    context = {
+        'heading': heading,
+        'description': description,
+        'pre_table': pre_table,
+        'table': rows,
+        'titles': titles,
+        'total': total,
+        'post_table': " "
+    }
+
+    html = render_to_string('reports/transaction-report.html', context)
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="Transaction_Report.pdf"'
 
     pisaStatus = pisa.CreatePDF(html, dest=response)
     return response

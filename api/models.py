@@ -147,7 +147,6 @@ class TranSum(models.Model):
     purchase_objects = manager.PurchaseTranSumManager()
     master_objects = manager.MasterTranSumManager()
 
-
     def save(self, *args, **kwargs):
         super(TranSum, self).save(*args, **kwargs)
         if self.sp == 'A' or self.sp == 'O':
@@ -169,7 +168,8 @@ class TranSum(models.Model):
                     sno = 1
 
             sales_for_current_purchase = MOS_Sales.objects.filter(group=self.group, code=self.code, purSno=self.sno,
-                                                                  scriptSno=self.scriptSno,againstType=self.againstType)
+                                                                  scriptSno=self.scriptSno,
+                                                                  againstType=self.againstType)
             balQty = self.qty - sum_by_key(sales_for_current_purchase, 'sqty')
             market_rate = services.get_market_rate(self.part)
             if market_rate:
@@ -208,7 +208,7 @@ class TranSum(models.Model):
             if market_rate:
                 market_rate = Decimal(market_rate['Adj Close'])
             else:
-                market_rate=0
+                market_rate = 0
             marketValue = balQty * market_rate
             avgRate = 0
             if balQty != 0:

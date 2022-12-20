@@ -32,3 +32,7 @@ urlpatterns.append(
 urlpatterns.append(
     re_path('profit_adj_report', views.get_profit_adj_report)
 )
+
+urlpatterns.append(
+    re_path('transaction_report', views.get_transaction_report)
+)
