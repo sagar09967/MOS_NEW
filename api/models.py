@@ -174,7 +174,10 @@ class TranSum(models.Model):
             market_rate = services.get_market_rate(self.part)
             if market_rate:
                 market_rate = market_rate['Adj Close']
-            marketValue = balQty * market_rate
+                marketValue = balQty * market_rate
+            else:
+                market_rate = None
+                marketValue = None
             HoldingValue = balQty * self.rate
             if balQty > 0:
                 avgRate = HoldingValue / balQty
