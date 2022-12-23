@@ -1148,7 +1148,7 @@ def get_mos_report(request):
 
     sales = MOS_Sales.objects.filter(**data)
     for sale in sales:
-        purchase = TranSum.purchase_objects.filter(group=data['group'], code=data['code'], sno=sale.purSno,
+        purchase = TranSum.purchase_objects.filter(group=data['group'], code=sale.code, sno=sale.purSno,
                                                    scriptSno=sale.scriptSno).first()
         if purchase is None:
             continue
