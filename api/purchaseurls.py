@@ -36,3 +36,7 @@ urlpatterns.append(
 urlpatterns.append(
     re_path('transaction_report', views.get_transaction_report)
 )
+urlpatterns.append(
+    re_path('mos_report', views.get_mos_report)
+)
+

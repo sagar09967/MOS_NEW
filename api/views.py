@@ -1,6 +1,7 @@
 import datetime
 from decimal import Decimal
 
+from dateutil.relativedelta import relativedelta
 from xhtml2pdf import pisa
 
 from .models import TranSum, MemberMaster, CustomerMaster, MOS_Sales
@@ -1085,7 +1086,7 @@ def get_transaction_report(request):
             row['pur_net'] = float(round(row['pur_value'] + row['pur_stt'] + row['pur_other'], 2))
             row['profit'] = float(round(temp_purchase.marketRate * temp_purchase.qty, 2))
             rows.append(row)
-            i = i+1
+            i = i + 1
     total = {
         'sno': " ",
         's_date': "Total",
@@ -1120,8 +1121,103 @@ def get_transaction_report(request):
     }
 
     html = render_to_string('reports/transaction-report.html', context)
+    # html = render_to_string('reports/test.html')
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="Transaction_Report.pdf"'
+
+    pisaStatus = pisa.CreatePDF(html, dest=response)
+    return response
+
+
+@api_view(['GET'])
+def get_mos_report(request):
+    data = request.query_params.dict()
+    # data['fy'] = data.pop('dfy')
+    name = ""
+    if data.get('code'):
+        member = MemberMaster.objects.filter(group=data['group'], code=data['code']).first()
+        name = member.name
+    else:
+        group = CustomerMaster.objects.filter(group=data['group']).first()
+        name = group.firstName + " " + group.lastName
+
+    ltcg_released = []
+    ltcg_unreleased = []
+    stcg_released = []
+    stcg_unreleased = []
+
+    sales = MOS_Sales.objects.filter(**data)
+    for sale in sales:
+        purchase = TranSum.purchase_objects.filter(group=data['group'], code=data['code'], sno=sale.purSno,
+                                                   scriptSno=sale.scriptSno).first()
+        if purchase is None:
+            continue
+        sale_row = {}
+
+        sale_row['sno'] = 0
+        sale_row['script'] = purchase.part
+        sale_row['qty'] = sale.sqty
+        sale_row['pur_date'] = purchase.trDate
+        sale_row['pur_rate'] = purchase.rate
+        sale_row['sale_date'] = sale.sDate
+        sale_row['sale_rate'] = sale.srate
+        time_delta = relativedelta(sale.sDate, purchase.trDate)
+        if (time_delta.years * 12 + time_delta.months) <= 12:
+            sale_row['cg'] = sale.stcg
+            stcg_released.append(sale_row)
+        else:
+            sale_row['cg'] = sale.ltcg
+            ltcg_released.append(sale_row)
+
+    purchases = TranSum.purchase_objects.filter(**data).filter(balQty__gt=0)
+    for purchase in purchases:
+        purchase_row = {}
+        purchase_row['sno'] = 0
+        purchase_row['script'] = purchase.part
+        purchase_row['qty'] = purchase.balQty
+        purchase_row['pur_date'] = purchase.trDate
+        purchase_row['pur_rate'] = purchase.rate
+        purchase_row['closing'] = purchase.balQty
+        mkt_rate = services.get_market_rate_value(purchase.part)
+        purchase_row['marketRate'] = mkt_rate if mkt_rate is not None else " "
+        purchase_row['cg'] = (Decimal(mkt_rate) - purchase.rate) * purchase.balQty if mkt_rate is not None else " "
+        time_delta = relativedelta(datetime.date.today(), purchase.trDate)
+        if (time_delta.years * 12 + time_delta.months) <= 12:
+            sale_row['cg'] = sale.stcg
+            stcg_unreleased.append(sale_row)
+        else:
+            sale_row['cg'] = sale.ltcg
+            ltcg_unreleased.append(sale_row)
+
+    stcg_unreleased_total = sum_by_key(stcg_unreleased, 'cg')
+    stcg_released_total = sum_by_key(stcg_released, 'cg')
+    ltcg_released_total = sum_by_key(ltcg_released, 'cg')
+    ltcg_unreleased_total = sum_by_key(ltcg_unreleased, 'cg')
+
+    totals = {
+        'stcg_unreleased_total': stcg_unreleased_total,
+        'stcg_released_total': stcg_released_total,
+        'ltcg_released_total': ltcg_released_total,
+        'ltcg_unreleased_total': ltcg_unreleased_total
+    }
+    pre_table = "Report Date : " + datetime.date.today().strftime('%d/%m/%Y')
+    heading = name
+    description = 'MOS Report ( ' + data['againstType'] + ')'
+    context = {
+        'ltcg_released': ltcg_released,
+        'ltcg_unreleased': ltcg_unreleased,
+        'stcg_released': stcg_released,
+        'stcg_unreleased': stcg_unreleased,
+        'totals': totals,
+        'heading': heading,
+        'description': description,
+        'pre_table': pre_table,
+    }
+
+    html = render_to_string('reports/mos_report.html', context)
+    # html = render_to_string('reports/test.html')
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="MOS_Report.pdf"'
 
     pisaStatus = pisa.CreatePDF(html, dest=response)
     return response

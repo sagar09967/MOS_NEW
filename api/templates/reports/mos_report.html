@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Holding Report</title>
+
+    <style>
+    @page main_template{
+        size: letter landscape;
+        margin: 2cm;
+        @frame content_frame {
+            left: 30pt;
+            width: 742pt;
+            top: 30pt;
+            height: 542pt;
+            -pdf-frame-border: 1;   /* for debugging the layout */
+        }
+
+        @frame header_frame {           /* Static Frame */
+            -pdf-frame-content: header_content;
+            left: 30pt; width: 742pt; top: 30pt; height: 40pt;
+        }
+
+        @frame footer_frame {           /* Another static Frame */
+            -pdf-frame-content: footer_content;
+            left: 50pt; width: 512pt; top: 772pt; height: 20pt;
+        }
+    }
+        .customers {
+          font-family: "Trebuchet MS", Tahoma, sans-serif;
+          table-layout: auto;
+          width:100%;
+          {% comment %} font-weight: bold; {% endcomment %}
+
+        }
+
+        .customers td, #customers th {
+          border: 1px solid black;
+
+        }
+
+        #customers th {
+          text-align:center;
+          background-color:#808080;
+          padding:2px;
+        }
+        td{
+          text-align: center;
+          padding:2px;
+          font-size:11px;
+        }
+
+        #date{
+          font-size:11px;
+          font-family: "Trebuchet MS", Tahoma, sans-serif;
+          text-align:left;
+        }
+
+        table > tr > td:nth-of-type(1) {
+        background-color: yellow;
+}
+
+
+    </style>
+</head>
+<body>
+
+
+<div>
+    <h3 style="text-align:center;">{{heading}}</h3>
+    <h3 style="text-align:center;">{{description}}</h3>
+</div>
+
+<p id='date'>{{pre_table}}</p>
+<table class="customers" align="center">
+    <tr>
+        <th scope="col">S. N.</th>
+        <th scope="col">Script</th>
+        <th scope="col">Qty</th>
+        <th scope="col">Pur.Date</th>
+        <th scope="col">Pur Rate</th>
+        <th scope="col">Sale Date</th>
+        <th scope="col">Sale Rate</th>
+        <th scope="col">LTCG</th>
+    </tr>
+
+
+    {% for row in ltcg_released %}
+    <tr>
+        {% for value in row.values %}
+        <td>{{value}}</td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+
+    <tr style='background-color:#808080'>
+        <td></td>
+        <td>Total</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td>{{totals.ltcg_released_total}}</td>
+    </tr>
+
+
+</table>
+
+<table class="customers" align="center">
+    <tr>
+        <th scope="col">S. N.</th>
+        <th scope="col">Script</th>
+        <th scope="col">Qty</th>
+        <th scope="col">Pur.Date</th>
+        <th scope="col">Pur Rate</th>
+        <th scope="col">Closing</th>
+        <th scope="col">Mkt Rate</th>
+        <th scope="col">LTCG</th>
+    </tr>
+
+
+    {% for row in ltcg_unreleased %}
+    <tr>
+        {% for value in row.values %}
+        <td>{{value}}</td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+
+    <tr style='background-color:#808080'>
+        <td></td>
+        <td>Total</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td>{{totals.ltcg_unreleased_total}}</td>
+    </tr>
+
+
+</table>
+
+<table class="customers" align="center">
+    <tr>
+        <th scope="col">S #</th>
+        <th scope="col">S. N.</th>
+        <th scope="col">Script</th>
+        <th scope="col">Qty</th>
+        <th scope="col">Pur.Date</th>
+        <th scope="col">Pur Rate</th>
+        <th scope="col">Sale Date</th>
+        <th scope="col">Sale Rate</th>
+        <th scope="col">STCG</th>
+    </tr>
+
+
+    {% for row in stcg_released %}
+    <tr>
+        {% for value in row.values %}
+        <td>{{value}}</td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+
+    <tr style='background-color:#808080'>
+        <td></td>
+        <td>Total</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td>{{totals.stcg_released_total}}</td>
+    </tr>
+
+
+</table>
+<table class="customers" align="center">
+    <tr>
+        <th scope="col">S. N.</th>
+        <th scope="col">Script</th>
+        <th scope="col">Qty</th>
+        <th scope="col">Pur.Date</th>
+        <th scope="col">Pur Rate</th>
+        <th scope="col">Closing</th>
+        <th scope="col">Mkt Rate</th>
+        <th scope="col">LTCG</th>
+    </tr>
+
+
+    {% for row in stcg_unreleased %}
+    <tr>
+        {% for value in row.values %}
+        <td>{{value}}</td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+
+    <tr style='background-color:#808080'>
+        <td></td>
+        <td>Total</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td>{{totals.stcg_unreleased_total}}</td>
+    </tr>
+
+
+</table>
+
+</body>
+</html>

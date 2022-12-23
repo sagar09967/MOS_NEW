@@ -7,7 +7,7 @@
     <title>Holding Report</title>
 
     <style>
-    @page {
+    @page main_template{
         size: letter landscape;
         margin: 2cm;
         @frame content_frame {
@@ -15,12 +15,22 @@
             width: 742pt;
             top: 30pt;
             height: 542pt;
-            /*-pdf-frame-border: 1;*/    /* for debugging the layout */
+            -pdf-frame-border: 1;   /* for debugging the layout */
+        }
+
+        @frame header_frame {           /* Static Frame */
+            -pdf-frame-content: header_content;
+            left: 30pt; width: 742pt; top: 30pt; height: 40pt;
+        }
+
+        @frame footer_frame {           /* Another static Frame */
+            -pdf-frame-content: footer_content;
+            left: 50pt; width: 512pt; top: 772pt; height: 20pt;
         }
     }
         #customers {
           font-family: "Trebuchet MS", Tahoma, sans-serif;
-          table-layout: fixed;
+          table-layout: auto;
           width:100%;
           {% comment %} font-weight: bold; {% endcomment %}
 
@@ -34,11 +44,11 @@
         #customers th {
           text-align:center;
           background-color:#808080;
-          padding:4px;
+          padding:2px;
         }
         td{
           text-align: center;
-          padding:4px;
+          padding:2px;
           font-size:11px;
         }
 
@@ -58,7 +68,7 @@
 <body>
 
 
-<div id="header_content">
+<div>
     <h3 style="text-align:center;">{{heading}}</h3>
     <h3 style="text-align:center;">{{description}}</h3>
 </div>
