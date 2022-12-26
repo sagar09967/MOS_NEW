@@ -36,19 +36,19 @@
 
         }
 
-        .customers td, #customers th {
+        .customers td, .customers th {
           border: 1px solid black;
 
         }
 
-        #customers th {
+        .customers th {
           text-align:center;
           background-color:#808080;
-          padding:2px;
+          padding:4px;
         }
         td{
           text-align: center;
-          padding:2px;
+          padding:4px;
           font-size:11px;
         }
 
@@ -63,6 +63,9 @@
 }
 
 
+
+
+
     </style>
 </head>
 <body>
@@ -74,6 +77,12 @@
 </div>
 
 <p id='date'>{{pre_table}}</p>
+
+<div style="display:inline">
+    <p style="width:max-content">Long Term Capital Gains</p>
+    <p style="text-align:right">Released</p>
+</div>
+
 <table class="customers" align="center">
     <tr>
         <th scope="col">S. N.</th>
@@ -89,6 +98,7 @@
 
     {% for row in ltcg_released %}
     <tr>
+        <td>{{forloop.counter}}</td>
         {% for value in row.values %}
         <td>{{value}}</td>
         {% endfor %}
@@ -96,19 +106,19 @@
     {% endfor %}
 
     <tr style='background-color:#808080'>
-        <td></td>
+        <td>{{" "}}</td>
         <td>Total</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
+        <td>{{" "}}</td>
+        <td>{{" "}}</td>
+        <td>{{" "}}</td>
+        <td>{{" "}}</td>
+        <td>{{" "}}</td>
         <td>{{totals.ltcg_released_total}}</td>
     </tr>
 
 
 </table>
-
+<p style="text-align:right">Unreleased</p>
 <table class="customers" align="center">
     <tr>
         <th scope="col">S. N.</th>
@@ -124,6 +134,7 @@
 
     {% for row in ltcg_unreleased %}
     <tr>
+        <td>{{forloop.counter}}</td>
         {% for value in row.values %}
         <td>{{value}}</td>
         {% endfor %}
@@ -131,22 +142,21 @@
     {% endfor %}
 
     <tr style='background-color:#808080'>
-        <td></td>
+        <td>{{" "}}</td>
         <td>Total</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
+        <td>{{" "}}</td>
+        <td>{{" "}}</td>
+        <td>{{" "}}</td>
+        <td>{{" "}}</td>
+        <td>{{" "}}</td>
         <td>{{totals.ltcg_unreleased_total}}</td>
     </tr>
 
 
 </table>
-
+<p style="text-align:right">Released</p>
 <table class="customers" align="center">
     <tr>
-        <th scope="col">S #</th>
         <th scope="col">S. N.</th>
         <th scope="col">Script</th>
         <th scope="col">Qty</th>
@@ -160,6 +170,8 @@
 
     {% for row in stcg_released %}
     <tr>
+        <td>{{forloop.counter}}</td>
+
         {% for value in row.values %}
         <td>{{value}}</td>
         {% endfor %}
@@ -167,19 +179,20 @@
     {% endfor %}
 
     <tr style='background-color:#808080'>
-        <td></td>
+        <td>{{" "}}</td>
         <td>Total</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
+        <td>{{" "}}</td>
+        <td>{{" "}}</td>
+        <td>{{" "}}</td>
+        <td>{{" "}}</td>
+        <td>{{" "}}</td>
         <td>{{totals.stcg_released_total}}</td>
     </tr>
 
 
 </table>
+
+<p style="text-align:right">Unreleased</p>
 <table class="customers" align="center">
     <tr>
         <th scope="col">S. N.</th>
@@ -195,6 +208,7 @@
 
     {% for row in stcg_unreleased %}
     <tr>
+        <td>{{forloop.counter}}</td>
         {% for value in row.values %}
         <td>{{value}}</td>
         {% endfor %}
@@ -202,13 +216,13 @@
     {% endfor %}
 
     <tr style='background-color:#808080'>
-        <td></td>
+        <td>{{" "}}</td>
         <td>Total</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
+        <td>{{" "}}</td>
+        <td>{{" "}}</td>
+        <td>{{" "}}</td>
+        <td>{{" "}}</td>
+        <td>{{" "}}</td>
         <td>{{totals.stcg_unreleased_total}}</td>
     </tr>
 

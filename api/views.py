@@ -1154,39 +1154,39 @@ def get_mos_report(request):
             continue
         sale_row = {}
 
-        sale_row['sno'] = 0
+        #sale_row['sno'] = 0
         sale_row['script'] = purchase.part
         sale_row['qty'] = sale.sqty
         sale_row['pur_date'] = purchase.trDate
-        sale_row['pur_rate'] = purchase.rate
+        sale_row['pur_rate'] = round(purchase.rate,2)
         sale_row['sale_date'] = sale.sDate
-        sale_row['sale_rate'] = sale.srate
+        sale_row['sale_rate'] = round(sale.srate,2)
         time_delta = relativedelta(sale.sDate, purchase.trDate)
         if (time_delta.years * 12 + time_delta.months) <= 12:
-            sale_row['cg'] = sale.stcg
+            sale_row['cg'] = round(sale.stcg,2)
             stcg_released.append(sale_row)
         else:
-            sale_row['cg'] = sale.ltcg
+            sale_row['cg'] = round(sale.ltcg,2)
             ltcg_released.append(sale_row)
 
     purchases = TranSum.purchase_objects.filter(**data).filter(balQty__gt=0)
     for purchase in purchases:
         purchase_row = {}
-        purchase_row['sno'] = 0
+        #purchase_row['sno'] = 0
         purchase_row['script'] = purchase.part
         purchase_row['qty'] = purchase.balQty
         purchase_row['pur_date'] = purchase.trDate
-        purchase_row['pur_rate'] = purchase.rate
+        purchase_row['pur_rate'] = round(purchase.rate,2)
         purchase_row['closing'] = purchase.balQty
         mkt_rate = services.get_market_rate_value(purchase.part)
-        purchase_row['marketRate'] = mkt_rate if mkt_rate is not None else " "
+        purchase_row['marketRate'] = round(mkt_rate,2) if mkt_rate is not None else " "
         purchase_row['cg'] = (Decimal(mkt_rate) - purchase.rate) * purchase.balQty if mkt_rate is not None else " "
         time_delta = relativedelta(datetime.date.today(), purchase.trDate)
         if (time_delta.years * 12 + time_delta.months) <= 12:
-            sale_row['cg'] = sale.stcg
+            sale_row['cg'] = round(sale.stcg,2)
             stcg_unreleased.append(sale_row)
         else:
-            sale_row['cg'] = sale.ltcg
+            sale_row['cg'] = round(sale.ltcg,2)
             ltcg_unreleased.append(sale_row)
 
     stcg_unreleased_total = sum_by_key(stcg_unreleased, 'cg')
@@ -1195,10 +1195,10 @@ def get_mos_report(request):
     ltcg_unreleased_total = sum_by_key(ltcg_unreleased, 'cg')
 
     totals = {
-        'stcg_unreleased_total': stcg_unreleased_total,
-        'stcg_released_total': stcg_released_total,
-        'ltcg_released_total': ltcg_released_total,
-        'ltcg_unreleased_total': ltcg_unreleased_total
+        'stcg_unreleased_total': round(stcg_unreleased_total,2),
+        'stcg_released_total': round(stcg_released_total,2),
+        'ltcg_released_total': round(ltcg_released_total,2),
+        'ltcg_unreleased_total': round(ltcg_unreleased_total,2)
     }
     pre_table = "Report Date : " + datetime.date.today().strftime('%d/%m/%Y')
     heading = name
