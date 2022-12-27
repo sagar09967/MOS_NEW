@@ -40,3 +40,7 @@ urlpatterns.append(
     re_path('mos_report', views.get_mos_report)
 )
 
+urlpatterns.append(
+    re_path('strategy', views.get_strategy)
+)
+

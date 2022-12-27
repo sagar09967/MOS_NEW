@@ -1154,39 +1154,39 @@ def get_mos_report(request):
             continue
         sale_row = {}
 
-        #sale_row['sno'] = 0
+        # sale_row['sno'] = 0
         sale_row['script'] = purchase.part
         sale_row['qty'] = sale.sqty
         sale_row['pur_date'] = purchase.trDate
-        sale_row['pur_rate'] = round(purchase.rate,2)
+        sale_row['pur_rate'] = round(purchase.rate, 2)
         sale_row['sale_date'] = sale.sDate
-        sale_row['sale_rate'] = round(sale.srate,2)
+        sale_row['sale_rate'] = round(sale.srate, 2)
         time_delta = relativedelta(sale.sDate, purchase.trDate)
         if (time_delta.years * 12 + time_delta.months) <= 12:
-            sale_row['cg'] = round(sale.stcg,2)
+            sale_row['cg'] = round(sale.stcg, 2)
             stcg_released.append(sale_row)
         else:
-            sale_row['cg'] = round(sale.ltcg,2)
+            sale_row['cg'] = round(sale.ltcg, 2)
             ltcg_released.append(sale_row)
 
     purchases = TranSum.purchase_objects.filter(**data).filter(balQty__gt=0)
     for purchase in purchases:
         purchase_row = {}
-        #purchase_row['sno'] = 0
+        # purchase_row['sno'] = 0
         purchase_row['script'] = purchase.part
         purchase_row['qty'] = purchase.balQty
         purchase_row['pur_date'] = purchase.trDate
-        purchase_row['pur_rate'] = round(purchase.rate,2)
+        purchase_row['pur_rate'] = round(purchase.rate, 2)
         purchase_row['closing'] = purchase.balQty
         mkt_rate = services.get_market_rate_value(purchase.part)
-        purchase_row['marketRate'] = round(mkt_rate,2) if mkt_rate is not None else " "
+        purchase_row['marketRate'] = round(mkt_rate, 2) if mkt_rate is not None else " "
         purchase_row['cg'] = (Decimal(mkt_rate) - purchase.rate) * purchase.balQty if mkt_rate is not None else " "
         time_delta = relativedelta(datetime.date.today(), purchase.trDate)
         if (time_delta.years * 12 + time_delta.months) <= 12:
-            sale_row['cg'] = round(sale.stcg,2)
+            sale_row['cg'] = round(sale.stcg, 2)
             stcg_unreleased.append(sale_row)
         else:
-            sale_row['cg'] = round(sale.ltcg,2)
+            sale_row['cg'] = round(sale.ltcg, 2)
             ltcg_unreleased.append(sale_row)
 
     stcg_unreleased_total = sum_by_key(stcg_unreleased, 'cg')
@@ -1195,10 +1195,10 @@ def get_mos_report(request):
     ltcg_unreleased_total = sum_by_key(ltcg_unreleased, 'cg')
 
     totals = {
-        'stcg_unreleased_total': round(stcg_unreleased_total,2),
-        'stcg_released_total': round(stcg_released_total,2),
-        'ltcg_released_total': round(ltcg_released_total,2),
-        'ltcg_unreleased_total': round(ltcg_unreleased_total,2)
+        'stcg_unreleased_total': round(stcg_unreleased_total, 2),
+        'stcg_released_total': round(stcg_released_total, 2),
+        'ltcg_released_total': round(ltcg_released_total, 2),
+        'ltcg_unreleased_total': round(ltcg_unreleased_total, 2)
     }
     pre_table = "Report Date : " + datetime.date.today().strftime('%d/%m/%Y')
     heading = name
@@ -1221,6 +1221,26 @@ def get_mos_report(request):
 
     pisaStatus = pisa.CreatePDF(html, dest=response)
     return response
+
+
+@transaction.atomic
+@api_view(['GET'])
+def get_strategy(request):
+    data = request.query_params.dict()
+    data['fy'] = data.pop('dfy')
+    days = data.pop('days')
+    records = TranSum.objects.filter(**data)
+    part_list = list(records.values_list('part', flat=True).distinct())
+    strategy_record = services.get_strategy_values(part_list, days)
+    print(strategy_record)
+    for strategy in strategy_record:
+        temp_records = records.filter(part=strategy['part'])
+        temp_records.update(strategyDate=datetime.datetime.strptime(strategy['date'], '%d-%m-%Y'),
+                            strategyTrigger=strategy['trigger'])
+
+    data = prepare_holdings_response(request.query_params.dict())
+
+    return Response({"status": True, "message": "Strategy Updated", "data": data})
 
 
 def round_to_100_percent(number_set, digit_after_decimal=2):
