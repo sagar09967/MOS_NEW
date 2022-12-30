@@ -1,8 +1,10 @@
 import io
 import json, requests
+from tempfile import NamedTemporaryFile
+
 import pandas as pd
 from openpyxl import load_workbook
-
+from openpyxl.writer.excel import save_virtual_workbook
 
 def get_market_rate(part):
     response = requests.post('https://mosapi.sinewave.co.in/stocks/', json={'tickers': part}, verify=False)
@@ -50,3 +52,10 @@ def get_strategy_values(parts, days):
         result.append(record)
 
     return result
+
+def get_strategy_file(parts, days):
+    bytes = get_strategy(parts,days)
+    wb = load_workbook(bytes)
+    #wb.template = False
+    #wb.save('temp/'+'_'.join(parts)+'_'+str(days)+'_'+'strategy.xlsx')
+    return save_virtual_workbook(wb)

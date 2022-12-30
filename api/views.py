@@ -1237,10 +1237,13 @@ def get_strategy(request):
         temp_records = records.filter(part=strategy['part'])
         temp_records.update(strategyDate=datetime.datetime.strptime(strategy['date'], '%d-%m-%Y'),
                             strategyTrigger=strategy['trigger'])
+    wb_file = services.get_strategy_file(part_list, days)
+    #data = prepare_holdings_response(request.query_params.dict())
 
-    data = prepare_holdings_response(request.query_params.dict())
+    response = HttpResponse(content=wb_file,content_type='application/vnd.ms-excel')
+    response['Content-Disposition'] = 'attachment; filename=strategy.xlsx'
 
-    return Response({"status": True, "message": "Strategy Updated", "data": data})
+    return response
 
 
 def round_to_100_percent(number_set, digit_after_decimal=2):
