@@ -29,6 +29,7 @@ from django.db.models import Sum
 import decimal
 from . import services
 from django.template.loader import render_to_string
+import locale
 
 
 # <-------------------- SavePurch API ---------------------->
@@ -793,21 +794,24 @@ def get_holding_report(request):
     list_holding_values = total_holding_values_by_part.values_list('total_holding_value', flat=True)
     percentages = round_to_100_percent(list_holding_values, 2)
     rows = []
+    locale.setlocale(locale.LC_ALL, 'en_IN.utf8')
     for i in range(0, len(total_holding_values_by_part)):
         row = {}
         row['sno'] = i + 1
         row['script'] = total_holding_values_by_part[i]['part']
-        row['qty'] = int(total_qty_by_part[i]['total_qty'])
+        row['qty'] = locale.format_string("%d", int(total_qty_by_part[i]['total_qty']), grouping=True)
         row['holding_perc'] = str(percentages[i]) + '%'
-        row['holding_value'] = round(total_holding_values_by_part[i]['total_holding_value'], 2)
+        row['holding_value'] = locale.format_string("%.2f",
+                                                    round(total_holding_values_by_part[i]['total_holding_value'], 2),
+                                                    grouping=True)
         rows.append(row)
 
     total = {
         'sno': " ",
         'script': "Total",
-        'qty': int(total_qty),
+        'qty': locale.format_string("%d", int(total_qty), grouping=True),
         'holding_perc': 100,
-        'holding_value': round(total_holding, 2)
+        'holding_value': locale.format_string("%.2f", round(total_holding, 2), grouping=True)
     }
     titles = ['S.N.', 'Script', 'Qty', 'Holding%', 'Holding(Rs)']
     pre_table = "Report Date : " + datetime.date.today().strftime('%d/%m/%Y')
@@ -847,7 +851,7 @@ def get_scriptwise_profit_report(request):
 
     if len(masters) == 0:
         return Response({"status": False, "message": "No data present for selected parameters"})
-
+    locale.setlocale(locale.LC_ALL, 'en_IN.utf8')
     for i in range(0, len(masters)):
         masters[i].save()
         masters[i].refresh_from_db()
@@ -859,6 +863,7 @@ def get_scriptwise_profit_report(request):
     total_qty_by_part = masters.values('part').annotate(total_qty=(Sum('balQty')))
     total_qty = list(total_qty_by_part.aggregate(Sum('total_qty')).values())[0]
     list_profit_values = []
+
     for i in range(0, len(total_holding_values_by_script)):
         list_profit_values.append(
             Decimal(total_market_values_by_script[i]['total_market_value']) - total_holding_values_by_script[i][
@@ -893,23 +898,23 @@ def get_scriptwise_profit_report(request):
         row = {}
         row['sno'] = i + 1
         row['script'] = total_holding_values_by_script[i]['part']
-        row['qty'] = int(total_qty_by_part[i]['total_qty'])
+        row['qty'] = locale.format_string("%d", int(total_qty_by_part[i]['total_qty']), grouping=True)
         row['profit_perc'] = str(percentages[i]) + '%'
-        row['profit_value'] = round(list_profit_values[i], 2)
-        row['stcg'] = round(stcg, 2)
-        row['ltcg'] = round(ltcg, 2)
-        row['speculation'] = round(speculation, 2)
+        row['profit_value'] = locale.format_string("%.2f", round(list_profit_values[i], 2), grouping=True)
+        row['stcg'] = locale.format_string("%.2f", round(stcg, 2), grouping=True)
+        row['ltcg'] = locale.format_string("%.2f", round(ltcg, 2), grouping=True)
+        row['speculation'] = locale.format_string("%.2f", round(speculation, 2), grouping=True)
 
         rows.append(row)
     total = {
         'sno': " ",
         'script': "Total",
-        'qty': int(total_qty),
+        'qty': locale.format_string("%d", int(total_qty), grouping=True),
         'profit_perc': 100,
-        'profit_value': round(total_profit, 2),
-        'stcg': round(total_stcg, 2),
-        'ltcg': round(total_ltcg, 2),
-        'speculation': round(total_speculation, 2)
+        'profit_value': locale.format_string("%.2f", round(total_profit, 2), grouping=True),
+        'stcg': locale.format_string("%.2f", round(total_stcg, 2), grouping=True),
+        'ltcg': locale.format_string("%.2f", round(total_ltcg, 2), grouping=True),
+        'speculation': locale.format_string("%.2f", round(total_speculation, 2), grouping=True)
     }
     titles = ['S.N.', 'Script', 'Qty', 'Profit%', 'Profit(Rs)', 'STCG', 'LTCG', 'Speculation']
     pre_table = "Report Date : " + datetime.date.today().strftime('%d/%m/%Y')
@@ -925,7 +930,7 @@ def get_scriptwise_profit_report(request):
         'post_table': " "
     }
 
-    html = render_to_string('reports/holding-report-member.html', context)
+    html = render_to_string('reports/scriptwise-profit-report.html', context)
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="Scriptwise_Profit_Report.pdf"'
 
@@ -1032,7 +1037,7 @@ def get_profit_adj_report(request):
         'post_table': " "
     }
 
-    html = render_to_string('reports/holding-report-member.html', context)
+    html = render_to_string('reports/profit-adjusted-report.html', context)
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="Profit_Adjusted_Report.pdf"'
 
@@ -1238,9 +1243,9 @@ def get_strategy(request):
         temp_records.update(strategyDate=datetime.datetime.strptime(strategy['date'], '%d-%m-%Y'),
                             strategyTrigger=strategy['trigger'])
     wb_file = services.get_strategy_file(part_list, days)
-    #data = prepare_holdings_response(request.query_params.dict())
+    # data = prepare_holdings_response(request.query_params.dict())
 
-    response = HttpResponse(content=wb_file,content_type='application/vnd.ms-excel')
+    response = HttpResponse(content=wb_file, content_type='application/vnd.ms-excel')
     response['Content-Disposition'] = 'attachment; filename=strategy.xlsx'
 
     return response

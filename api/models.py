@@ -102,7 +102,7 @@ class TranSum(models.Model):
     fy = models.CharField(max_length=9, choices=FY)
     againstType = models.CharField(max_length=20, choices=TYPE)
     sp = models.CharField(max_length=2)
-    part = models.CharField(max_length=30)
+    part = models.CharField(max_length=100)
     sno = models.IntegerField(blank=True, null=True, default=0)
     fmr = models.FloatField(null=True, blank=True)
     isinCode = models.CharField(max_length=30, null=True, blank=True)

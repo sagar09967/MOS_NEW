@@ -12,13 +12,14 @@
         margin: 2cm;
         @frame content_frame {
             left: 30pt;
-            width: 532pt;
+            width: 552pt;
             top: 30pt;
             height: 712pt;
             /*-pdf-frame-border: 1; */   /* for debugging the layout */
         }
     }
         table {
+             table-layout:fixed;
              border: 1px solid black;
         }
         th {
@@ -57,11 +58,15 @@
 
 
     <tr>
-        <th scope="col" class="right" width="40">S. N.</th>
-        <th scope="col" class="left">Script</th>
-        <th scope="col" class="right" width="80">Qty.</th>
-        <th scope="col" class="right">Holding %</th>
-        <th scope="col" class="right">Holding(Rs)</th>
+        <th scope="col" class="right">S. N.</th>
+        <th scope="col" class="left" width="80">Script</th>
+        <th scope="col" class="right">Qty.</th>
+        <th scope="col" class="right" >Profit %</th>
+        <th scope="col" class="right">Profit(Rs)</th>
+        <th scope="col" class="right" >Purchase Price</th>
+        <th scope="col" class="right" >Purchase Value</th>
+        <th scope="col" class="right">Market Rate</th>
+        <th scope="col" class="right" >Adjusted Purchase Rate</th>
     </tr>
 
 
@@ -70,8 +75,12 @@
         <td class="right">{{forloop.counter}}</td>
         <td class="left">{{row.script}}</td>
         <td class="right">{{row.qty}}</td>
-        <td class="right">{{row.holding_perc}}</td>
-        <td class="right">{{row.holding_value}}</td>
+        <td class="right">{{row.profit_perc}}</td>
+        <td class="right">{{row.profit_value}}</td>
+        <td class="right">{{row.purchase_price}}</td>
+        <td class="right">{{row.purchase_value}}</td>
+        <td class="right">{{row.mkt_rate}}</td>
+        <td class="right">{{row.adj_pur_rate}}</td>
     </tr>
     {% endfor %}
 
@@ -79,8 +88,12 @@
         <td> </td>
         <td class="left">Total</td>
         <td class="right">{{total.qty}}</td>
-        <td class="right">{{total.holding_perc}}</td>
-        <td class="right">{{total.holding_value}}</td>
+        <td class="right">{{total.profit_perc}}</td>
+        <td class="right">{{total.profit_value}}</td>
+        <td class="right">{{total.purchase_price}}</td>
+        <td class="right">{{total.purchase_value}}</td>
+        <td class="right">{{total.mkt_rate}}</td>
+        <td class="right">{{total.adj_pur_rate}}</td>
 
     </tr>
 

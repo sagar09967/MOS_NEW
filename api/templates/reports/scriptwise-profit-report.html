@@ -11,9 +11,9 @@
         size: letter portrait;
         margin: 2cm;
         @frame content_frame {
-            left: 30pt;
-            width: 532pt;
-            top: 30pt;
+            left: 20pt;
+            width: 562pt;
+            top: 20pt;
             height: 712pt;
             /*-pdf-frame-border: 1; */   /* for debugging the layout */
         }
@@ -58,10 +58,13 @@
 
     <tr>
         <th scope="col" class="right" width="40">S. N.</th>
-        <th scope="col" class="left">Script</th>
-        <th scope="col" class="right" width="80">Qty.</th>
-        <th scope="col" class="right">Holding %</th>
-        <th scope="col" class="right">Holding(Rs)</th>
+        <th scope="col" class="left" width="120">Script</th>
+        <th scope="col" class="right" width="40">Qty.</th>
+        <th scope="col" class="right" width="50">Profit %</th>
+        <th scope="col" class="right" width="80">Profit(Rs)</th>
+        <th scope="col" class="right" width="70">STCG</th>
+        <th scope="col" class="right" width="70">LTCG</th>
+        <th scope="col" class="right" width="80">Speculation</th>
     </tr>
 
 
@@ -70,8 +73,11 @@
         <td class="right">{{forloop.counter}}</td>
         <td class="left">{{row.script}}</td>
         <td class="right">{{row.qty}}</td>
-        <td class="right">{{row.holding_perc}}</td>
-        <td class="right">{{row.holding_value}}</td>
+        <td class="right">{{row.profit_perc}}</td>
+        <td class="right">{{row.profit_value}}</td>
+        <td class="right">{{row.stcg}}</td>
+        <td class="right">{{row.ltcg}}</td>
+        <td class="right">{{row.speculation}}</td>
     </tr>
     {% endfor %}
 
@@ -79,8 +85,11 @@
         <td> </td>
         <td class="left">Total</td>
         <td class="right">{{total.qty}}</td>
-        <td class="right">{{total.holding_perc}}</td>
-        <td class="right">{{total.holding_value}}</td>
+        <td class="right">{{total.profit_perc}}</td>
+        <td class="right">{{total.profit_value}}</td>
+        <td class="right">{{total.stcg}}</td>
+        <td class="right">{{total.ltcg}}</td>
+        <td class="right">{{total.speculation}}</td>
 
     </tr>
 
