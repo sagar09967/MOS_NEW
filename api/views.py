@@ -783,7 +783,7 @@ def get_holding_report(request):
         group = CustomerMaster.objects.filter(group=data['group']).first()
         name = group.firstName + " " + group.lastName
 
-    masters = TranSum.master_objects.filter(**data)
+    masters = TranSum.master_objects.filter(**data).filter(balQty__gt=0).order_by('part')
     if len(masters) == 0:
         return Response({"status": False, "message": "No data present for selected parameters"})
 
@@ -847,7 +847,7 @@ def get_scriptwise_profit_report(request):
         group = CustomerMaster.objects.filter(group=data['group']).first()
         name = group.firstName + " " + group.lastName
 
-    masters = TranSum.master_objects.filter(**data)
+    masters = TranSum.master_objects.filter(**data).order_by('part')
 
     if len(masters) == 0:
         return Response({"status": False, "message": "No data present for selected parameters"})
@@ -953,6 +953,7 @@ def get_profit_adj_report(request):
     masters = TranSum.master_objects.filter(**data)
     if len(masters) == 0:
         return Response({"status": False, "message": "No data present for selected parameters"})
+    locale.setlocale(locale.LC_ALL, 'en_IN.utf8')
     for i in range(0, len(masters)):
         masters[i].save()
         masters[i].refresh_from_db()
@@ -1001,24 +1002,28 @@ def get_profit_adj_report(request):
         row = {}
         row['sno'] = i + 1
         row['script'] = total_holding_values_by_script[i]['part']
-        row['qty'] = int(total_qty_by_part[i]['total_qty'])
+        row['qty'] = locale.format_string("%d", int(total_qty_by_part[i]['total_qty']),grouping=True)
         row['profit_perc'] = str(percentages[i]) + '%'
-        row['profit_value'] = round(list_profit_values[i], 2)
-        row['purchase_price'] = round(
-            total_holding_values_by_script[i]['total_holding_value'] / total_qty_by_part[i]['total_qty'], 2)
-        row['purchase_value'] = round(total_holding_values_by_script[i]['total_holding_value'], 2)
-        row['mkt_rate'] = round(total_holding_values_by_script[i]['avg_mkt_rate'], 2)
+        row['profit_value'] = locale.format_string("%.2f", round(list_profit_values[i], 2),grouping=True)
+        if total_qty_by_part[i]['total_qty'] == 0:
+            row['purchase_price'] = 0
+        else:
+            row['purchase_price'] = locale.format_string("%.2f", round(
+                total_holding_values_by_script[i]['total_holding_value'] / total_qty_by_part[i]['total_qty'], 2),grouping=True)
+        row['purchase_value'] = locale.format_string("%.2f",
+                                                     round(total_holding_values_by_script[i]['total_holding_value'], 2),grouping=True)
+        row['mkt_rate'] = locale.format_string("%.2f", round(total_holding_values_by_script[i]['avg_mkt_rate'], 2),grouping=True)
         row['adj_pur_rate'] = " "
 
         rows.append(row)
     total = {
         'sno': " ",
         'script': "Total",
-        'qty': int(total_qty),
+        'qty': locale.format_string("%d", int(total_qty),grouping=True),
         'profit_perc': 100,
-        'profit_value': round(total_profit, 2),
+        'profit_value': locale.format_string("%.2f", round(total_profit, 2),grouping=True),
         'purchase_price': " ",
-        'purchase_value': round(total_holding, 2),
+        'purchase_value': locale.format_string("%.2f", round(total_holding, 2),grouping=True),
         'mkt_rate': " ",
         'adj_pur_rate': " "
     }

@@ -7,30 +7,36 @@
     <title>Holding Report</title>
 
     <style>
-    @page {
+    @page main_template{
         size: letter portrait;
         margin: 2cm;
         @frame content_frame {
-            left: 20pt;
-            width: 562pt;
+            left: 10pt;
+            width: 592pt;
             top: 20pt;
-            height: 712pt;
-            /*-pdf-frame-border: 1; */   /* for debugging the layout */
+            height: 762pt;
+            /*-pdf-frame-border: 1;*/    /* for debugging the layout */
         }
     }
+        body{
+            line-height:0.5px;
+        }
         table {
              border: 1px solid black;
         }
         th {
             padding:4px;
-            font-size:13px;
+            font-size:15px;
+            font-weight:bold;
         }
         td{
           text-align: center;
           padding:4px;
-          font-size:13px;
+          font-size:15px;
         }
-
+        .total{
+            font-weight:bold;
+        }
         .left {
             text-align:left;
         }
@@ -38,9 +44,10 @@
             text-align:right;
         }
         #date{
-          font-size:13px;
+          font-size:15px;
           font-family: "Trebuchet MS", Tahoma, sans-serif;
           text-align:left;
+          font-weight:bold;
         }
     </style>
 </head>
@@ -48,8 +55,8 @@
 
 
 <div id="header_content">
-    <h3 style="text-align:center; font-size:13px;">{{heading}}</h3>
-    <h3 style="text-align:center;font-size:13px;">{{description}}</h3>
+    <h3 style="text-align:center; font-size:15px;">{{heading}}</h3>
+    <h3 style="text-align:center;font-size:15px;">{{description}}</h3>
 </div>
 
 <p id='date' >{{pre_table}}</p>
@@ -59,11 +66,11 @@
     <tr>
         <th scope="col" class="right" width="40">S. N.</th>
         <th scope="col" class="left" width="120">Script</th>
-        <th scope="col" class="right" width="40">Qty.</th>
-        <th scope="col" class="right" width="50">Profit %</th>
+        <th scope="col" class="right" width="50">Qty.</th>
+        <th scope="col" class="right" width="60">Profit %</th>
         <th scope="col" class="right" width="80">Profit(Rs)</th>
-        <th scope="col" class="right" width="70">STCG</th>
-        <th scope="col" class="right" width="70">LTCG</th>
+        <th scope="col" class="right" width="80">STCG</th>
+        <th scope="col" class="right" width="80">LTCG</th>
         <th scope="col" class="right" width="80">Speculation</th>
     </tr>
 
@@ -81,7 +88,7 @@
     </tr>
     {% endfor %}
 
-    <tr style='background-color:#808080'>
+    <tr style='background-color:lightgrey' class="total">
         <td> </td>
         <td class="left">Total</td>
         <td class="right">{{total.qty}}</td>

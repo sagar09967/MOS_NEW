@@ -7,8 +7,8 @@
     <title>Holding Report</title>
 
     <style>
-    @page {
-        size: letter portrait;
+    @page main_template{
+        size: a4 portrait;
         margin: 2cm;
         @frame content_frame {
             left: 30pt;
@@ -18,17 +18,25 @@
             /*-pdf-frame-border: 1; */   /* for debugging the layout */
         }
     }
+        body{
+            line-height:0.5px;
+        }
         table {
              border: 1px solid black;
         }
         th {
             padding:4px;
-            font-size:13px;
+            font-size:15px;
+            font-weight:bold;
         }
         td{
           text-align: center;
           padding:4px;
-          font-size:13px;
+          font-size:15px;
+          font-family:sans-serif;
+        }
+        .total{
+            font-weight:bold;
         }
 
         .left {
@@ -38,9 +46,10 @@
             text-align:right;
         }
         #date{
-          font-size:13px;
+          font-size:15px;
           font-family: "Trebuchet MS", Tahoma, sans-serif;
           text-align:left;
+          font-weight:bold;
         }
     </style>
 </head>
@@ -48,8 +57,8 @@
 
 
 <div id="header_content">
-    <h3 style="text-align:center; font-size:13px;">{{heading}}</h3>
-    <h3 style="text-align:center;font-size:13px;">{{description}}</h3>
+    <h3 style="text-align:center; font-size:15px;">{{heading}}</h3>
+    <h3 style="text-align:center;font-size:15px;">{{description}}</h3>
 </div>
 
 <p id='date' >{{pre_table}}</p>
@@ -57,9 +66,9 @@
 
 
     <tr>
-        <th scope="col" class="right" width="40">S. N.</th>
+        <th scope="col" class="right">S. N.</th>
         <th scope="col" class="left">Script</th>
-        <th scope="col" class="right" width="80">Qty.</th>
+        <th scope="col" class="right">Qty.</th>
         <th scope="col" class="right">Holding %</th>
         <th scope="col" class="right">Holding(Rs)</th>
     </tr>
@@ -75,13 +84,12 @@
     </tr>
     {% endfor %}
 
-    <tr style='background-color:#808080'>
+    <tr style='background-color:lightgrey' class="total">
         <td> </td>
         <td class="left">Total</td>
         <td class="right">{{total.qty}}</td>
         <td class="right">{{total.holding_perc}}</td>
         <td class="right">{{total.holding_value}}</td>
-
     </tr>
 
 

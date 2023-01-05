@@ -11,12 +11,13 @@
         size: letter portrait;
         margin: 2cm;
         @frame content_frame {
-            left: 30pt;
-            width: 552pt;
-            top: 30pt;
-            height: 712pt;
-            /*-pdf-frame-border: 1; */   /* for debugging the layout */
+            left: 10pt;
+            width: 592pt;
+            top: 20pt;
+            height: 762pt;
+            /*-pdf-frame-border: 1;*/    /* for debugging the layout */
         }
+        table-layout:auto;
     }
         table {
              table-layout:fixed;
@@ -42,6 +43,7 @@
           font-size:13px;
           font-family: "Trebuchet MS", Tahoma, sans-serif;
           text-align:left;
+          font-weight:bold;
         }
     </style>
 </head>
@@ -58,13 +60,13 @@
 
 
     <tr>
-        <th scope="col" class="right">S. N.</th>
-        <th scope="col" class="left" width="80">Script</th>
-        <th scope="col" class="right">Qty.</th>
+        <th scope="col" class="right" width="38">S. N.</th>
+        <th scope="col" class="left" width="120">Script</th>
+        <th scope="col" class="right" >Qty.</th>
         <th scope="col" class="right" >Profit %</th>
-        <th scope="col" class="right">Profit(Rs)</th>
+        <th scope="col" class="right" width="80">Profit(Rs)</th>
         <th scope="col" class="right" >Purchase Price</th>
-        <th scope="col" class="right" >Purchase Value</th>
+        <th scope="col" class="right" width="80">Purchase Value</th>
         <th scope="col" class="right">Market Rate</th>
         <th scope="col" class="right" >Adjusted Purchase Rate</th>
     </tr>
