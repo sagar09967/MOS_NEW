@@ -1,5 +1,5 @@
 from django.urls import path, include
-from . import views
+from . import views, post_feedback_release_views as pfr_views
 from rest_framework.routers import DefaultRouter
 from django.urls import path, re_path
 
@@ -7,6 +7,7 @@ router = DefaultRouter(trailing_slash=False)
 router.register(r'purchase', views.TranSumViewSet, basename='purchase')
 router.register(r'sale', views.SalesViewSet, basename='sale')
 router.register(r'day_trading', views.DayTradingViewSet, basename='day_trading')
+router.register(r'feedback', pfr_views.FeedbackViewSet, basename='feedback')
 urlpatterns = router.urls
 
 urlpatterns.append(
@@ -44,3 +45,10 @@ urlpatterns.append(
     re_path('strategy', views.get_strategy)
 )
 
+urlpatterns.append(
+    re_path('release_notes', pfr_views.ReleaseNoteList.as_view())
+)
+
+urlpatterns.append(
+    re_path('posts', pfr_views.PostList.as_view())
+)

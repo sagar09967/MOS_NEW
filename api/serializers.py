@@ -1,7 +1,7 @@
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 
-from .models import TranSum, CustomerMaster, MemberMaster, MOS_Sales
+from .models import TranSum, CustomerMaster, MemberMaster, MOS_Sales, Feedback, ReleaseNote, Post
 import decimal
 
 
@@ -139,7 +139,6 @@ class TranSumSerializer(serializers.ModelSerializer):
 
 
 class RetrieveTranSumSerializer(serializers.ModelSerializer):
-
     balQty = serializers.IntegerField()
 
     class Meta:
@@ -177,3 +176,21 @@ class DayTradingSaleSerializer(serializers.ModelSerializer):
                   'srate',
                   'sqty', 'sVal',
                   'stt', 'other', 'stcg', 'ltcg', 'speculation']
+
+
+class FeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feedback
+        fields = '__all__'
+        read_only_fields = ['created_at']
+
+
+class ReleaseNoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReleaseNote
+        fields = '__all__'
+
+class PostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = '__all__'

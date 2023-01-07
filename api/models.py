@@ -303,6 +303,27 @@ class MOS_Sales(models.Model):
         verbose_name_plural = ('MOS_Sales')
 
 
+class Feedback(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    group = models.CharField(max_length=10)
+    note = models.TextField(blank=False, null=False)
+    created_at = models.DateTimeField(auto_now_add=True, editable=True)
+
+
+class Post(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    title = models.CharField(max_length=100)
+    caption = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=True)
+    image = models.ImageField(blank=True, null=True,upload_to='Post_Images/post/')
+
+
+class ReleaseNote(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    note = models.TextField(blank=False, null=False)
+    date = models.DateField(null=True, blank=True)
+
+
 def sum_by_key(records, key):
     sum_result = 0
     for record in records:
