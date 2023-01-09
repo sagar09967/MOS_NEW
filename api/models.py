@@ -315,11 +315,13 @@ class Post(models.Model):
     title = models.CharField(max_length=100)
     caption = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=True)
-    image = models.ImageField(blank=True, null=True,upload_to='Post_Images/post/')
+    image = models.ImageField(blank=True, null=True, upload_to='Post_Images/post/')
+    post_url = models.URLField(blank=True, null=True)
 
 
 class ReleaseNote(models.Model):
     id = models.BigAutoField(primary_key=True)
+    title = models.CharField(max_length=100)
     note = models.TextField(blank=False, null=False)
     date = models.DateField(null=True, blank=True)
 
