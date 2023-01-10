@@ -587,7 +587,7 @@ def get_market_rate(request):
         data = prepare_purchases_response(temp_request)
     else:
         temp_request = request.query_params.dict()
-        temp_request['againstType'] = "Shares"
+        temp_request['againstType'] = temp_request['againstType'] if 'againstType' in temp_request else "Shares"
         data = prepare_holdings_response(temp_request)
 
     return Response({"status": True, "message": "Retrieved Market Rates", "data": data})
