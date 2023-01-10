@@ -8,13 +8,13 @@
 
     <style>
     @page main_template{
-        size: letter landscape;
+        size:16.54in 23.39in;
         margin: 2cm;
         @frame content_frame {
-            left: 30pt;
-            width: 742pt;
-            top: 30pt;
-            height: 542pt;
+            left: 5pt;
+            width: 16in;
+            top: 10pt;
+            height: 23in;
             -pdf-frame-border: 1;   /* for debugging the layout */
         }
 
@@ -28,39 +28,48 @@
             left: 50pt; width: 512pt; top: 772pt; height: 20pt;
         }
     }
-        #customers {
-          font-family: "Trebuchet MS", Tahoma, sans-serif;
-          table-layout: auto;
-          width:100%;
-          {% comment %} font-weight: bold; {% endcomment %}
 
+        body{
+            line-height:0.5px;
+        }
+        .yellow {
+            background-color:#ffd480;
         }
 
-        #customers td, #customers th {
-          border: 1px solid black;
-
+        .blue {
+            background-color:#66b3ff;
         }
 
-        #customers th {
-          text-align:center;
-          background-color:#808080;
-          padding:2px;
+        table {
+            border:1px solid black;
+            table-layout:auto;
+        }
+        th{
+            padding:2px;
+            font-size:15px;
+            font-weight:bold;
         }
         td{
           text-align: center;
           padding:2px;
-          font-size:11px;
+          font-size:15px;
         }
-
+        .left {
+            text-align:left;
+        }
+        .right {
+            text-align:right;
+        }
+        h3 {
+            font-size:15px;
+            font-weight:bold;
+        }
         #date{
-          font-size:11px;
+          font-size:15px;
           font-family: "Trebuchet MS", Tahoma, sans-serif;
           text-align:left;
+          font-weight:bold;
         }
-
-        table > tr > td:nth-of-type(1) {
-        background-color: yellow;
-}
 
 
     </style>
@@ -76,31 +85,69 @@
 <p id='date'>{{pre_table}}</p>
 <table id="customers" align="center">
     <tr>
-        <th scope="col">S #</th>
-        <th scope="col" colspan="8"><---------- Sales -----------></th>
-        <th scope="col" colspan="7"><------- Purchases --------></th>
+        <th scope="col" width="20" class="blue">S #</th>
+        <th scope="col" colspan="8" class="yellow"><---------- Sales -----------></th>
+        <th scope="col" colspan="7" class="blue"><------- Purchases --------></th>
     </tr>
 
     <tr>
-        {% for title in titles %}
-        <th scope="col">{{title}}</th>
-        {% endfor %}
-
+        <th class="blue right"> </th>
+        <th class="yellow right" width="70">Date</th>
+        <th class="yellow left" width="110">Script</th>
+        <th class="yellow right" width="60">Qty</th>
+        <th class="yellow right" width="60">Rate</th>
+        <th class="yellow right" width="90">Value</th>
+        <th class="yellow right" width="60">STT</th>
+        <th class="yellow right" width="60">Other</th>
+        <th class="yellow right" width="90">Net</th>
+        <th class="blue right" width="60">Qty</th>
+        <th class="blue right" width="60">Rate</th>
+        <th class="blue right" width="90">Value</th>
+        <th class="blue right" width="60">STT</th>
+        <th class="blue right" width="60">Other</th>
+        <th class="blue right" width="90">Net</th>
+        <th class="blue right">Profit</th>
     </tr>
 
 
     {% for row in table %}
     <tr>
-        {% for value in row.values %}
-        <td>{{value}}</td>
-        {% endfor %}
+        <td class="blue right">{{row.sno}}</td>
+        <td class="yellow right">{{row.s_date}}</td>
+        <td class="yellow left">{{row.part}}</td>
+        <td class="yellow right">{{row.s_qty}}</td>
+        <td class="yellow right">{{row.s_rate}}</td>
+        <td class="yellow right">{{row.s_value}}</td>
+        <td class="yellow right">{{row.s_stt}}</td>
+        <td class="yellow right">{{row.s_other}}</td>
+        <td class="yellow right">{{row.s_net}}</td>
+        <td class="blue right">{{row.pur_qty}}</td>
+        <td class="blue right">{{row.pur_rate}}</td>
+        <td class="blue right">{{row.pur_value}}</td>
+        <td class="blue right">{{row.pur_stt}}</td>
+        <td class="blue right">{{row.pur_other}}</td>
+        <td class="blue right">{{row.pur_net}}</td>
+        <td class="blue right">{{row.profit}}</td>
     </tr>
     {% endfor %}
 
     <tr style='background-color:#808080'>
-        {% for value in total.values %}
-        <td>{{value}}</td>
-        {% endfor %}
+        <td class="blue right">{{total.sno}}</td>
+        <td class="yellow right">{{total.s_date}}</td>
+        <td class="yellow left">{{total.part}}</td>
+        <td class="yellow right">{{total.s_qty}}</td>
+        <td class="yellow right">{{total.s_rate}}</td>
+        <td class="yellow right">{{total.s_value}}</td>
+        <td class="yellow right">{{total.s_stt}}</td>
+        <td class="yellow right">{{total.s_other}}</td>
+        <td class="yellow right">{{total.s_net}}</td>
+        <td class="blue right">{{total.pur_qty}}</td>
+        <td class="blue right">{{total.pur_rate}}</td>
+        <td class="blue right">{{total.pur_value}}</td>
+        <td class="blue right">{{total.pur_stt}}</td>
+        <td class="blue right">{{total.pur_other}}</td>
+        <td class="blue right">{{total.pur_net}}</td>
+        <td class="blue right">{{total.profit}}</td>
     </tr>
 
 
