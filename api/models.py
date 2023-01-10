@@ -244,7 +244,7 @@ class MOS_Sales(models.Model):
     group = models.CharField(max_length=10)
     code = models.CharField(max_length=10)
     fy = models.CharField(max_length=9, choices=AY)
-    againstType = models.CharField(max_length=15)
+    againstType = models.CharField(max_length=50)
     scriptSno = models.IntegerField(blank=True, null=True)
     purSno = models.IntegerField(blank=True, null=True)
     sDate = models.DateField(blank=True, null=True)

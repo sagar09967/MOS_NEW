@@ -601,9 +601,10 @@ def sum_by_key(records, key):
 
 
 def sum_by_key(records: dict[str], key):
-    sum_result = 0
+    locale.setlocale(locale.LC_ALL, 'en_IN.utf8')
+    sum_result = Decimal(0)
     for record in records:
-        sum_result = sum_result + record[key]
+        sum_result = sum_result + Decimal(locale.atof(record[key]))
     return sum_result
 
 
@@ -1002,28 +1003,31 @@ def get_profit_adj_report(request):
         row = {}
         row['sno'] = i + 1
         row['script'] = total_holding_values_by_script[i]['part']
-        row['qty'] = locale.format_string("%d", int(total_qty_by_part[i]['total_qty']),grouping=True)
+        row['qty'] = locale.format_string("%d", int(total_qty_by_part[i]['total_qty']), grouping=True)
         row['profit_perc'] = str(percentages[i]) + '%'
-        row['profit_value'] = locale.format_string("%.2f", round(list_profit_values[i], 2),grouping=True)
+        row['profit_value'] = locale.format_string("%.2f", round(list_profit_values[i], 2), grouping=True)
         if total_qty_by_part[i]['total_qty'] == 0:
             row['purchase_price'] = 0
         else:
             row['purchase_price'] = locale.format_string("%.2f", round(
-                total_holding_values_by_script[i]['total_holding_value'] / total_qty_by_part[i]['total_qty'], 2),grouping=True)
+                total_holding_values_by_script[i]['total_holding_value'] / total_qty_by_part[i]['total_qty'], 2),
+                                                         grouping=True)
         row['purchase_value'] = locale.format_string("%.2f",
-                                                     round(total_holding_values_by_script[i]['total_holding_value'], 2),grouping=True)
-        row['mkt_rate'] = locale.format_string("%.2f", round(total_holding_values_by_script[i]['avg_mkt_rate'], 2),grouping=True)
+                                                     round(total_holding_values_by_script[i]['total_holding_value'], 2),
+                                                     grouping=True)
+        row['mkt_rate'] = locale.format_string("%.2f", round(total_holding_values_by_script[i]['avg_mkt_rate'], 2),
+                                               grouping=True)
         row['adj_pur_rate'] = " "
 
         rows.append(row)
     total = {
         'sno': " ",
         'script': "Total",
-        'qty': locale.format_string("%d", int(total_qty),grouping=True),
+        'qty': locale.format_string("%d", int(total_qty), grouping=True),
         'profit_perc': 100,
-        'profit_value': locale.format_string("%.2f", round(total_profit, 2),grouping=True),
+        'profit_value': locale.format_string("%.2f", round(total_profit, 2), grouping=True),
         'purchase_price': " ",
-        'purchase_value': locale.format_string("%.2f", round(total_holding, 2),grouping=True),
+        'purchase_value': locale.format_string("%.2f", round(total_holding, 2), grouping=True),
         'mkt_rate': " ",
         'adj_pur_rate': " "
     }
@@ -1065,6 +1069,7 @@ def get_transaction_report(request):
     masters = TranSum.master_objects.filter(**data)
     if len(masters) == 0:
         return Response({"status": False, "message": "No data present for selected parameters"})
+    locale.setlocale(locale.LC_ALL, 'en_IN.utf8')
     for i in range(0, len(masters)):
         masters[i].save()
         masters[i].refresh_from_db()
@@ -1079,22 +1084,30 @@ def get_transaction_report(request):
         for sale in sales:
             row = {}
             row['sno'] = i
-            row['s_date'] = sale.sDate
+            row['s_date'] = sale.sDate.strftime('%d-%m-%Y')
             row['part'] = purchase.part
-            row['s_qty'] = sale.sqty
+            row['s_qty'] = locale.format_string("%d", sale.sqty, grouping=True)
             row['s_rate'] = float(round(sale.srate, 2))
-            row['s_value'] = float(round(sale.sVal, 2))
-            row['s_stt'] = float(round(sale.stt, 2)) if sale.stt is not None else " "
-            row['s_other'] = float(round(sale.other, 2)) if sale.other is not None else " "
-            row['s_net'] = float(sale.sqty * temp_purchase.rate)
+            row['s_value'] = locale.format_string("%.2f", float(round(sale.sVal, 2)), grouping=True)
+            row['s_stt'] = locale.format_string("%.2f", float(round(sale.stt, 2)),
+                                                grouping=True) if sale.stt is not None else " "
+            row['s_other'] = locale.format_string("%.2f", float(round(sale.other, 2)),
+                                                  grouping=True) if sale.other is not None else " "
+            row['s_net'] = locale.format_string("%f", float(sale.sqty * temp_purchase.rate), grouping=True)
 
-            row['pur_qty'] = float(round(temp_purchase.qty, 2))
+            row['pur_qty'] = locale.format_string("%d", float(round(temp_purchase.qty, 2)), grouping=True)
             row['pur_rate'] = float(round(temp_purchase.rate, 2))
-            row['pur_value'] = float(round(temp_purchase.rate * temp_purchase.qty, 2))
-            row['pur_stt'] = float(round(temp_purchase.sttCharges, 2))
-            row['pur_other'] = float(round(temp_purchase.otherCharges, 2))
-            row['pur_net'] = float(round(row['pur_value'] + row['pur_stt'] + row['pur_other'], 2))
-            row['profit'] = float(round(temp_purchase.marketRate * temp_purchase.qty, 2))
+            row['pur_value'] = locale.format_string("%.2f", float(round(temp_purchase.rate * temp_purchase.qty, 2)),
+                                                    grouping=True)
+            row['pur_stt'] = locale.format_string("%.2f", float(round(temp_purchase.sttCharges, 2)), grouping=True)
+            row['pur_other'] = locale.format_string("%.2f", float(round(temp_purchase.otherCharges, 2)), grouping=True)
+            row['pur_net'] = locale.format_string("%.2f",
+                                                  float(round(
+                                                      temp_purchase.rate * temp_purchase.qty + temp_purchase.sttCharges + temp_purchase.otherCharges,
+                                                      2)),
+                                                  grouping=True)
+            row['profit'] = locale.format_string("%.2f", float(round(temp_purchase.marketRate * temp_purchase.qty, 2)),
+                                                 grouping=True)
             rows.append(row)
             i = i + 1
     total = {
