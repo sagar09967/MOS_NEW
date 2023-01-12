@@ -52,3 +52,7 @@ urlpatterns.append(
 urlpatterns.append(
     re_path('posts', pfr_views.PostList.as_view())
 )
+
+urlpatterns.append(
+    re_path('shift_to_trading', views.shift_to_trading)
+)

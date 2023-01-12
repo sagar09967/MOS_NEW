@@ -1248,6 +1248,28 @@ def get_mos_report(request):
 
 
 @transaction.atomic
+@api_view(['POST'])
+def shift_to_trading(request):
+    data = copy.deepcopy(request.data)
+    trId_list = data['trId']
+    group = data['group']
+    code = data['code']
+
+    purchase_records = TranSum.purchase_objects.filter(trId__in=trId_list, group=group, code=code)
+    purchase_sno_map = purchase_records.values_list('sno', 'scriptSno')
+    for purchase in purchase_records:
+        sno, scriptSno = purchase.sno, purchase.scriptSno
+        purchase.againstType = "Trading"
+        purchase.save()
+        purchase.refresh_from_db()
+        sales_queryset = MOS_Sales.objects.filter(group=group, code=code, purSno=sno, scriptSno=scriptSno)
+        values = {"againstType": "Trading", "purSno": purchase.sno, "scriptSno": purchase.scriptSno}
+        sales_queryset.update(**values)
+
+    return Response({"status": True, "message": "Purchases shifted to Trading"})
+
+
+@transaction.atomic
 @api_view(['GET'])
 def get_strategy(request):
     data = request.query_params.dict()
