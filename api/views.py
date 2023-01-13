@@ -1076,12 +1076,12 @@ def get_transaction_report(request):
         masters[i].save()
         masters[i].refresh_from_db()
 
-    purchases = TranSum.purchase_objects.filter(**data)
+    purchases = TranSum.purchase_objects.filter(**data).order_by('part')
     rows = []
     i = 1
     for purchase in purchases:
         sales = MOS_Sales.objects.filter(group=data['group'], code=data['code'], fy=data['fy'], purSno=purchase.sno,
-                                         scriptSno=purchase.scriptSno)
+                                         scriptSno=purchase.scriptSno).order_by('sDate')
         temp_purchase = purchase
         for sale in sales:
             row = {}
@@ -1256,15 +1256,19 @@ def shift_to_trading(request):
     code = data['code']
 
     purchase_records = TranSum.purchase_objects.filter(trId__in=trId_list, group=group, code=code)
-    purchase_sno_map = purchase_records.values_list('sno', 'scriptSno')
+
     for purchase in purchase_records:
-        sno, scriptSno = purchase.sno, purchase.scriptSno
+        sno, scriptSno, current_againstType, part = purchase.sno, purchase.scriptSno, purchase.againstType, purchase.part
+        master = TranSum.master_objects.filter(sno=scriptSno, againstType=current_againstType, group=group,
+                                               code=code, part=part).first()
         purchase.againstType = "Trading"
         purchase.save()
         purchase.refresh_from_db()
-        sales_queryset = MOS_Sales.objects.filter(group=group, code=code, purSno=sno, scriptSno=scriptSno)
+        sales_queryset = MOS_Sales.objects.filter(group=group, code=code, purSno=sno, scriptSno=scriptSno,
+                                                  againstType=current_againstType)
         values = {"againstType": "Trading", "purSno": purchase.sno, "scriptSno": purchase.scriptSno}
         sales_queryset.update(**values)
+        master.save()
 
     return Response({"status": True, "message": "Purchases shifted to Trading"})
 
