@@ -8,13 +8,13 @@
 
     <style>
     @page main_template{
-        size: letter landscape;
+        size: 11.69in 16.54in;
         margin: 2cm;
         @frame content_frame {
             left: 30pt;
-            width: 742pt;
+            width: 11in;
             top: 30pt;
-            height: 542pt;
+            height: 16in;
             -pdf-frame-border: 1;   /* for debugging the layout */
         }
 
@@ -28,42 +28,45 @@
             left: 50pt; width: 512pt; top: 772pt; height: 20pt;
         }
     }
-        .customers {
-          font-family: "Trebuchet MS", Tahoma, sans-serif;
-          table-layout: auto;
-          width:100%;
-          {% comment %} font-weight: bold; {% endcomment %}
-
+        body{
+            line-height:0.5px;
         }
-
-        .customers td, .customers th {
-          border: 1px solid black;
-
+        table {
+            border:1px solid black;
         }
-
-        .customers th {
-          text-align:center;
-          background-color:#808080;
-          padding:4px;
+        th {
+            font-size:15px;
+            font-weight:bold;
+            padding:3px;
         }
         td{
           text-align: center;
-          padding:4px;
-          font-size:11px;
+          padding:2px;
+          padding-top:3px;
+          font-size:15px;
         }
-
+        h3{
+            font-size:15px;
+            font-weight:bold;
+        }
         #date{
-          font-size:11px;
+          font-size:15px;
           font-family: "Trebuchet MS", Tahoma, sans-serif;
           text-align:left;
+          font-weight:bold;
         }
-
-        table > tr > td:nth-of-type(1) {
-        background-color: yellow;
-}
-
-
-
+        p{
+            font-size:15px;
+        }
+        span{
+        font-size:15px;
+        }
+        .left {
+            text-align:left;
+        }
+        .right {
+            text-align:right;
+        }
 
 
     </style>
@@ -78,141 +81,159 @@
 
 <p id='date'>{{pre_table}}</p>
 
-<div style="display:inline">
-    <p style="width:max-content">Long Term Capital Gains</p>
-    <p style="text-align:right">Released</p>
+<div style="display:inline-block;width:100%">
+    <p><span style="float:left">Long Term Capital Gains</span><br><br><span>Released</span></p>
 </div>
 
 <table class="customers" align="center">
     <tr>
-        <th scope="col">S. N.</th>
-        <th scope="col">Script</th>
-        <th scope="col">Qty</th>
-        <th scope="col">Pur.Date</th>
-        <th scope="col">Pur Rate</th>
-        <th scope="col">Sale Date</th>
-        <th scope="col">Sale Rate</th>
-        <th scope="col">LTCG</th>
+        <th class="left" scope="col" width="35">S. N.</th>
+        <th class="left" scope="col">Script</th>
+        <th class="left" scope="col">Qty</th>
+        <th class="left" scope="col">Pur.Date</th>
+        <th class="left" scope="col">Pur Rate</th>
+        <th class="left" scope="col">Sale Date</th>
+        <th class="left" scope="col">Sale Rate</th>
+        <th class="left" scope="col">LTCG</th>
     </tr>
 
 
     {% for row in ltcg_released %}
     <tr>
-        <td>{{forloop.counter}}</td>
-        {% for value in row.values %}
-        <td>{{value}}</td>
-        {% endfor %}
+        <td class="right">{{forloop.counter}}</td>
+        <td class="left">{{row.script}}</td>
+        <td class="right">{{row.qty}}</td>
+        <td class="right">{{row.pur_date}}</td>
+        <td class="right">{{row.pur_rate}}</td>
+        <td class="right">{{row.sale_date}}</td>
+        <td class="right">{{row.sale_rate}}</td>
+        <td class="right">{{row.cg}}</td>
     </tr>
     {% endfor %}
 
     <tr style='background-color:#808080'>
         <td>{{" "}}</td>
-        <td>Total</td>
+        <td class="right">Total</td>
         <td>{{" "}}</td>
         <td>{{" "}}</td>
         <td>{{" "}}</td>
         <td>{{" "}}</td>
         <td>{{" "}}</td>
-        <td>{{totals.ltcg_released_total}}</td>
+        <td class="right">{{totals.ltcg_released_total}}</td>
     </tr>
 
 
 </table>
-<p style="text-align:right">Unreleased</p>
+<div style="display:inline;width:100%">
+    <p style="width:100%"><span style="float:right">Unreleased</span></p>
+</div>
+
 <table class="customers" align="center">
     <tr>
-        <th scope="col">S. N.</th>
-        <th scope="col">Script</th>
-        <th scope="col">Qty</th>
-        <th scope="col">Pur.Date</th>
-        <th scope="col">Pur Rate</th>
-        <th scope="col">Closing</th>
-        <th scope="col">Mkt Rate</th>
-        <th scope="col">LTCG</th>
+        <th class="left" scope="col" width="35">S. N.</th>
+        <th class="left" scope="col">Script</th>
+        <th class="left" scope="col">Qty</th>
+        <th class="left" scope="col">Pur.Date</th>
+        <th class="left" scope="col">Pur Rate</th>
+        <th class="left" scope="col">Closing</th>
+        <th class="left" scope="col">Mkt Rate</th>
+        <th class="left" scope="col">LTCG</th>
     </tr>
 
 
     {% for row in ltcg_unreleased %}
     <tr>
-        <td>{{forloop.counter}}</td>
-        {% for value in row.values %}
-        <td>{{value}}</td>
-        {% endfor %}
+        <td class="right">{{forloop.counter}}</td>
+        <td class="left">{{row.script}}</td>
+        <td class="right">{{row.qty}}</td>
+        <td class="right">{{row.pur_date}}</td>
+        <td class="right">{{row.pur_rate}}</td>
+        <td class="right">{{row.closing}}</td>
+        <td class="right">{{row.marketRate}}</td>
+        <td class="right">{{row.cg}}</td>
     </tr>
     {% endfor %}
 
     <tr style='background-color:#808080'>
         <td>{{" "}}</td>
-        <td>Total</td>
+        <td class="right">Total</td>
         <td>{{" "}}</td>
         <td>{{" "}}</td>
         <td>{{" "}}</td>
         <td>{{" "}}</td>
         <td>{{" "}}</td>
-        <td>{{totals.ltcg_unreleased_total}}</td>
+        <td class="right">{{totals.ltcg_unreleased_total}}</td>
     </tr>
 
-
 </table>
-<p style="width:max-content">Long Term Capital Gains</p>
-<p style="text-align:right">Released</p>
+
+<div style="display:inline;width:100%;">
+    <p><span style="float:left">Short Term Capital Gains</span><br><br><span>Released</span></p>
+</div>
 <table class="customers" align="center">
     <tr>
-        <th scope="col">S. N.</th>
-        <th scope="col">Script</th>
-        <th scope="col">Qty</th>
-        <th scope="col">Pur.Date</th>
-        <th scope="col">Pur Rate</th>
-        <th scope="col">Sale Date</th>
-        <th scope="col">Sale Rate</th>
-        <th scope="col">STCG</th>
+        <th class="left" scope="col" width="35">S. N.</th>
+        <th class="left" scope="col">Script</th>
+        <th class="left" scope="col">Qty</th>
+        <th class="left" scope="col">Pur.Date</th>
+        <th class="left" scope="col">Pur Rate</th>
+        <th class="left" scope="col">Sale Date</th>
+        <th class="left" scope="col">Sale Rate</th>
+        <th class="left" scope="col">LTCG</th>
     </tr>
 
 
     {% for row in stcg_released %}
     <tr>
-        <td>{{forloop.counter}}</td>
-
-        {% for value in row.values %}
-        <td>{{value}}</td>
-        {% endfor %}
+        <td class="right">{{forloop.counter}}</td>
+        <td class="left">{{row.script}}</td>
+        <td class="right">{{row.qty}}</td>
+        <td class="right">{{row.pur_date}}</td>
+        <td class="right">{{row.pur_rate}}</td>
+        <td class="right">{{row.sale_date}}</td>
+        <td class="right">{{row.sale_rate}}</td>
+        <td class="right">{{row.cg}}</td>
     </tr>
     {% endfor %}
 
     <tr style='background-color:#808080'>
         <td>{{" "}}</td>
-        <td>Total</td>
+        <td class="right">Total</td>
         <td>{{" "}}</td>
         <td>{{" "}}</td>
         <td>{{" "}}</td>
         <td>{{" "}}</td>
         <td>{{" "}}</td>
-        <td>{{totals.stcg_released_total}}</td>
+        <td class="right">{{totals.stcg_released_total}}</td>
     </tr>
-
-
 </table>
 
-<p style="text-align:right">Unreleased</p>
+<div style="display:inline;width:100%">
+    <p style="width:100%"><span style="float:right">Unreleased</span></p>
+</div>
 <table class="customers" align="center">
     <tr>
-        <th scope="col">S. N.</th>
-        <th scope="col">Script</th>
-        <th scope="col">Qty</th>
-        <th scope="col">Pur.Date</th>
-        <th scope="col">Pur Rate</th>
-        <th scope="col">Closing</th>
-        <th scope="col">Mkt Rate</th>
-        <th scope="col">LTCG</th>
+        <th class="left" scope="col" width="35">S. N.</th>
+        <th class="left" scope="col">Script</th>
+        <th class="left" scope="col">Qty</th>
+        <th class="left" scope="col">Pur.Date</th>
+        <th class="left" scope="col">Pur Rate</th>
+        <th class="left" scope="col">Closing</th>
+        <th class="left" scope="col">Mkt Rate</th>
+        <th class="left" scope="col">LTCG</th>
     </tr>
 
 
     {% for row in stcg_unreleased %}
     <tr>
-        <td>{{forloop.counter}}</td>
-        {% for value in row.values %}
-        <td>{{value}}</td>
-        {% endfor %}
+        <td class="right">{{forloop.counter}}</td>
+        <td class="left">{{row.script}}</td>
+        <td class="right">{{row.qty}}</td>
+        <td class="right">{{row.pur_date}}</td>
+        <td class="right">{{row.pur_rate}}</td>
+        <td class="right">{{row.closing}}</td>
+        <td class="right">{{row.marketRate}}</td>
+        <td class="right">{{row.cg}}</td>
     </tr>
     {% endfor %}
 

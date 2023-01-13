@@ -31,13 +31,14 @@
 
         body{
             line-height:0.5px;
+            font-family: "Trebuchet MS";
         }
         .yellow {
-            background-color:#ffd480;
+            background-color:#fff7e6;
         }
 
         .blue {
-            background-color:#66b3ff;
+            background-color:#e6f2ff;
         }
 
         table {
@@ -113,8 +114,8 @@
     {% for row in table %}
     <tr>
         <td class="blue right">{{row.sno}}</td>
-        <td class="yellow right">{{row.s_date}}</td>
         <td class="yellow left">{{row.part}}</td>
+        <td class="yellow right">{{row.s_date}}</td>
         <td class="yellow right">{{row.s_qty}}</td>
         <td class="yellow right">{{row.s_rate}}</td>
         <td class="yellow right">{{row.s_value}}</td>
@@ -133,8 +134,8 @@
 
     <tr style='background-color:#808080'>
         <td class="blue right">{{total.sno}}</td>
-        <td class="yellow right">{{total.s_date}}</td>
         <td class="yellow left">{{total.part}}</td>
+        <td class="yellow right">{{total.s_date}}</td>
         <td class="yellow right">{{total.s_qty}}</td>
         <td class="yellow right">{{total.s_rate}}</td>
         <td class="yellow right">{{total.s_value}}</td>

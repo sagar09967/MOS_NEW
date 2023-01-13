@@ -1184,7 +1184,7 @@ def get_mos_report(request):
         sale_row['qty'] = sale.sqty
         sale_row['pur_date'] = purchase.trDate.strftime('%d-%m-%Y')
         sale_row['pur_rate'] = round(purchase.rate, 2)
-        sale_row['sale_date'] = sale.sDate
+        sale_row['sale_date'] = sale.sDate.strftime('%d-%m-%Y')
         sale_row['sale_rate'] = round(sale.srate, 2)
         time_delta = relativedelta(sale.sDate, purchase.trDate)
         if (time_delta.years * 12 + time_delta.months) <= 12:
@@ -1194,12 +1194,12 @@ def get_mos_report(request):
             sale_row['cg'] = locale.format_string("%.2f", round(sale.ltcg, 2), grouping=True)
             ltcg_released.append(sale_row)
 
-    purchases = TranSum.purchase_objects.filter(**data).filter(balQty__gt=0)
+    purchases = TranSum.purchase_objects.filter(**data).filter(balQty__gt=0).order_by('part')
     for purchase in purchases:
         purchase_row = {}
         # purchase_row['sno'] = 0
         purchase_row['script'] = purchase.part
-        purchase_row['qty'] = locale.format_string("%.2f", purchase.balQty, grouping=True)
+        purchase_row['qty'] = locale.format_string("%d", int(purchase.balQty), grouping=True)
         purchase_row['pur_date'] = purchase.trDate.strftime('%d-%m-%Y')
         purchase_row['pur_rate'] = round(purchase.rate, 2)
         purchase_row['closing'] = locale.format_string("%.2f", purchase.balQty, grouping=True)
@@ -1228,9 +1228,9 @@ def get_mos_report(request):
     heading = name
     description = 'MOS Report ( ' + data['againstType'] + ')'
     context = {
-        'ltcg_released': ltcg_released,
+        'ltcg_released': sorted(ltcg_released, key=lambda d: d['script']),
         'ltcg_unreleased': ltcg_unreleased,
-        'stcg_released': stcg_released,
+        'stcg_released': sorted(stcg_released, key=lambda d: d['script']),
         'stcg_unreleased': stcg_unreleased,
         'totals': totals,
         'heading': heading,
