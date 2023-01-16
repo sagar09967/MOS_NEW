@@ -874,52 +874,40 @@ def get_scriptwise_profit_report(request):
     total_profit = sum(list_profit_values)
     percentages = round_to_100_percent(list_profit_values, 2)
     rows = []
-    total_stcg = Decimal(0)
-    total_ltcg = Decimal(0)
-    total_speculation = Decimal(0)
+    gains_list =[]
     for i in range(0, len(total_holding_values_by_script)):
         temp_masters = masters.filter(part=total_holding_values_by_script[i]['part'])
-        stcg = Decimal(0)
-        ltcg = Decimal(0)
-        speculation = Decimal(0)
+        gain = Decimal(0)
         for master in temp_masters:
             sales = MOS_Sales.objects.filter(group=data['group'], fy=data['fy'], againstType=data['againstType'],
                                              scriptSno=master.sno, code=master.code)
             sum_stcg = list(sales.aggregate(Sum('stcg')).values())[0]
             if sum_stcg:
-                stcg = stcg + sum_stcg
+                gain = gain + sum_stcg
             sum_ltcg = list(sales.aggregate(Sum('ltcg')).values())[0]
             if sum_ltcg:
-                ltcg = ltcg + sum_ltcg
-            sum_speculation = list(sales.aggregate(Sum('speculation')).values())[0]
-            if sum_speculation:
-                speculation = speculation + sum_speculation
-        total_stcg = total_stcg + stcg
-        total_ltcg = total_ltcg + ltcg
-        total_speculation = total_speculation + speculation
-
+                gain = gain + sum_ltcg
+            gains_list.append(gain)
+    total_gain = sum(gains_list)
+    gains_percentages = round_to_100_percent(gains_list)
+    for i in range(0, len(total_holding_values_by_script)):
         row = {}
         row['sno'] = i + 1
         row['script'] = total_holding_values_by_script[i]['part']
         row['qty'] = locale.format_string("%d", int(total_qty_by_part[i]['total_qty']), grouping=True)
-        row['profit_perc'] = str(percentages[i]) + '%'
-        row['profit_value'] = locale.format_string("%.2f", round(list_profit_values[i], 2), grouping=True)
-        row['stcg'] = locale.format_string("%.2f", round(stcg, 2), grouping=True)
-        row['ltcg'] = locale.format_string("%.2f", round(ltcg, 2), grouping=True)
-        row['speculation'] = locale.format_string("%.2f", round(speculation, 2), grouping=True)
+        row['gain_perc'] = str(gains_percentages[i]) + '%'
+        row['gain_value'] = locale.format_string("%.2f", round(gains_list[i], 2), grouping=True)
+
 
         rows.append(row)
     total = {
         'sno': " ",
         'script': "Total",
         'qty': locale.format_string("%d", int(total_qty), grouping=True),
-        'profit_perc': 100,
-        'profit_value': locale.format_string("%.2f", round(total_profit, 2), grouping=True),
-        'stcg': locale.format_string("%.2f", round(total_stcg, 2), grouping=True),
-        'ltcg': locale.format_string("%.2f", round(total_ltcg, 2), grouping=True),
-        'speculation': locale.format_string("%.2f", round(total_speculation, 2), grouping=True)
+        'gain_perc': 100,
+        'gain_value': locale.format_string("%.2f", round(total_profit, 2), grouping=True)
     }
-    titles = ['S.N.', 'Script', 'Qty', 'Profit%', 'Profit(Rs)', 'STCG', 'LTCG', 'Speculation']
+    titles = ['S.N.', 'Script', 'Qty', 'Gain%', 'Gain(Rs)']
     pre_table = "Report Date : " + datetime.date.today().strftime('%d/%m/%Y')
     heading = name + " (FY " + data['fy'] + ")"
     description = 'Scriptwise Profit Report (' + data['againstType'] + ')'
@@ -953,7 +941,7 @@ def get_profit_adj_report(request):
         group = CustomerMaster.objects.filter(group=data['group']).first()
         name = group.firstName + " " + group.lastName
 
-    masters = TranSum.master_objects.filter(**data)
+    masters = TranSum.master_objects.filter(**data).order_by('part')
     if len(masters) == 0:
         return Response({"status": False, "message": "No data present for selected parameters"})
     locale.setlocale(locale.LC_ALL, 'en_IN.utf8')
@@ -978,36 +966,30 @@ def get_profit_adj_report(request):
     total_profit = sum(list_profit_values)
     percentages = round_to_100_percent(list_profit_values, 2)
     rows = []
-    total_stcg = Decimal(0)
-    total_ltcg = Decimal(0)
-    total_speculation = Decimal(0)
+    gains_list = []
     for i in range(0, len(total_holding_values_by_script)):
         temp_masters = masters.filter(part=total_holding_values_by_script[i]['part'])
-        stcg = Decimal(0)
-        ltcg = Decimal(0)
-        speculation = Decimal(0)
+
+        gain = Decimal(0)
         for master in temp_masters:
             sales = MOS_Sales.objects.filter(group=data['group'], fy=data['fy'], againstType=data['againstType'],
                                              scriptSno=master.sno, code=master.code)
             sum_stcg = list(sales.aggregate(Sum('stcg')).values())[0]
             if sum_stcg:
-                stcg = stcg + sum_stcg
+                gain = gain + sum_stcg
             sum_ltcg = list(sales.aggregate(Sum('ltcg')).values())[0]
             if sum_ltcg:
-                ltcg = ltcg + sum_ltcg
-            sum_speculation = list(sales.aggregate(Sum('speculation')).values())[0]
-            if sum_speculation:
-                speculation = speculation + sum_speculation
-        total_stcg = total_stcg + stcg
-        total_ltcg = total_ltcg + ltcg
-        total_speculation = total_speculation + speculation
-
+                gain = gain + sum_ltcg
+            gains_list.append(gain)
+    total_gain = sum(gains_list)
+    gains_percentages = round_to_100_percent(gains_list)
+    for i in range(0, len(total_holding_values_by_script)):
         row = {}
         row['sno'] = i + 1
         row['script'] = total_holding_values_by_script[i]['part']
         row['qty'] = locale.format_string("%d", int(total_qty_by_part[i]['total_qty']), grouping=True)
-        row['profit_perc'] = str(percentages[i]) + '%'
-        row['profit_value'] = locale.format_string("%.2f", round(list_profit_values[i], 2), grouping=True)
+        row['gain_perc'] = str(gains_percentages[i]) + '%'
+        row['gain_value'] = locale.format_string("%.2f", round(gains_list[i], 2), grouping=True)
         if total_qty_by_part[i]['total_qty'] == 0:
             row['purchase_price'] = 0
         else:
@@ -1019,21 +1001,22 @@ def get_profit_adj_report(request):
                                                      grouping=True)
         row['mkt_rate'] = locale.format_string("%.2f", round(total_holding_values_by_script[i]['avg_mkt_rate'], 2),
                                                grouping=True)
-        row['adj_pur_rate'] = " "
+        row['adj_pur_rate'] = locale.format_string("%.2f", round((total_holding_values_by_script[i]['total_holding_value'] - gains_list[i]) / \
+                              total_qty_by_part[i]['total_qty'],2),grouping=True)
 
         rows.append(row)
     total = {
         'sno': " ",
         'script': "Total",
         'qty': locale.format_string("%d", int(total_qty), grouping=True),
-        'profit_perc': 100,
-        'profit_value': locale.format_string("%.2f", round(total_profit, 2), grouping=True),
+        'gain_perc': 100,
+        'gain_value': locale.format_string("%.2f", round(total_gain, 2), grouping=True),
         'purchase_price': " ",
         'purchase_value': locale.format_string("%.2f", round(total_holding, 2), grouping=True),
         'mkt_rate': " ",
         'adj_pur_rate': " "
     }
-    titles = ['S.N.', 'Script', 'Qty', 'Profit%', 'Profit(Rs)', 'Purchase Price', 'Purchase Value', 'Market Rate',
+    titles = ['S.N.', 'Script', 'Qty', 'Gain%', 'Gain(Rs)', 'Purchase Price', 'Purchase Value', 'Market Rate',
               'Adjusted Purchase Rate']
     pre_table = "Report Date : " + datetime.date.today().strftime('%d/%m/%Y')
     heading = name + " (FY " + data['fy'] + ")"
