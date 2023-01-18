@@ -1,4 +1,5 @@
 import datetime
+import operator
 from decimal import Decimal
 
 from dateutil.relativedelta import relativedelta
@@ -905,7 +906,7 @@ def get_scriptwise_profit_report(request):
         'script': "Total",
         'qty': locale.format_string("%d", int(total_qty), grouping=True),
         'gain_perc': 100,
-        'gain_value': locale.format_string("%.2f", round(total_profit, 2), grouping=True)
+        'gain_value': locale.format_string("%.2f", round(total_gain, 2), grouping=True)
     }
     titles = ['S.N.', 'Script', 'Qty', 'Gain%', 'Gain(Rs)']
     pre_table = "Report Date : " + datetime.date.today().strftime('%d/%m/%Y')
@@ -1009,7 +1010,7 @@ def get_profit_adj_report(request):
         'sno': " ",
         'script': "Total",
         'qty': locale.format_string("%d", int(total_qty), grouping=True),
-        'gain_perc': 100,
+        'gain_perc': sum(gains_percentages),
         'gain_value': locale.format_string("%.2f", round(total_gain, 2), grouping=True),
         'purchase_price': " ",
         'purchase_value': locale.format_string("%.2f", round(total_holding, 2), grouping=True),
@@ -1209,12 +1210,12 @@ def get_mos_report(request):
     }
     pre_table = "Report Date : " + datetime.date.today().strftime('%d/%m/%Y')
     heading = name
-    description = 'MOS Report ( ' + data['againstType'] + ')'
+    description = 'MOS Report ( ' + data['againstType'] + ' )'
     context = {
-        'ltcg_released': sorted(ltcg_released, key=lambda d: d['script']),
-        'ltcg_unreleased': ltcg_unreleased,
-        'stcg_released': sorted(stcg_released, key=lambda d: d['script']),
-        'stcg_unreleased': stcg_unreleased,
+        'ltcg_released': sorted(ltcg_released, key=lambda x: (x['script'],datetime.datetime.strptime(x['pur_date'], '%d-%m-%Y'))),
+        'ltcg_unreleased': sorted(ltcg_unreleased,key=lambda x: (x['script'],datetime.datetime.strptime(x['pur_date'], '%d-%m-%Y'))),
+        'stcg_released': sorted(stcg_released, key=lambda x: (x['script'],datetime.datetime.strptime(x['pur_date'], '%d-%m-%Y'))),
+        'stcg_unreleased': sorted(stcg_unreleased, key=lambda x: (x['script'],datetime.datetime.strptime(x['pur_date'], '%d-%m-%Y'))),
         'totals': totals,
         'heading': heading,
         'description': description,
@@ -1286,8 +1287,13 @@ def round_to_100_percent(number_set, digit_after_decimal=2):
         Notice: the algorithm we are using here is 'Largest Remainder'
         The down-side is that the results won't be accurate, but they are never accurate anyway:)
     """
+
     if len(number_set) == 0:
         return None
+
+    if sum(number_set) == 0:
+        return [0] * len(number_set)
+
     unround_numbers = [x / Decimal(float(sum(number_set))) * 100 * 10 ** digit_after_decimal for x in number_set]
     decimal_part_with_index = sorted([(index, unround_numbers[index] % 1) for index in range(len(unround_numbers))],
                                      key=lambda y: y[1], reverse=True)

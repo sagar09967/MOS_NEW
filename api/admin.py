@@ -9,14 +9,14 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 class UserAdmin(BaseUserAdmin):
     list_display = (
-    'userId', 'username', 'group', 'firstName', 'lastName', 'emailId', 'contactNo', 'dob', 'active', 'address',
-    'companyCode', 'sw_CustomerId', 'registration_Date', 'valid_Date')
+        'userId', 'username', 'group', 'firstName', 'lastName', 'emailId', 'contactNo', 'dob', 'active', 'address',
+        'companyCode', 'sw_CustomerId', 'registration_Date', 'valid_Date')
     list_filter = ('username', 'group')
     fieldsets = (
         ('User Credentials', {'fields': ('username', 'password')}),
         (None, {'fields': (
-        'group', 'firstName', 'lastName', 'emailId', 'contactNo', 'dob', 'address', 'active', 'companyCode',
-        'sw_CustomerId', 'registration_Date', 'valid_Date')}),
+            'group', 'firstName', 'lastName', 'emailId', 'contactNo', 'dob', 'address', 'active', 'companyCode',
+            'sw_CustomerId', 'registration_Date', 'valid_Date')}),
         ('Permissions', {'fields': ('is_active', 'is_staff')}),
     )
     # add_fieldsets is not a standard ModelAdmin attribute. UserAdmin
@@ -54,13 +54,17 @@ class TranSumAdmin(admin.ModelAdmin):
     list_filter = ('group', 'code', 'fy', 'againstType', 'part', 'sp')
     list_per_page = 10
     list_display = (
-    'trId', 'group', 'code', 'fy', 'againstType', 'sp', 'part', 'fmr', 'isinCode', 'trDate', 'qty', 'balQty', 'rate',
-    'sVal', 'sttCharges', 'otherCharges', 'noteAdd', 'marketRate', 'marketValue', 'HoldingValue', 'avgRate', 'sno',
-    'scriptSno', 'empCode', 'clDate', 'clRate', 'clQTY', 'clValue', 'clsttCharges', 'clOtherCharges')
+        'trId', 'group', 'code', 'fy', 'againstType', 'sp', 'part', 'fmr', 'isinCode', 'trDate', 'qty', 'balQty',
+        'rate',
+        'sVal', 'sttCharges', 'otherCharges', 'noteAdd', 'marketRate', 'marketValue', 'HoldingValue', 'avgRate', 'sno',
+        'scriptSno', 'empCode', 'clDate', 'clRate', 'clQTY', 'clValue', 'clsttCharges', 'clOtherCharges')
 
 
 @admin.register(MOS_Sales)
 class MOS_SalesAdmin(admin.ModelAdmin):
+    list_filter = ('group', 'code', 'fy', 'againstType', 'scriptSno', 'purSno')
+
     list_display = (
-    'trId', 'group', 'code', 'fy', 'againstType', 'scriptSno', 'purSno', 'sDate', 'srate', 'sqty', 'sVal', 'stt_Paid',
-    'stt', 'other', 'speculation', 'stcg', 'ltcg', 'fno', 'empCode')
+        'trId', 'group', 'code', 'fy', 'againstType', 'scriptSno', 'purSno', 'sDate', 'srate', 'sqty', 'sVal',
+        'stt_Paid',
+        'stt', 'other', 'speculation', 'stcg', 'ltcg', 'fno', 'empCode')

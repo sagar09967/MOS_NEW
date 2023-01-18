@@ -8,7 +8,7 @@
 
     <style>
     @page main_template{
-        size: 11.69in 16.54in;
+        size: A3 portrait;
         margin: 2cm;
         @frame content_frame {
             left: 30pt;
@@ -67,6 +67,9 @@
         .right {
             text-align:right;
         }
+        .mid {
+            text-align:center;
+        }
 
 
     </style>
@@ -89,11 +92,11 @@
     <tr>
         <th class="left" scope="col" width="35">S. N.</th>
         <th class="left" scope="col">Script</th>
-        <th class="left" scope="col">Qty</th>
-        <th class="left" scope="col">Pur.Date</th>
-        <th class="left" scope="col">Pur Rate</th>
-        <th class="left" scope="col">Sale Date</th>
-        <th class="left" scope="col">Sale Rate</th>
+        <th class="left" scope="col" width="60">Qty</th>
+        <th class="left" scope="col" width="66">Pur.Date</th>
+        <th class="left" scope="col" width="80">Pur Rate</th>
+        <th class="left" scope="col" width="66">Sale Date</th>
+        <th class="left" scope="col" width="80">Sale Rate</th>
         <th class="left" scope="col">LTCG</th>
     </tr>
 
@@ -103,9 +106,9 @@
         <td class="right">{{forloop.counter}}</td>
         <td class="left">{{row.script}}</td>
         <td class="right">{{row.qty}}</td>
-        <td class="right">{{row.pur_date}}</td>
+        <td class="mid">{{row.pur_date}}</td>
         <td class="right">{{row.pur_rate}}</td>
-        <td class="right">{{row.sale_date}}</td>
+        <td class="mid">{{row.sale_date}}</td>
         <td class="right">{{row.sale_rate}}</td>
         <td class="right">{{row.cg}}</td>
     </tr>
@@ -132,11 +135,11 @@
     <tr>
         <th class="left" scope="col" width="35">S. N.</th>
         <th class="left" scope="col">Script</th>
-        <th class="left" scope="col">Qty</th>
-        <th class="left" scope="col">Pur.Date</th>
-        <th class="left" scope="col">Pur Rate</th>
-        <th class="left" scope="col">Closing</th>
-        <th class="left" scope="col">Mkt Rate</th>
+        <th class="left" scope="col" width="60">Qty</th>
+        <th class="left" scope="col" width="66">Pur.Date</th>
+        <th class="left" scope="col" width="80">Pur Rate</th>
+        <th class="left" scope="col" width="66">Closing</th>
+        <th class="left" scope="col" width="80">Mkt Rate</th>
         <th class="left" scope="col">LTCG</th>
     </tr>
 
@@ -146,7 +149,7 @@
         <td class="right">{{forloop.counter}}</td>
         <td class="left">{{row.script}}</td>
         <td class="right">{{row.qty}}</td>
-        <td class="right">{{row.pur_date}}</td>
+        <td class="mid">{{row.pur_date}}</td>
         <td class="right">{{row.pur_rate}}</td>
         <td class="right">{{row.closing}}</td>
         <td class="right">{{row.marketRate}}</td>
@@ -174,12 +177,12 @@
     <tr>
         <th class="left" scope="col" width="35">S. N.</th>
         <th class="left" scope="col">Script</th>
-        <th class="left" scope="col">Qty</th>
-        <th class="left" scope="col">Pur.Date</th>
-        <th class="left" scope="col">Pur Rate</th>
-        <th class="left" scope="col">Sale Date</th>
-        <th class="left" scope="col">Sale Rate</th>
-        <th class="left" scope="col">LTCG</th>
+        <th class="left" scope="col" width="60">Qty</th>
+        <th class="left" scope="col" width="66">Pur.Date</th>
+        <th class="left" scope="col" width="80">Pur Rate</th>
+        <th class="left" scope="col" width="66">Sale Date</th>
+        <th class="left" scope="col" width="80">Sale Rate</th>
+        <th class="left" scope="col">STCG</th>
     </tr>
 
 
@@ -188,9 +191,9 @@
         <td class="right">{{forloop.counter}}</td>
         <td class="left">{{row.script}}</td>
         <td class="right">{{row.qty}}</td>
-        <td class="right">{{row.pur_date}}</td>
+        <td class="mid">{{row.pur_date}}</td>
         <td class="right">{{row.pur_rate}}</td>
-        <td class="right">{{row.sale_date}}</td>
+        <td class="mid">{{row.sale_date}}</td>
         <td class="right">{{row.sale_rate}}</td>
         <td class="right">{{row.cg}}</td>
     </tr>
@@ -215,12 +218,12 @@
     <tr>
         <th class="left" scope="col" width="35">S. N.</th>
         <th class="left" scope="col">Script</th>
-        <th class="left" scope="col">Qty</th>
-        <th class="left" scope="col">Pur.Date</th>
-        <th class="left" scope="col">Pur Rate</th>
-        <th class="left" scope="col">Closing</th>
-        <th class="left" scope="col">Mkt Rate</th>
-        <th class="left" scope="col">LTCG</th>
+        <th class="left" scope="col" width="60">Qty</th>
+        <th class="left" scope="col" width="66">Pur.Date</th>
+        <th class="left" scope="col" width="80">Pur Rate</th>
+        <th class="left" scope="col" width="66">Closing</th>
+        <th class="left" scope="col" width="80">Mkt Rate</th>
+        <th class="left" scope="col">STCG</th>
     </tr>
 
 
@@ -229,7 +232,7 @@
         <td class="right">{{forloop.counter}}</td>
         <td class="left">{{row.script}}</td>
         <td class="right">{{row.qty}}</td>
-        <td class="right">{{row.pur_date}}</td>
+        <td class="mid">{{row.pur_date}}</td>
         <td class="right">{{row.pur_rate}}</td>
         <td class="right">{{row.closing}}</td>
         <td class="right">{{row.marketRate}}</td>
