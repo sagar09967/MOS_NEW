@@ -67,8 +67,8 @@
     <tr>
         <th scope="col" class="right" width="40">S. N.</th>
         <th scope="col" class="left">Script</th>
-        <th scope="col" class="right">Qty.</th>
-        <th scope="col" class="right">Gain %</th>
+        <th scope="col" class="right" width="60">Qty.</th>
+        <th scope="col" class="right" width="60">Gain %</th>
         <th scope="col" class="right">Gain(Rs)</th>
     </tr>
 
@@ -84,7 +84,7 @@
     {% endfor %}
 
     <tr style='background-color:lightgrey' class="total">
-        <td></td>
+        <td>{{" "}}</td>
         <td class="left">Total</td>
         <td class="right">{{total.qty}}</td>
         <td class="right">{{total.gain_perc}}</td>
