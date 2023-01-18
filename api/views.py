@@ -343,7 +343,7 @@ class CustomerUpdadeDelete(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = SavecustomerSerializer
 
     def update(self, request, *args, **kwargs):
-        print(request)
+        print(request.data.copy())
         return super(CustomerUpdadeDelete, self).update(request)
 
 
