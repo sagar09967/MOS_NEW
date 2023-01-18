@@ -16,7 +16,7 @@ class UserAdmin(BaseUserAdmin):
         ('User Credentials', {'fields': ('username', 'password')}),
         (None, {'fields': (
             'group', 'firstName', 'lastName', 'emailId', 'contactNo', 'dob', 'address', 'active', 'companyCode',
-            'sw_CustomerId', 'registration_Date', 'valid_Date')}),
+            'sw_CustomerId', 'registration_Date', 'valid_Date', 'photo')}),
         ('Permissions', {'fields': ('is_active', 'is_staff')}),
     )
     # add_fieldsets is not a standard ModelAdmin attribute. UserAdmin
