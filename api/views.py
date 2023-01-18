@@ -344,7 +344,7 @@ class CustomerUpdadeDelete(generics.RetrieveUpdateDestroyAPIView):
 
     def update(self, request, *args, **kwargs):
         print(request)
-        return super(CustomerUpdadeDelete, self).update()
+        return super(CustomerUpdadeDelete, self).update(request)
 
 
 # < --------------- Login Customer Master Api ---------------->
