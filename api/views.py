@@ -342,6 +342,10 @@ class CustomerUpdadeDelete(generics.RetrieveUpdateDestroyAPIView):
     queryset = CustomerMaster.objects.all()
     serializer_class = SavecustomerSerializer
 
+    def update(self, request, *args, **kwargs):
+        print(request)
+        return super(CustomerUpdadeDelete, self).update()
+
 
 # < --------------- Login Customer Master Api ---------------->
 
