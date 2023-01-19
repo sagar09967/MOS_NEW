@@ -1190,7 +1190,7 @@ def get_mos_report(request):
         purchase_row['qty'] = locale.format_string("%d", int(purchase.balQty), grouping=True)
         purchase_row['pur_date'] = purchase.trDate.strftime('%d-%m-%Y')
         purchase_row['pur_rate'] = round(purchase.rate, 2)
-        purchase_row['closing'] = locale.format_string("%.2f", purchase.balQty, grouping=True)
+        purchase_row['closing'] = locale.format_string("%d", purchase.balQty, grouping=True)
         mkt_rate = services.get_market_rate_value(purchase.part)
         purchase_row['marketRate'] = round(mkt_rate, 2) if mkt_rate is not None else " "
         purchase_row['cg'] = locale.format_string("%.2f", Decimal(mkt_rate) - purchase.rate * purchase.balQty,
