@@ -1176,6 +1176,7 @@ def get_mos_report(request):
         sale_row['sale_rate'] = round(sale.srate, 2)
         time_delta = relativedelta(sale.sDate, purchase.trDate)
         if (time_delta.years * 12 + time_delta.months) <= 12:
+            sale_row['cg'] = (sale.srate - purchase.rate) * sale.sqty
             sale_row['cg'] = locale.format_string("%.2f", round(sale.stcg, 2), grouping=True)
             stcg_released.append(sale_row)
         else:
