@@ -879,7 +879,7 @@ def get_scriptwise_profit_report(request):
     total_profit = sum(list_profit_values)
     percentages = round_to_100_percent(list_profit_values, 2)
     rows = []
-    gains_list =[]
+    gains_list = []
     for i in range(0, len(total_holding_values_by_script)):
         temp_masters = masters.filter(part=total_holding_values_by_script[i]['part'])
         gain = Decimal(0)
@@ -902,7 +902,6 @@ def get_scriptwise_profit_report(request):
         row['qty'] = locale.format_string("%d", int(total_qty_by_part[i]['total_qty']), grouping=True)
         row['gain_perc'] = str(gains_percentages[i]) + '%'
         row['gain_value'] = locale.format_string("%.2f", round(gains_list[i], 2), grouping=True)
-
 
         rows.append(row)
     total = {
@@ -1006,8 +1005,9 @@ def get_profit_adj_report(request):
                                                      grouping=True)
         row['mkt_rate'] = locale.format_string("%.2f", round(total_holding_values_by_script[i]['avg_mkt_rate'], 2),
                                                grouping=True)
-        row['adj_pur_rate'] = locale.format_string("%.2f", round((total_holding_values_by_script[i]['total_holding_value'] - gains_list[i]) / \
-                              total_qty_by_part[i]['total_qty'],2),grouping=True)
+        row['adj_pur_rate'] = locale.format_string("%.2f", round(
+            (total_holding_values_by_script[i]['total_holding_value'] - gains_list[i]) / \
+            total_qty_by_part[i]['total_qty'], 2), grouping=True)
 
         rows.append(row)
     total = {
@@ -1179,7 +1179,8 @@ def get_mos_report(request):
             sale_row['cg'] = locale.format_string("%.2f", round(sale.stcg, 2), grouping=True)
             stcg_released.append(sale_row)
         else:
-            sale_row['cg'] = locale.format_string("%.2f", round(sale.ltcg, 2), grouping=True)
+            sale_row['cg'] = (sale.srate - purchase.rate) * sale.sqty
+            sale_row['cg'] = locale.format_string("%.2f", round(sale_row['cg'], 2), grouping=True)
             ltcg_released.append(sale_row)
 
     purchases = TranSum.purchase_objects.filter(**data).filter(balQty__gt=0).order_by('part')
@@ -1192,11 +1193,13 @@ def get_mos_report(request):
         purchase_row['pur_rate'] = round(purchase.rate, 2)
         purchase_row['closing'] = locale.format_string("%d", purchase.balQty, grouping=True)
         mkt_rate = services.get_market_rate_value(purchase.part)
-        purchase_row['marketRate'] = round(mkt_rate, 2) if mkt_rate is not None else " "
-        purchase_row['cg'] = locale.format_string("%.2f", Decimal(mkt_rate) - purchase.rate * purchase.balQty,
+        purchase_row['marketRate'] = locale.format_string("%.2f", round(mkt_rate, 2),
+                                                          grouping=True) if mkt_rate is not None else " "
+        purchase_row['cg'] = locale.format_string("%.2f", (Decimal(mkt_rate) - purchase.rate) * purchase.balQty,
                                                   grouping=True) if mkt_rate is not None else " "
         time_delta = relativedelta(datetime.date.today(), purchase.trDate)
         if (time_delta.years * 12 + time_delta.months) <= 12:
+
             stcg_unreleased.append(purchase_row)
         else:
             ltcg_unreleased.append(purchase_row)
@@ -1216,10 +1219,14 @@ def get_mos_report(request):
     heading = name
     description = 'MOS Report ( ' + data['againstType'] + ' )'
     context = {
-        'ltcg_released': sorted(ltcg_released, key=lambda x: (x['script'],datetime.datetime.strptime(x['pur_date'], '%d-%m-%Y'))),
-        'ltcg_unreleased': sorted(ltcg_unreleased,key=lambda x: (x['script'],datetime.datetime.strptime(x['pur_date'], '%d-%m-%Y'))),
-        'stcg_released': sorted(stcg_released, key=lambda x: (x['script'],datetime.datetime.strptime(x['pur_date'], '%d-%m-%Y'))),
-        'stcg_unreleased': sorted(stcg_unreleased, key=lambda x: (x['script'],datetime.datetime.strptime(x['pur_date'], '%d-%m-%Y'))),
+        'ltcg_released': sorted(ltcg_released,
+                                key=lambda x: (x['script'], datetime.datetime.strptime(x['pur_date'], '%d-%m-%Y'))),
+        'ltcg_unreleased': sorted(ltcg_unreleased,
+                                  key=lambda x: (x['script'], datetime.datetime.strptime(x['pur_date'], '%d-%m-%Y'))),
+        'stcg_released': sorted(stcg_released,
+                                key=lambda x: (x['script'], datetime.datetime.strptime(x['pur_date'], '%d-%m-%Y'))),
+        'stcg_unreleased': sorted(stcg_unreleased,
+                                  key=lambda x: (x['script'], datetime.datetime.strptime(x['pur_date'], '%d-%m-%Y'))),
         'totals': totals,
         'heading': heading,
         'description': description,
