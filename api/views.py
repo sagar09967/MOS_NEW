@@ -1218,7 +1218,7 @@ def get_mos_report(request):
     }
     pre_table = "Report Date : " + datetime.date.today().strftime('%d/%m/%Y')
     heading = name
-    description = 'MOS Report ( ' + data['againstType'] + ' )'
+    description = 'MOS Report ( ' + data['againstType'] + ' )' + " FY " + "2021-2022"
     context = {
         'ltcg_released': sorted(ltcg_released,
                                 key=lambda x: (x['script'], datetime.datetime.strptime(x['pur_date'], '%d-%m-%Y'))),
