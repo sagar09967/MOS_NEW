@@ -524,10 +524,10 @@ def get_holdings_for_member(request):
             "avgRate": master['avgRate']
         }
         purchases = TranSum.purchase_objects.filter(group=group, code=code, againstType=againstType,
-                                                    scriptSno=master['sno'], part=master['part'])
-        openings = purchases.filter(trDate__lt=from_date)
+                                                    scriptSno=master['sno'], part=master['part'], fy=dfy)
+        openings = purchases.filter(sp='O')
         sum_opening = list(openings.aggregate(Sum('qty')).values())[0]
-        additions = purchases.filter(trDate__range=(from_date, to_date))
+        additions = purchases.filter(sp='A')
         sum_addition = list(additions.aggregate(Sum('qty')).values())[0]
         sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'], againstType=againstType)
         sum_sales = list(sales.aggregate(Sum('sqty')).values())[0]
