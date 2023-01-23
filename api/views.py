@@ -513,6 +513,10 @@ def get_holdings_for_member(request):
 
     masters = TranSum.master_objects.filter(group=group, code=code, againstType=againstType)
     for master in masters.values():
+        purchases = TranSum.purchase_objects.filter(group=group, code=code, againstType=againstType,
+                                                    scriptSno=master['sno'], part=master['part'], fy=dfy)
+        if len(purchases) == 0:
+            continue
         holding = {
             "part": master['part'],
             "balQty": int(master['balQty']),
@@ -523,8 +527,7 @@ def get_holdings_for_member(request):
             "marketRate": master['marketRate'],
             "avgRate": master['avgRate']
         }
-        purchases = TranSum.purchase_objects.filter(group=group, code=code, againstType=againstType,
-                                                    scriptSno=master['sno'], part=master['part'], fy=dfy)
+
         openings = purchases.filter(sp='O')
         sum_opening = list(openings.aggregate(Sum('qty')).values())[0]
         additions = purchases.filter(sp='A')
