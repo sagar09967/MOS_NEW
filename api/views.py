@@ -1010,7 +1010,7 @@ def get_profit_adj_report(request):
                                                grouping=True)
         row['adj_pur_rate'] = locale.format_string("%.2f", round(
             (total_holding_values_by_script[i]['total_holding_value'] - gains_list[i]) / \
-            total_qty_by_part[i]['total_qty'], 2), grouping=True)
+            total_qty_by_part[i]['total_qty'], 2), grouping=True) if total_qty_by_part[i]['total_qty'] != 0 else " "
 
         rows.append(row)
     total = {
