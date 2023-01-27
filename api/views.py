@@ -496,6 +496,7 @@ class SalesViewSet(viewsets.ViewSet):
 
 
 @api_view(['GET'])
+@transaction.atomic
 def get_holdings_for_member(request):
     group = request.query_params.get('group')
     code = request.query_params.get('code')
@@ -511,7 +512,14 @@ def get_holdings_for_member(request):
     # print("Ballllllll--->",holding)
     holdings = []
 
-    masters = TranSum.master_objects.filter(group=group, code=code, againstType=againstType)
+    masters = TranSum.master_objects.filter(group=group, code=code, againstType=againstType, fy=dfy)
+    if len(masters) == 0:
+        years = dfy.split("-")
+        start_year = int(years[0])
+        end_year = int(years[1])
+        prev_dfy = str(start_year - 1) + "-" + str(end_year - 1)
+        masters = carry_forward_records(group, code, againstType, prev_dfy, dfy)
+
     for master in masters.values():
         purchases = TranSum.purchase_objects.filter(group=group, code=code, againstType=againstType,
                                                     scriptSno=master['sno'], part=master['part'], fy=dfy)
@@ -545,6 +553,51 @@ def get_holdings_for_member(request):
         holdings.append(holding)
 
     return Response({'status': True, 'message': 'Retrieved Holdings', 'data': holdings})
+
+
+def carry_forward_records(group, code, againstType, prev_dfy, next_dfy):
+    masters = TranSum.master_objects.filter(group=group, code=code,
+                                            againstType=againstType,
+                                            fy=prev_dfy)
+    if len(masters) == 0:
+        years = prev_dfy.split("-")
+        start_year = int(years[0])
+        end_year = int(years[1])
+        new_prev_dfy = str(start_year - 1) + "-" + str(end_year - 1)
+        new_next_dfy = prev_dfy
+        generated_masters = carry_forward_records(group, code, againstType, new_prev_dfy, new_next_dfy)
+        result_masters = carry_forward_records(group, code, againstType, prev_dfy, next_dfy)
+        return result_masters
+    else:
+        purchases = TranSum.purchase_objects.filter(group=group, code=code,
+                                                  againstType=againstType,
+                                                  fy=prev_dfy)
+        for purchase in purchases:
+            if purchase.balQty > 0:
+                carried_purchase = TranSum()
+                carried_purchase.group = purchase.group
+                carried_purchase.code = purchase.code
+                carried_purchase.part = purchase.part
+                carried_purchase.qty = purchase.balQty
+                carried_purchase.fy = next_dfy
+                carried_purchase.againstType = againstType
+                carried_purchase.sp = 'O'
+                carried_purchase.rate = purchase.rate
+                carried_purchase.fmr = purchase.fmr
+                carried_purchase.sVal = purchase.HoldingValue
+                carried_purchase.trDate = purchase.trDate
+                carried_purchase.sttCharges = purchase.sttCharges
+                carried_purchase.otherCharges = purchase.otherCharges
+                carried_purchase.noteAdd = purchase.noteAdd
+                carried_purchase.isinCode = purchase.isinCode
+                carried_purchase.save()
+            else:
+                continue
+
+        carried_masters = TranSum.master_objects.filter(group=group, code=code,
+                                                        againstType=againstType,
+                                                        fy=next_dfy)
+        return carried_masters
 
 
 @api_view(['GET'])

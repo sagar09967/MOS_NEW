@@ -151,7 +151,7 @@ class TranSum(models.Model):
         super(TranSum, self).save(*args, **kwargs)
         if self.sp == 'A' or self.sp == 'O':
             master_record = TranSum.master_objects.filter(group=self.group, code=self.code, part=self.part,
-                                                          againstType=self.againstType).last()
+                                                          againstType=self.againstType, fy=self.fy).last()
             if master_record is None:
                 master_record = TranSum.master_objects.create_master_from_purchase(self)
             queryset = TranSum.purchase_objects.filter(pk=self.trId)  # this record itself
@@ -174,7 +174,7 @@ class TranSum(models.Model):
             market_rate = services.get_market_rate(self.part)
             if market_rate:
                 market_rate = market_rate['Adj Close']
-                marketValue = balQty * market_rate
+                marketValue = int(balQty) * market_rate
             else:
                 market_rate = None
                 marketValue = None
