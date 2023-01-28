@@ -554,7 +554,7 @@ def get_holdings_for_member(request):
 
     return Response({'status': True, 'message': 'Retrieved Holdings', 'data': holdings})
 
-
+@transaction.atomic
 def carry_forward_records(group, code, againstType, prev_dfy, next_dfy):
     masters = TranSum.master_objects.filter(group=group, code=code,
                                             againstType=againstType,
@@ -1070,7 +1070,7 @@ def get_profit_adj_report(request):
         'sno': " ",
         'script': "Total",
         'qty': locale.format_string("%d", int(total_qty), grouping=True),
-        'gain_perc': sum(gains_percentages),
+        'gain_perc': "100%",
         'gain_value': locale.format_string("%.2f", round(total_gain, 2), grouping=True),
         'purchase_price': " ",
         'purchase_value': locale.format_string("%.2f", round(total_holding, 2), grouping=True),
