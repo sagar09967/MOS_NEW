@@ -554,6 +554,7 @@ def get_holdings_for_member(request):
 
     return Response({'status': True, 'message': 'Retrieved Holdings', 'data': holdings})
 
+
 @transaction.atomic
 def carry_forward_records(group, code, againstType, prev_dfy, next_dfy):
     masters = TranSum.master_objects.filter(group=group, code=code,
@@ -570,8 +571,8 @@ def carry_forward_records(group, code, againstType, prev_dfy, next_dfy):
         return result_masters
     else:
         purchases = TranSum.purchase_objects.filter(group=group, code=code,
-                                                  againstType=againstType,
-                                                  fy=prev_dfy)
+                                                    againstType=againstType,
+                                                    fy=prev_dfy)
         for purchase in purchases:
             if purchase.balQty > 0:
                 carried_purchase = TranSum()
@@ -1125,7 +1126,7 @@ def get_transaction_report(request):
     i = 1
     for purchase in purchases:
         sales = MOS_Sales.objects.filter(group=data['group'], code=data['code'], fy=data['fy'], purSno=purchase.sno,
-                                         scriptSno=purchase.scriptSno).order_by('sDate')
+                                         scriptSno=purchase.scriptSno,againstType=purchase.againstType).order_by('sDate')
         temp_purchase = purchase
         for sale in sales:
             row = {}
@@ -1210,56 +1211,62 @@ def get_mos_report(request):
         group = CustomerMaster.objects.filter(group=data['group']).first()
         name = group.firstName + " " + group.lastName
 
+    filter = "both"
+    if data.get("filter"):
+        filter = data.pop('filter')
+
     ltcg_released = []
     ltcg_unreleased = []
     stcg_released = []
     stcg_unreleased = []
     locale.setlocale(locale.LC_ALL, 'en_IN.utf8')
     sales = MOS_Sales.objects.filter(**data)
-    for sale in sales:
-        purchase = TranSum.purchase_objects.filter(group=data['group'], code=sale.code, sno=sale.purSno,
-                                                   scriptSno=sale.scriptSno).first()
-        if purchase is None:
-            continue
-        sale_row = {}
+    if filter == 'both' or filter == 'released':
+        for sale in sales:
+            purchase = TranSum.purchase_objects.filter(group=data['group'], code=sale.code, sno=sale.purSno,
+                                                       scriptSno=sale.scriptSno).first()
+            if purchase is None:
+                continue
+            sale_row = {}
 
-        # sale_row['sno'] = 0
-        sale_row['script'] = purchase.part
-        sale_row['qty'] = sale.sqty
-        sale_row['pur_date'] = purchase.trDate.strftime('%d-%m-%Y')
-        sale_row['pur_rate'] = round(purchase.rate, 2)
-        sale_row['sale_date'] = sale.sDate.strftime('%d-%m-%Y')
-        sale_row['sale_rate'] = round(sale.srate, 2)
-        time_delta = relativedelta(sale.sDate, purchase.trDate)
-        if (time_delta.years * 12 + time_delta.months) <= 12:
-            sale_row['cg'] = (sale.srate - purchase.rate) * sale.sqty
-            sale_row['cg'] = locale.format_string("%.2f", round(sale.stcg, 2), grouping=True)
-            stcg_released.append(sale_row)
-        else:
-            sale_row['cg'] = (sale.srate - purchase.rate) * sale.sqty
-            sale_row['cg'] = locale.format_string("%.2f", round(sale_row['cg'], 2), grouping=True)
-            ltcg_released.append(sale_row)
+            # sale_row['sno'] = 0
+            sale_row['script'] = purchase.part
+            sale_row['qty'] = sale.sqty
+            sale_row['pur_date'] = purchase.trDate.strftime('%d-%m-%Y')
+            sale_row['pur_rate'] = round(purchase.rate, 2)
+            sale_row['sale_date'] = sale.sDate.strftime('%d-%m-%Y')
+            sale_row['sale_rate'] = round(sale.srate, 2)
+            time_delta = relativedelta(sale.sDate, purchase.trDate)
+            if (time_delta.years * 12 + time_delta.months) <= 12:
+                sale_row['cg'] = (sale.srate - purchase.rate) * sale.sqty
+                sale_row['cg'] = locale.format_string("%.2f", round(sale.stcg, 2), grouping=True)
+                stcg_released.append(sale_row)
+            else:
+                sale_row['cg'] = (sale.srate - purchase.rate) * sale.sqty
+                sale_row['cg'] = locale.format_string("%.2f", round(sale_row['cg'], 2), grouping=True)
+                ltcg_released.append(sale_row)
 
-    purchases = TranSum.purchase_objects.filter(**data).filter(balQty__gt=0).order_by('part')
-    for purchase in purchases:
-        purchase_row = {}
-        # purchase_row['sno'] = 0
-        purchase_row['script'] = purchase.part
-        purchase_row['qty'] = locale.format_string("%d", int(purchase.balQty), grouping=True)
-        purchase_row['pur_date'] = purchase.trDate.strftime('%d-%m-%Y')
-        purchase_row['pur_rate'] = round(purchase.rate, 2)
-        purchase_row['closing'] = locale.format_string("%d", purchase.balQty, grouping=True)
-        mkt_rate = services.get_market_rate_value(purchase.part)
-        purchase_row['marketRate'] = locale.format_string("%.2f", round(mkt_rate, 2),
-                                                          grouping=True) if mkt_rate is not None else " "
-        purchase_row['cg'] = locale.format_string("%.2f", (Decimal(mkt_rate) - purchase.rate) * purchase.balQty,
-                                                  grouping=True) if mkt_rate is not None else " "
-        time_delta = relativedelta(datetime.date.today(), purchase.trDate)
-        if (time_delta.years * 12 + time_delta.months) <= 12:
+    if filter == 'both' or filter == 'unreleased':
+        purchases = TranSum.purchase_objects.filter(**data).filter(balQty__gt=0).order_by('part')
+        for purchase in purchases:
+            purchase_row = {}
+            # purchase_row['sno'] = 0
+            purchase_row['script'] = purchase.part
+            purchase_row['qty'] = locale.format_string("%d", int(purchase.balQty), grouping=True)
+            purchase_row['pur_date'] = purchase.trDate.strftime('%d-%m-%Y')
+            purchase_row['pur_rate'] = round(purchase.rate, 2)
+            purchase_row['closing'] = locale.format_string("%d", purchase.balQty, grouping=True)
+            mkt_rate = services.get_market_rate_value(purchase.part)
+            purchase_row['marketRate'] = locale.format_string("%.2f", round(mkt_rate, 2),
+                                                              grouping=True) if mkt_rate is not None else " "
+            purchase_row['cg'] = locale.format_string("%.2f", (Decimal(mkt_rate) - purchase.rate) * purchase.balQty,
+                                                      grouping=True) if mkt_rate is not None else " "
+            time_delta = relativedelta(datetime.date.today(), purchase.trDate)
+            if (time_delta.years * 12 + time_delta.months) <= 12:
 
-            stcg_unreleased.append(purchase_row)
-        else:
-            ltcg_unreleased.append(purchase_row)
+                stcg_unreleased.append(purchase_row)
+            else:
+                ltcg_unreleased.append(purchase_row)
 
     stcg_unreleased_total = sum_by_key(stcg_unreleased, 'cg')
     stcg_released_total = sum_by_key(stcg_released, 'cg')
@@ -1276,6 +1283,8 @@ def get_mos_report(request):
     heading = name
     description = 'MOS Report ( ' + data['againstType'] + ' )' + " FY " + "2021-2022"
     context = {
+        'released': filter == 'both' or filter == 'released',
+        'unreleased': filter == 'both' or filter == 'unreleased',
         'ltcg_released': sorted(ltcg_released,
                                 key=lambda x: (x['script'], datetime.datetime.strptime(x['pur_date'], '%d-%m-%Y'))),
         'ltcg_unreleased': sorted(ltcg_unreleased,

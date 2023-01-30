@@ -83,7 +83,7 @@
 </div>
 
 <p id='date'>{{pre_table}}</p>
-
+{% if released %}
 <div style="display:inline-block;width:100%">
     <p><span style="float:left">Long Term Capital Gains</span><br><br><span>Released</span></p>
 </div>
@@ -124,9 +124,10 @@
         <td>{{" "}}</td>
         <td class="right">{{totals.ltcg_released_total}}</td>
     </tr>
-
-
 </table>
+{% endif %}
+
+{% if unreleased %}
 <div style="display:inline;width:100%">
     <p style="width:100%"><span style="float:right">Unreleased</span></p>
 </div>
@@ -169,7 +170,8 @@
     </tr>
 
 </table>
-
+{% endif %}
+{% if released %}
 <div style="display:inline;width:100%;">
     <p><span style="float:left">Short Term Capital Gains</span><br><br><span>Released</span></p>
 </div>
@@ -210,7 +212,8 @@
         <td class="right">{{totals.stcg_released_total}}</td>
     </tr>
 </table>
-
+{% endif %}
+{% if unreleased %}
 <div style="display:inline;width:100%">
     <p style="width:100%"><span style="float:right">Unreleased</span></p>
 </div>
@@ -253,6 +256,6 @@
 
 
 </table>
-
+{% endif %}
 </body>
 </html>
