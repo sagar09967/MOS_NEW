@@ -203,7 +203,7 @@ class TranSum(models.Model):
                 else:
                     sno = 1
             purchases_by_part = TranSum.purchase_objects.filter(group=self.group, code=self.code, part=self.part,
-                                                                againstType=self.againstType)
+                                                                againstType=self.againstType, fy=self.fy)
             purchases_by_part.update(scriptSno=sno)
             balQty = sum_by_key(purchases_by_part, 'balQty')
             HoldingValue = sum_by_key(purchases_by_part, 'HoldingValue')

@@ -655,10 +655,17 @@ def get_market_rate(request):
     return Response({"status": True, "message": "Retrieved Market Rates", "data": data})
 
 
-def sum_by_key(records, key):
+def sum_by_key_ul(records, key):
     sum_result = 0
     for record in records:
         sum_result = sum_result + getattr(record, key)
+    return sum_result
+
+
+def sum_by_key_ul(records: dict[str], key):
+    sum_result = 0
+    for record in records:
+        sum_result = sum_result + record[key]
     return sum_result
 
 
@@ -1126,7 +1133,8 @@ def get_transaction_report(request):
     i = 1
     for purchase in purchases:
         sales = MOS_Sales.objects.filter(group=data['group'], code=data['code'], fy=data['fy'], purSno=purchase.sno,
-                                         scriptSno=purchase.scriptSno,againstType=purchase.againstType).order_by('sDate')
+                                         scriptSno=purchase.scriptSno, againstType=purchase.againstType).order_by(
+            'sDate')
         temp_purchase = purchase
         for sale in sales:
             row = {}
@@ -1303,6 +1311,157 @@ def get_mos_report(request):
     # html = render_to_string('reports/test.html')
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="MOS_Report.pdf"'
+
+    pisaStatus = pisa.CreatePDF(html, dest=response)
+    return response
+
+
+@api_view(['GET'])
+def script_review_report(request):
+    data = request.query_params.dict()
+    data['fy'] = data.pop('dfy')
+    name = ""
+    if data.get('code'):
+        member = MemberMaster.objects.filter(group=data['group'], code=data['code']).first()
+        name = member.name
+    else:
+        group = CustomerMaster.objects.filter(group=data['group']).first()
+        name = group.firstName + " " + group.lastName
+
+    filter = "both"
+    if data.get("filter"):
+        filter = data.pop('filter')
+
+    ltcg_released = []
+    ltcg_unreleased = []
+    stcg_released = []
+    stcg_unreleased = []
+    locale.setlocale(locale.LC_ALL, 'en_IN.utf8')
+    masters = TranSum.master_objects.filter(**data).order_by('part')
+    master_rows = []
+    for master in masters:
+        purchases = TranSum.purchase_objects.filter(**data, part=master.part, scriptSno=master.sno).order_by('trDate')
+        master_row = {
+            "part": master.part,
+            "purchases": []
+        }
+        mkt_rate = services.get_market_rate_value(master.part)
+        for purchase in purchases:
+            pur_cg = locale.format_string("%.2f", (Decimal(mkt_rate) - purchase.rate) * purchase.balQty,
+                                          grouping=True) if mkt_rate is not None else " "
+            purchase_row = {
+                "pur_date": purchase.trDate.strftime('%d-%m-%Y'),
+                "pur_qty": locale.format_string('%d', purchase.qty, grouping=True),
+                "pur_rate": locale.format_string('%.2f', purchase.rate, grouping=True),
+                "pur_value": locale.format_string('%.2f', purchase.sVal, grouping=True),
+                "sales": [],
+                "bal_qty": locale.format_string('%d', purchase.balQty, grouping=True),
+                "mkt_rate": locale.format_string('%.2f', mkt_rate, grouping=True),
+                "stcg": " ",
+                "ltcg": " ",
+                "speculation": " ",
+
+            }
+            time_delta = relativedelta(datetime.date.today(), purchase.trDate)
+            if (time_delta.years * 12 + time_delta.months) <= 12:
+                purchase_row['stcg'] = pur_cg
+            else:
+                purchase_row['ltcg'] = pur_cg
+
+            sales = MOS_Sales.objects.filter(group=purchase.group, code=purchase.code, purSno=purchase.sno,
+                                             scriptSno=purchase.scriptSno, againstType=data['againstType'],
+                                             fy=purchase.fy).order_by('sDate')
+            if len(sales) == 0:
+                sale_row = {
+                    "s_date": " ",
+                    "s_qty": " ",
+                    "s_rate": " ",
+                    "s_val": " ",
+                    "stcg": " ",
+                    "ltcg": " ",
+                    "speculation": " "
+                }
+                purchase_row['sales'].append(sale_row)
+                purchase_row['sales_range'] = range(0, 1)
+            else:
+                for sale in sales:
+                    sale_row = {
+                        "s_date": sale.sDate.strftime('%d-%m-%Y'),
+                        "s_qty": locale.format_string('%d', sale.sqty, grouping=True),
+                        "s_rate": locale.format_string('%.2f', sale.srate, grouping=True),
+                        "s_val": locale.format_string('%.2f', sale.sVal, grouping=True),
+                        "stcg": " ",
+                        "ltcg": " ",
+                        "speculation": sale.speculation if sale.speculation else " "
+                    }
+                    if (time_delta.years * 12 + time_delta.months) <= 12:
+                        sale_row['stcg'] = (sale.srate - purchase.rate) * sale.sqty
+                        sale_row['stcg'] = locale.format_string("%.2f", round(sale_row['stcg'], 2), grouping=True)
+                    else:
+                        sale_row['ltcg'] = (sale.srate - purchase.rate) * sale.sqty
+                        sale_row['ltcg'] = locale.format_string("%.2f", round(sale_row['ltcg'], 2), grouping=True)
+                    purchase_row['sales_range'] = range(1, len(sales))
+                    purchase_row['sales'].append(sale_row)
+            purchase_row['sale_qty_total'] = locale.format_string("%d", sum_by_key(purchase_row['sales'], 's_qty'),
+                                                                  grouping=True)
+            purchase_row['sale_value_total'] = locale.format_string("%.2f", sum_by_key(purchase_row['sales'], 's_val'),
+                                                                    grouping=True)
+            purchase_row['sale_stcg_total'] = locale.format_string("%.2f", sum_by_key(purchase_row['sales'], 'stcg'),
+                                                                   grouping=True)
+            purchase_row['sale_ltcg_total'] = locale.format_string("%.2f", sum_by_key(purchase_row['sales'], 'ltcg'),
+                                                                   grouping=True)
+            purchase_row['sale_spec_total'] = locale.format_string("%.2f",
+                                                                   sum_by_key(purchase_row['sales'], 'speculation'),
+                                                                   grouping=True)
+            master_row['purchases'].append(purchase_row)
+        master_row['purchase_qty_total'] = sum_by_key(master_row['purchases'], 'pur_qty')
+        master_row['purchase_value_total'] = sum_by_key(master_row['purchases'], 'pur_value')
+        master_row['purchase_bal_qty_total'] = sum_by_key(master_row['purchases'], 'bal_qty')
+        master_row['purchase_stcg_total'] = locale.format_string("%.2f", sum_by_key(master_row['purchases'], 'stcg'),
+                                                                 grouping=True)
+        master_row['purchase_ltcg_total'] = locale.format_string("%.2f", sum_by_key(master_row['purchases'], 'ltcg'),
+                                                                 grouping=True)
+        master_row['purchase_speculation_total'] = locale.format_string("%.2f", sum_by_key(master_row['purchases'],
+                                                                                           'speculation'),
+                                                                        grouping=True)
+        master_row['sale_qty_total'] = sum_by_key(master_row['purchases'], 'sale_qty_total')
+        master_row['sale_value_total'] = sum_by_key(master_row['purchases'], 'sale_value_total')
+        master_row['sale_stcg_total'] = locale.format_string("%.2f",
+                                                             sum_by_key(master_row['purchases'], 'sale_stcg_total'),
+                                                             grouping=True)
+        master_row['sale_ltcg_total'] = locale.format_string("%.2f",
+                                                             sum_by_key(master_row['purchases'], 'sale_ltcg_total'),
+                                                             grouping=True)
+        master_row['sale_spec_total'] = locale.format_string("%.2f",
+                                                             sum_by_key(master_row['purchases'], 'sale_spec_total'),
+                                                             grouping=True)
+        master_rows.append(master_row)
+    grand_totals = {}
+    grand_totals['purchase_qty_total'] = sum_by_key_ul(master_rows, 'purchase_qty_total')
+    grand_totals['purchase_value_total'] = sum_by_key_ul(master_rows, 'purchase_value_total')
+    grand_totals['purchase_bal_qty_total'] = sum_by_key_ul(master_rows, 'purchase_bal_qty_total')
+    grand_totals['purchase_stcg_total'] = locale.format_string("%.2f",sum_by_key(master_rows, 'purchase_stcg_total'),grouping=True)
+    grand_totals['purchase_ltcg_total'] = locale.format_string("%.2f",sum_by_key(master_rows, 'purchase_ltcg_total'),grouping=True)
+    grand_totals['purchase_speculation_total'] = locale.format_string("%.2f",sum_by_key(master_rows, 'purchase_speculation_total'),grouping=True)
+    grand_totals['sale_qty_total'] = sum_by_key_ul(master_rows, 'sale_qty_total')
+    grand_totals['sale_value_total'] = sum_by_key_ul(master_rows, 'sale_value_total')
+    grand_totals['sale_stcg_total'] = locale.format_string("%.2f",sum_by_key(master_rows, 'sale_stcg_total'),grouping=True)
+    grand_totals['sale_ltcg_total'] = locale.format_string("%.2f",sum_by_key(master_rows, 'sale_ltcg_total'),grouping=True)
+    grand_totals['sale_spec_total'] = locale.format_string("%.2f",sum_by_key(master_rows, 'sale_spec_total'),grouping=True)
+    pre_table = "Report Date : " + datetime.date.today().strftime('%d/%m/%Y')
+    heading = name
+    description = 'Script Review Report ( ' + data['againstType'] + ' )' + " FY " + data['fy']
+    context = {
+        'masters': master_rows,
+        'grand_totals': grand_totals,
+        'heading': heading,
+        'description': description,
+        'pre_table': pre_table,
+    }
+    html = render_to_string('reports/script_review_report.html', context)
+    # html = render_to_string('reports/test.html')
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="Script Review_Report.pdf"'
 
     pisaStatus = pisa.CreatePDF(html, dest=response)
     return response

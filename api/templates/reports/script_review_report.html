@@ -1,0 +1,243 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Holding Report</title>
+
+    <style>
+    @page main_template{
+        size:16.54in 23.39in;
+        margin: 2cm;
+        @frame content_frame {
+            left: 5pt;
+            width: 16in;
+            top: 10pt;
+            height: 23in;
+            -pdf-frame-border: 1;   /* for debugging the layout */
+        }
+
+        @frame header_frame {           /* Static Frame */
+            -pdf-frame-content: header_content;
+            left: 5pt;
+            width: 16in;
+            top: 10pt;
+            height: 23in;
+        }
+
+        @frame footer_frame {           /* Another static Frame */
+            -pdf-frame-content: footer_content;
+            left: 70pt; width: 512pt; top: 772pt; height: 20pt;
+        }
+    }
+        body{
+            line-height:0.5px;
+        }
+        table {
+            border:1px solid black;
+        }
+        th {
+            font-size:15px;
+            font-weight:bold;
+            padding:3px;
+        }
+        td{
+          text-align: center;
+          padding:2px;
+          padding-top:3px;
+          font-size:15px;
+        }
+        h3{
+            font-size:15px;
+            font-weight:bold;
+        }
+        #date{
+          font-size:15px;
+          font-family: "Trebuchet MS", Tahoma, sans-serif;
+          text-align:left;
+          font-weight:bold;
+        }
+        p{
+            font-size:15px;
+        }
+        span{
+        font-size:15px;
+        }
+        .yellow {
+            background-color:#fff7e6;
+        }
+
+        .blue {
+            background-color:#e6f2ff;
+        }
+        .total > .yellow {
+            background-color:#ffe7b3;
+        }
+        .total > .blue {
+            background-color:#b3d7ff;
+        }
+        .left {
+            text-align:left;
+        }
+        .right {
+            text-align:right;
+        }
+        .mid {
+            text-align:center;
+        }
+
+
+    </style>
+</head>
+<body>
+
+{% load template_helpers %}
+<div>
+    <h3 style="text-align:center;">{{heading}}</h3>
+    <h3 style="text-align:center;">{{description}}</h3>
+</div>
+
+<p id='date'>{{pre_table}}</p>
+
+<table class="customers" align="center" repeat="3">
+    <thead>
+    <tr>
+        <th scope="col" width="20" class="blue">S #</th>
+        <th scope="col" colspan="11" class="blue"><---------- Released Capital Gain -----------></th>
+        <th scope="col" colspan="5" class="yellow"><------- Unreleased Capital Gain --------></th>
+        <th scope="col" colspan="2" class="blue"><-- STCG to LTCG --></th>
+    </tr>
+    <tr>
+        <th scope="col" width="20" class="blue">{{" "}}</th>
+        <th scope="col" colspan="4" class="blue"><---------- Purchase -----------></th>
+        <th scope="col" colspan="4" class="yellow"><------- Sale --------></th>
+        <th scope="col" colspan="3" class="blue"><------- Capital Gain --------></th>
+        <th scope="col" colspan="5" class="blue">{{" "}}</th>
+        <th scope="col" colspan="1" class="blue">LTCG</th>
+        <th scope="col" colspan="1" class="blue">LTCG</th>
+    </tr>
+    <tr>
+        <th class="left blue" scope="col" width="35">{{" "}}</th>
+        <th class="left blue" scope="col" width="70">Date</th>
+        <th class="right blue" scope="col" width="40">Qty</th>
+        <th class="right blue" scope="col" width="60">Rate</th>
+        <th class="right blue" scope="col" width="70">Value</th>
+        <th class="left yellow" scope="col" width="70">Date</th>
+        <th class="right yellow" scope="col" width="40">Qty</th>
+        <th class="right yellow" scope="col" width="60">Rate</th>
+        <th class="right yellow" scope="col" width="70">Value</th>
+        <th class="right blue" scope="col" width="70">STCG</th>
+        <th class="right blue" scope="col" width="70">LTCG</th>
+        <th class="right blue" scope="col" width="70">Spec</th>
+        <th class="right yellow" scope="col" width="50">Qty</th>
+        <th class="right yellow" scope="col" width="70">Mkt Rate</th>
+        <th class="right yellow" scope="col" width="80">STCG</th>
+        <th class="right yellow" scope="col" width="80">LTCG</th>
+        <th class="right yellow" scope="col" width="70">Spec</th>
+        <th class="left blue" scope="col" width="70">{{" "}}</th>
+        <th class="left blue" scope="col" width="70">{{" "}}</th>
+    </tr>
+</thead>
+    {% for master in masters %}
+    <tr>
+        <td class="right blue">{{forloop.counter}}</td>
+        <td class="left blue" colspan="18">{{master.part}}</td>
+    </tr>
+        {% for purchase in master.purchases %}
+        <tr>
+            <td class="left blue">{{" "}}</td>
+            <td class="left blue">{{purchase.pur_date}}</td>
+            <td class="right blue">{{purchase.pur_qty}}</td>
+            <td class="right blue">{{purchase.pur_rate}}</td>
+            <td class="right blue">{{purchase.pur_value}}</td>
+            <td class="left yellow">{{purchase.sales.0.s_date}}</td>
+            <td class="right yellow">{{purchase.sales.0.s_qty}}</td>
+            <td class="right yellow">{{purchase.sales.0.s_rate}}</td>
+            <td class="right yellow">{{purchase.sales.0.s_val}}</td>
+            <td class="right blue">{{purchase.sales.0.stcg}}</td>
+            <td class="right blue">{{purchase.sales.0.ltcg}}</td>
+            <td class="right blue">{{purchase.sales.0.speculation}}</td>
+            <td class="right yellow">{{purchase.bal_qty}}</td>
+            <td class="right yellow">{{purchase.mkt_rate}}</td>
+            <td class="right yellow">{{purchase.stcg}}</td>
+            <td class="right yellow">{{purchase.ltcg}}</td>
+            <td class="right yellow">{{purchase.speculation}}</td>
+            <td class="right blue">{{" "}}</td>
+            <td class="right blue">{{" "}}</td>
+        </tr>
+        {% if purchase.sales|length > 1 %}
+            {% for i in purchase.sales_range %}
+            <tr>
+                <td class="left blue">{{" "}}</td>
+                <td class="left blue">{{" "}}</td>
+                <td class="left blue">{{" "}}</td>
+                <td class="left blue">{{" "}}</td>
+                <td class="left blue">{{" "}}</td>
+                <td class="left yellow">{{ purchase.sales|get_by_index:i|get_by_key:"s_date"}}</td>
+                <td class="right yellow">{{purchase.sales|get_by_index:i|get_by_key:"s_qty"}}</td>
+                <td class="right yellow">{{purchase.sales|get_by_index:i|get_by_key:"s_rate"}}</td>
+                <td class="right yellow">purchase.sales|get_by_index:i|get_by_key:"s_val"</td>
+                <td class="right blue">{{purchase.sales|get_by_index:i|get_by_key:"stcg"}}</td>
+                <td class="right blue">{{purchase.sales|get_by_index:i|get_by_key:"ltcg"}}</td>
+                <td class="right blue">{{purchase.sales|get_by_index:i|get_by_key:"speculation"}}</td>
+                <td class="left yellow">{{" "}}</td>
+                <td class="left yellow">{{" "}}</td>
+                <td class="mid yellow">{{" "}}</td>
+                <td class="right yellow">{{" "}}</td>
+                <td class="right yellow">{{" "}}</td>
+                <td class="right blue">{{" "}}</td>
+                <td class="right blue">{{" "}}</td>
+            </tr>
+            {% endfor %}
+        {% endif %}
+        {% endfor %}
+        <tr class="total">
+            <td class="left blue">{{" "}}</td>
+            <td class="right blue">{{"Total"}}</td>
+            <td class="right blue">{{master.purchase_qty_total}}</td>
+            <td class="left blue">{{" "}}</td>
+            <td class="right blue">{{master.purchase_value_total}}</td>
+            <td class="left yellow">{{" "}}</td>
+            <td class="right yellow">{{master.sale_qty_total}}</td>
+            <td class="left yellow">{{" "}}</td>
+            <td class="right yellow">{{master.sale_value_total}}</td>
+            <td class="right blue">{{master.sale_stcg_total}}</td>
+            <td class="right blue">{{master.sale_ltcg_total}}</td>
+            <td class="right blue">{{master.sale_spec_total}}</td>
+            <td class="right yellow">{{master.purchase_bal_qty_total}}</td>
+            <td class="left yellow">{{" "}}</td>
+            <td class="right yellow">{{master.purchase_stcg_total}}</td>
+            <td class="right yellow">{{master.purchase_ltcg_total}}</td>
+            <td class="right yellow">{{master.purchase_speculation_total}}</td>
+            <td class="right blue">{{" "}}</td>
+            <td class="right blue">{{" "}}</td>
+        </tr>
+    {% endfor %}
+    <tr class="total">
+            <td class="left blue">{{" "}}</td>
+            <td class="left blue">{{"Grand Total"}}</td>
+            <td class="left blue">{{grand_totals.purchase_qty_total}}</td>
+            <td class="left blue">{{" "}}</td>
+            <td class="left blue">{{grand_totals.purchase_value_total}}</td>
+            <td class="left yellow">{{" "}}</td>
+            <td class="left yellow">{{grand_totals.sale_qty_total}}</td>
+            <td class="left yellow">{{" "}}</td>
+            <td class="left yellow">{{grand_totals.sale_value_total}}</td>
+            <td class="left blue">{{grand_totals.sale_stcg_total}}</td>
+            <td class="left blue">{{grand_totals.sale_ltcg_total}}</td>
+            <td class="left blue">{{grand_totals.sale_spec_total}}</td>
+            <td class="left yellow">{{grand_totals.purchase_bal_qty_total}}</td>
+            <td class="left yellow">{{" "}}</td>
+            <td class="mid yellow">{{grand_totals.purchase_stcg_total}}</td>
+            <td class="right yellow">{{grand_totals.purchase_ltcg_total}}</td>
+            <td class="right yellow">{{grand_totals.purchase_speculation_total}}</td>
+            <td class="right blue">{{" "}}</td>
+            <td class="right blue">{{" "}}</td>
+        </tr>
+</table>
+
+
+</body>
+</html>
