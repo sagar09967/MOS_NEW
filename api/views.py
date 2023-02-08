@@ -1162,7 +1162,7 @@ def get_transaction_report(request):
                                                       2)),
                                                   grouping=True)
             row['profit'] = locale.format_string("%.2f", float(round(temp_purchase.marketRate * temp_purchase.qty, 2)),
-                                                 grouping=True)
+                                                 grouping=True) if temp_purchase.marketRate else " "
             rows.append(row)
             i = i + 1
     total = {
@@ -1181,7 +1181,7 @@ def get_transaction_report(request):
         'pur_stt': " ",
         'pur_other': " ",
         'pur_net': " ",
-        'profit': sum_by_key(rows, 'profit')
+        'profit': locale.format_string("%.2f",sum_by_key(rows, 'profit'),grouping=True)
     }
     titles = [' ', 'Date', 'Script', 'Qty', 'Rate', 'Value', 'STT', 'Other', 'Net',
               'Qty', 'Rate', 'Value', 'STT', 'Other', 'Net', 'Profit']
