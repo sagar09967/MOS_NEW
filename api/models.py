@@ -161,7 +161,7 @@ class TranSum(models.Model):
                 last_purchase_for_part = TranSum.purchase_objects.filter(group=self.group, code=self.code,
                                                                          scriptSno=master_record.sno,
                                                                          part=self.part,
-                                                                         againstType=self.againstType).last()
+                                                                         againstType=self.againstType,fy=self.fy).last()
                 if last_purchase_for_part:
                     sno = last_purchase_for_part.sno + 1
                 else:
@@ -169,7 +169,7 @@ class TranSum(models.Model):
 
             sales_for_current_purchase = MOS_Sales.objects.filter(group=self.group, code=self.code, purSno=self.sno,
                                                                   scriptSno=self.scriptSno,
-                                                                  againstType=self.againstType)
+                                                                  againstType=self.againstType,fy=self.fy)
             balQty = self.qty - sum_by_key(sales_for_current_purchase, 'sqty')
             market_rate = services.get_market_rate(self.part)
             if market_rate:
@@ -196,7 +196,7 @@ class TranSum(models.Model):
             sno = self.sno
             if self.sno is 0:
                 last_master_for_user = TranSum.master_objects.filter(group=self.group, code=self.code,
-                                                                     againstType=self.againstType).exclude(
+                                                                     againstType=self.againstType, fy=self.fy).exclude(
                     pk=self.trId).last()
                 if last_master_for_user:
                     sno = last_master_for_user.sno + 1

@@ -1440,14 +1440,21 @@ def script_review_report(request):
     grand_totals['purchase_qty_total'] = sum_by_key_ul(master_rows, 'purchase_qty_total')
     grand_totals['purchase_value_total'] = sum_by_key_ul(master_rows, 'purchase_value_total')
     grand_totals['purchase_bal_qty_total'] = sum_by_key_ul(master_rows, 'purchase_bal_qty_total')
-    grand_totals['purchase_stcg_total'] = locale.format_string("%.2f",sum_by_key(master_rows, 'purchase_stcg_total'),grouping=True)
-    grand_totals['purchase_ltcg_total'] = locale.format_string("%.2f",sum_by_key(master_rows, 'purchase_ltcg_total'),grouping=True)
-    grand_totals['purchase_speculation_total'] = locale.format_string("%.2f",sum_by_key(master_rows, 'purchase_speculation_total'),grouping=True)
+    grand_totals['purchase_stcg_total'] = locale.format_string("%.2f", sum_by_key(master_rows, 'purchase_stcg_total'),
+                                                               grouping=True)
+    grand_totals['purchase_ltcg_total'] = locale.format_string("%.2f", sum_by_key(master_rows, 'purchase_ltcg_total'),
+                                                               grouping=True)
+    grand_totals['purchase_speculation_total'] = locale.format_string("%.2f", sum_by_key(master_rows,
+                                                                                         'purchase_speculation_total'),
+                                                                      grouping=True)
     grand_totals['sale_qty_total'] = sum_by_key_ul(master_rows, 'sale_qty_total')
     grand_totals['sale_value_total'] = sum_by_key_ul(master_rows, 'sale_value_total')
-    grand_totals['sale_stcg_total'] = locale.format_string("%.2f",sum_by_key(master_rows, 'sale_stcg_total'),grouping=True)
-    grand_totals['sale_ltcg_total'] = locale.format_string("%.2f",sum_by_key(master_rows, 'sale_ltcg_total'),grouping=True)
-    grand_totals['sale_spec_total'] = locale.format_string("%.2f",sum_by_key(master_rows, 'sale_spec_total'),grouping=True)
+    grand_totals['sale_stcg_total'] = locale.format_string("%.2f", sum_by_key(master_rows, 'sale_stcg_total'),
+                                                           grouping=True)
+    grand_totals['sale_ltcg_total'] = locale.format_string("%.2f", sum_by_key(master_rows, 'sale_ltcg_total'),
+                                                           grouping=True)
+    grand_totals['sale_spec_total'] = locale.format_string("%.2f", sum_by_key(master_rows, 'sale_spec_total'),
+                                                           grouping=True)
     pre_table = "Report Date : " + datetime.date.today().strftime('%d/%m/%Y')
     heading = name
     description = 'Script Review Report ( ' + data['againstType'] + ' )' + " FY " + data['fy']
@@ -1462,6 +1469,56 @@ def script_review_report(request):
     # html = render_to_string('reports/test.html')
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="Script Review_Report.pdf"'
+
+    pisaStatus = pisa.CreatePDF(html, dest=response)
+    return response
+
+
+@api_view(['GET'])
+def day_trading_report(request):
+    data = request.query_params.dict()
+    data['fy'] = data.pop('dfy')
+    data['againstType'] = "Day Trading"
+    name = ""
+    if data.get('code'):
+        member = MemberMaster.objects.filter(group=data['group'], code=data['code']).first()
+        name = member.name
+    else:
+        group = CustomerMaster.objects.filter(group=data['group']).first()
+        name = group.firstName + " " + group.lastName
+
+    purchases = TranSum.purchase_objects.filter(**data).order_by('part', 'trDate')
+    purchases_rows = []
+    locale.setlocale(locale.LC_ALL, 'en_IN.utf8')
+    for purchase in purchases:
+        purchase_row = {
+            "part": purchase.part,
+            "pur_date": purchase.trDate.strftime('%d-%m-%Y'),
+            "pur_qty": purchase.qty,
+            "pur_rate": locale.format_string("%.2f", purchase.rate, grouping=True),
+            "pur_value": locale.format_string("%.2f", purchase.sVal, grouping=True)
+        }
+        sale = MOS_Sales.objects.filter(**data, purSno=purchase.sno,
+                                        scriptSno=purchase.scriptSno).first()
+        purchase_row['sale_rate'] = locale.format_string("%.2f", sale.srate, grouping=True)
+        purchase_row['sale_value'] = locale.format_string("%.2f", sale.sVal, grouping=True)
+        purchase_row['speculation'] = locale.format_string("%.2f", sale.speculation, grouping=True)
+        purchases_rows.append(purchase_row)
+
+    pre_table = "Report Date : " + datetime.date.today().strftime('%d/%m/%Y')
+    heading = name + " (FY " + data['fy'] + ")"
+    description = 'Day Trading Report'
+    context = {
+        'heading': heading,
+        'description': description,
+        'pre_table': pre_table,
+        'rows': purchases_rows,
+        'post_table': " "
+    }
+
+    html = render_to_string('reports/day-trading-report.html', context)
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="Holding Report.pdf"'
 
     pisaStatus = pisa.CreatePDF(html, dest=response)
     return response

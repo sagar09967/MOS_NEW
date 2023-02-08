@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Holding Report</title>
+    <link rel="stylesheet" type="text/css" href="D:\Sinewave\Mosversion2\api\static\reports\style.css">
+    <style>
+    @page main_template{
+        size: 9.5in 11in;
+        margin: 2cm;
+        @frame content_frame {
+            left: 10pt;
+            width: 9.3in;
+            top: 20pt;
+            height: 10.8in;
+            /*-pdf-frame-border: 1; */   /* for debugging the layout */
+        }
+    }
+
+        body{
+            line-height:0.5px;
+            font-family: "Trebuchet MS";
+        }
+        table {
+             border: 1px solid black;
+
+        }
+        th {
+            padding:4px;
+            font-size:15px;
+            font-weight:bold;
+        }
+        td{
+          text-align: center;
+          padding:4px;
+          font-size:15px;
+          font-family:sans-serif;
+        }
+        .total{
+            font-weight:bold;
+        }
+        .center{
+            text-align:center;
+        }
+        .left {
+            text-align:left;
+        }
+        .right {
+            text-align:right;
+        }
+        #date{
+          font-size:15px;
+          font-family: "Trebuchet MS", Tahoma, sans-serif;
+          text-align:left;
+          font-weight:bold;
+        }
+    </style>
+</head>
+<body>
+
+
+<div id="header_content">
+    <h3 style="text-align:center; font-size:15px;">{{heading}}</h3>
+    <h3 style="text-align:center;font-size:15px;">{{description}}</h3>
+</div>
+
+<p id='date' >{{pre_table}}</p>
+<table align="center">
+
+
+    <tr>
+        <th scope="col" class="right" width="30" rowspan="2">S. N.</th>
+        <th scope="col" class="left" rowspan="2" width="120">Name of the Script</th>
+        <th scope="col" class="right" colspan="2">{{" "}}</th>
+        <th scope="col" class="center" colspan="2">Purchase</th>
+        <th scope="col" class="center" colspan="2">Sale</th>
+        <th scope="col" class="center">Speculation</th>
+    </tr>
+    <tr>
+        <th scope="col" class="right" width="65">Date</th>
+        <th scope="col" class="right" width="40">Qty</th>
+        <th scope="col" class="right" >Rate</th>
+        <th scope="col" class="right" width="80">Value</th>
+        <th scope="col" class="right">Rate</th>
+        <th scope="col" class="right" width="80">Value</th>
+        <th scope="col" class="right" width="80">Value</th>
+    </tr>
+
+    {% for row in rows %}
+    <tr>
+        <td class="right">{{forloop.counter}}</td>
+        <td class="left">{{row.part}}</td>
+        <td class="center">{{row.pur_date}}</td>
+        <td class="right">{{row.pur_qty}}</td>
+        <td class="right">{{row.pur_rate}}</td>
+        <td class="right">{{row.pur_value}}</td>
+        <td class="right">{{row.sale_rate}}</td>
+        <td class="right">{{row.sale_value}}</td>
+        <td class="right">{{row.speculation}}</td>
+    </tr>
+    {% endfor %}
+
+</table>
+
+
+</body>
+</html>

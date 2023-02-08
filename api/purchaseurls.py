@@ -43,6 +43,9 @@ urlpatterns.append(
 urlpatterns.append(
     re_path('script_review_report', views.script_review_report)
 )
+urlpatterns.append(
+    re_path('day_trading_report', views.day_trading_report)
+)
 
 urlpatterns.append(
     re_path('strategy', views.get_strategy)
