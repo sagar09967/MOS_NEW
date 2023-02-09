@@ -63,7 +63,7 @@ class SavePurch(APIView):
             serializer.save()
             print("Saving Records---->", serializer.data)
 
-            return Response({'status': True, 'msg': 'You have successfully Created', 'data': serializer.data},
+            return Response({'status': True, 'message': 'You have successfully Created', 'data': serializer.data},
                             status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -94,7 +94,7 @@ class SavePrimaryAPI(APIView):
         if serializer.is_valid():
             serializer.save()
             # print("Primary Records---->",serializer.data)
-            return Response({'status': True, 'msg': 'You have successfully Created', 'data': serializer.data},
+            return Response({'status': True, 'message': 'You have successfully Created', 'data': serializer.data},
                             status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -135,7 +135,7 @@ class RetPrimaryAPI(APIView):
             'balQty': primary['total_balQty'],
             # 'avgRate':round(primary['holding_Val'] / primary['total_balQty'],2)
         }
-        return Response({'status': True, 'msg': 'done', 'data': primary_ls})
+        return Response({'status': True, 'message': 'done', 'data': primary_ls})
 
 
 # <--------------------RetTransSum API --------------------->
@@ -187,7 +187,7 @@ class RetTransSumUpdate(generics.RetrieveUpdateAPIView):
         self.perform_update(serializer)
         result = {
             "status": True,
-            "msg": "Data successfully updated",
+            "message": "Data successfully updated",
             "data": dict_ls
 
         }
@@ -237,7 +237,7 @@ class RetScriptSum(APIView):
         }
         open_add = TranSum.objects.filter(group=group, code=code, part=part)
         serializer = TranSumRetrivesc2Serializer(open_add)
-        return Response({'status': True, 'msg': 'done', 'data1': serializer.data, 'data': context})
+        return Response({'status': True, 'message': 'done', 'data1': serializer.data, 'data': context})
 
 
 class RetHolding(APIView):
@@ -257,7 +257,7 @@ class RetHolding(APIView):
             data_ls = {'part': data['part'], 'holdQty': int(data['total_balQty']), 'invValue': float(data['invVal']),
                        'mktVal': float(data['mktVal'])}
             ls.append(data_ls)
-        return Response({'status': True, 'msg': 'done', 'data': ls})
+        return Response({'status': True, 'message': 'done', 'data': ls})
 
 
 # <-------------------------- SaveMember api ----------------------->
@@ -295,7 +295,7 @@ class RetMember(APIView):
         group = self.request.query_params.get('group')
         member = MemberMaster.objects.filter(group=group)
         serializer = RetMemberSerializer(member, many=True)
-        return Response({'status': True, 'msg': 'done', 'data': serializer.data})
+        return Response({'status': True, 'message': 'done', 'data': serializer.data})
 
 
 # <---------------------------- updated delete api mrmber ----------------->
@@ -323,7 +323,7 @@ class SaveCustomer(APIView):
         serializer = SavecustomerSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({'status': True, 'msg': 'You have successfully Created', 'data': serializer.data},
+            return Response({'status': True, 'message': 'You have successfully Created', 'data': serializer.data},
                             status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -334,7 +334,7 @@ class RetCustomer(APIView):
         username = self.request.query_params.get('username')
         customer = CustomerMaster.objects.filter(username=username)
         serializer = SavecustomerSerializer(customer, many=True)
-        return Response({'status': True, 'msg': 'done', 'data': serializer.data})
+        return Response({'status': True, 'message': 'done', 'data': serializer.data})
 
 
 # <------------ updated delete api Customer ---------------->
@@ -357,10 +357,10 @@ class CustomerLogin(APIView):
             password = serializer.data.get('password')
             user = authenticate(username=username, password=password)
             if user is not None:
-                return Response({'status': True, 'msg': 'Login Success', 'data': serializer.data},
+                return Response({'status': True, 'message': 'Login Success', 'data': serializer.data},
                                 status=status.HTTP_200_OK)
             else:
-                return Response({'status': False, 'msg': 'Username or Password is not Valid', 'data': ' '})
+                return Response({'status': False, 'message': 'Username or Password is not Valid', 'data': ' '})
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -370,7 +370,7 @@ class RetChangeDefault(APIView):
         group = self.request.query_params.get('group')
         member = MemberMaster.objects.filter(group=group)
         serializer = RetChangeDefaultSerializer(member, many=True)
-        return Response({'status': True, 'msg': 'done', 'data': serializer.data})
+        return Response({'status': True, 'message': 'done', 'data': serializer.data})
 
 
 class TranSumViewSet(viewsets.ViewSet):
@@ -513,7 +513,7 @@ def get_holdings_for_member(request):
     holdings = []
 
     masters = TranSum.master_objects.filter(group=group, code=code, againstType=againstType, fy=dfy)
-    if len(masters) == 0:
+    if len(masters) == 0 and dfy != '2021-2022':
         years = dfy.split("-")
         start_year = int(years[0])
         end_year = int(years[1])
@@ -564,6 +564,8 @@ def carry_forward_records(group, code, againstType, prev_dfy, next_dfy):
         years = prev_dfy.split("-")
         start_year = int(years[0])
         end_year = int(years[1])
+        if start_year - 1 < 2021:
+            return TranSum.master_objects.none()
         new_prev_dfy = str(start_year - 1) + "-" + str(end_year - 1)
         new_next_dfy = prev_dfy
         generated_masters = carry_forward_records(group, code, againstType, new_prev_dfy, new_next_dfy)
