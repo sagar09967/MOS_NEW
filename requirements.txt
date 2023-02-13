@@ -3,3 +3,4 @@ djangorestframework~=3.14.0
 django-filter~=22.1
 PyMySQL~=1.0.2
 pandas
+numpy
