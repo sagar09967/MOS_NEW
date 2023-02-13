@@ -1,6 +1,7 @@
 import datetime
 import operator
 from decimal import Decimal
+from io import StringIO, BytesIO
 
 import numpy
 import pandas
@@ -15,7 +16,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, StreamingHttpResponse
 from rest_framework.views import APIView
 from rest_framework import viewsets
 from .serializers import (SavePurchSerializer, RetTransSumSerializer,
@@ -1606,8 +1607,16 @@ def portfolio_returns_report(request):
                 "Wtf * Ret", "Ann Return %"]:
         result_df[key] = result_df[key].apply(localize)
 
-    result_df.to_excel("output.xlsx")
-    return Response("File generated")
+    sio = BytesIO()
+    PandasWriter = pandas.ExcelWriter(sio, engine='xlsxwriter')
+    result_df.to_excel(PandasWriter, sheet_name="Sheet 1", index=False)
+    PandasWriter.save()
+    sio.seek(0)
+    workbook = sio.getvalue()
+    response = HttpResponse(workbook,
+                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=%s' % "Portfolio_Returns_Report.xlsx"
+    return response
 
 
 def localize(x):
