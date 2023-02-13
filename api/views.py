@@ -1582,7 +1582,7 @@ def portfolio_returns_report(request):
     result_df = pandas.DataFrame(
         columns=["Name of Script", "Purchase Date", "Qty", "PR", "PV", "Wtg", "Sale/Valuation Date", "Days Held", "SR",
                  "SV", "Profit", "Returns", "Per Day Return", "Annual Return", "Return Weightage", "Return Weightage %",
-                 "Return %", "Wtf * Ret", "Ann Return %"])
+                 "Return %", "Wtg * Ret", "Ann Return %"])
     for index, purchase_row in enumerate(purchases_rows):
         sales_rows = purchase_row.pop('sales_rows')
         first_row = list({**purchase_row, **sales_rows[0]}.values())
