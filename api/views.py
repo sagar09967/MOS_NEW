@@ -1604,7 +1604,7 @@ def portfolio_returns_report(request):
 
     for key in ["Qty", "PV", "SV", "Profit", "Returns", "Per Day Return", "Annual Return", "Return Weightage",
                 "Return %",
-                "Wtf * Ret", "Ann Return %"]:
+                "Wtg * Ret", "Ann Return %"]:
         result_df[key] = result_df[key].apply(localize)
 
     sio = BytesIO()
