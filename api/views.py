@@ -578,6 +578,9 @@ def carry_forward_records(group, code, againstType, prev_dfy, next_dfy):
         purchases = TranSum.purchase_objects.filter(group=group, code=code,
                                                     againstType=againstType,
                                                     fy=prev_dfy)
+        years = next_dfy.split("-")
+        start_year = int(years[0])
+        end_year = int(years[1])
         for purchase in purchases:
             if purchase.balQty > 0:
                 carried_purchase = TranSum()
@@ -1213,6 +1216,44 @@ def get_transaction_report(request):
 
 
 @api_view(['GET'])
+def get_transaction_report(request):
+    data = request.query_params.dict()
+    data['fy'] = data.pop('dfy')
+    name = ""
+    if data.get('code'):
+        member = MemberMaster.objects.filter(group=data['group'], code=data['code']).first()
+        name = member.name
+    else:
+        group = CustomerMaster.objects.filter(group=data['group']).first()
+        name = group.firstName + " " + group.lastName
+
+    masters = TranSum.master_objects.filter(**data)
+    if len(masters) == 0:
+        return Response({"status": False, "message": "No data present for selected parameters"})
+    locale.setlocale(locale.LC_ALL, 'en_IN.utf8')
+    for i in range(0, len(masters)):
+        masters[i].save()
+        masters[i].refresh_from_db()
+
+    purchases = TranSum.purchase_objects.filter(**data).order_by('part')
+    rows = []
+    cummulative_profit = Decimal(0)
+    for purchase in purchases:
+        sales = MOS_Sales.objects.filter(group=data['group'], code=data['code'], fy=data['fy'], purSno=purchase.sno,
+                                         scriptSno=purchase.scriptSno, againstType=purchase.againstType).order_by(
+            'sDate')
+        temp_purchase = purchase
+        for sale in sales:
+            row = {}
+            row['sDate'] = sale.sDate
+            row['profit'] = locale.format_string("%.2f", float(round(sale.sVal - temp_purchase.sVal, 2)),
+                                                 grouping=True)
+            row['cummulative_profit'] += row['profit']
+            rows.append(row)
+
+
+
+@api_view(['GET'])
 def get_mos_report(request):
     data = request.query_params.dict()
     # data['fy'] = data.pop('dfy')
@@ -1602,14 +1643,19 @@ def portfolio_returns_report(request):
         [result_df, pandas.DataFrame([totals_list], columns=result_df.columns)],
         ignore_index=True)
 
-    for key in ["Qty", "PV", "SV", "Profit", "Returns", "Per Day Return", "Annual Return", "Return Weightage",
-                "Return %",
+    for key in ["Qty", "PR", "PV", "Wtg", "SR", "SV", "Profit", "Returns", "Per Day Return", "Annual Return",
+                "Return Weightage",
+                "Return Weightage %", "Return %",
                 "Wtg * Ret", "Ann Return %"]:
         result_df[key] = result_df[key].apply(localize)
 
     sio = BytesIO()
     PandasWriter = pandas.ExcelWriter(sio, engine='xlsxwriter')
-    result_df.to_excel(PandasWriter, sheet_name="Sheet 1", index=False)
+    result_df.to_excel(PandasWriter, sheet_name="Sheet 1", index=False, na_rep=" ")
+    for column in result_df:
+        column_length = max(result_df[column].astype(str).map(len).max(), len(column))
+        col_idx = result_df.columns.get_loc(column)
+        PandasWriter.sheets['Sheet 1'].set_column(col_idx, col_idx, column_length)
     PandasWriter.save()
     sio.seek(0)
     workbook = sio.getvalue()
@@ -1620,14 +1666,8 @@ def portfolio_returns_report(request):
 
 
 def localize(x):
-    try:
-        if numpy.isnan(x):
-            return x
-    except TypeError:
-        return x
     locale.setlocale(locale.LC_ALL, 'en_IN.utf8')
-
-    return locale.format_string("%.2f", x, grouping=True)
+    return locale.format_string("%.2f", float(x), grouping=True)
 
 
 @api_view(['GET'])
