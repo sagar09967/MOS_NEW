@@ -1215,10 +1215,7 @@ def get_transaction_report(request):
     return response
 
 
-import pandas as pd
-import statsmodels.api as sm
 import seaborn as sns
-import matplotlib.pyplot as plt
 from matplotlib import pyplot
 
 @api_view(['GET'])
