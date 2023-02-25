@@ -38,6 +38,10 @@ urlpatterns.append(
     re_path('transaction_report', views.get_transaction_report)
 )
 urlpatterns.append(
+    re_path('profit_chart', views.get_profit_chart)
+)
+
+urlpatterns.append(
     re_path('mos_report', views.get_mos_report)
 )
 urlpatterns.append(

@@ -16,7 +16,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
-from django.http import Http404, HttpResponse, StreamingHttpResponse
+from django.http import Http404, HttpResponse, StreamingHttpResponse, FileResponse
 from rest_framework.views import APIView
 from rest_framework import viewsets
 from .serializers import (SavePurchSerializer, RetTransSumSerializer,
@@ -1215,8 +1215,14 @@ def get_transaction_report(request):
     return response
 
 
+import pandas as pd
+import statsmodels.api as sm
+import seaborn as sns
+import matplotlib.pyplot as plt
+from matplotlib import pyplot
+
 @api_view(['GET'])
-def get_transaction_report(request):
+def get_profit_chart(request):
     data = request.query_params.dict()
     data['fy'] = data.pop('dfy')
     name = ""
@@ -1231,9 +1237,9 @@ def get_transaction_report(request):
     if len(masters) == 0:
         return Response({"status": False, "message": "No data present for selected parameters"})
     locale.setlocale(locale.LC_ALL, 'en_IN.utf8')
-    for i in range(0, len(masters)):
-        masters[i].save()
-        masters[i].refresh_from_db()
+    # for i in range(0, len(masters)):
+    #     masters[i].save()
+    #     masters[i].refresh_from_db()
 
     purchases = TranSum.purchase_objects.filter(**data).order_by('part')
     rows = []
@@ -1246,12 +1252,22 @@ def get_transaction_report(request):
         for sale in sales:
             row = {}
             row['sDate'] = sale.sDate
-            row['profit'] = locale.format_string("%.2f", float(round(sale.sVal - temp_purchase.sVal, 2)),
-                                                 grouping=True)
-            row['cummulative_profit'] += row['profit']
+            row['profit'] = sale.sVal - temp_purchase.sVal
+            row['cummulative_profit'] = cummulative_profit + row['profit']
             rows.append(row)
 
+    a4_dims = (14.7, 10.27)
+    rows_df = pandas.DataFrame.from_records(rows)
+    rows_df['month'] = pandas.to_datetime(rows_df['sDate'], format="%Y-%m-%d").dt.strftime('%B %Y')
+    fig, ax = pyplot.subplots(figsize=a4_dims)
+    lineplot=sns.lineplot(x='month', y='profit', data=rows_df,ci=False,ax=ax)
 
+    fig = lineplot.get_figure()
+    fig.savefig("out.png")
+    response = FileResponse(open('out.png', 'rb'),filename="Profit_Chart.png",content_type='image/png')
+    response['Content-Disposition'] = 'attachment; filename="Profit_Chart.png"'
+
+    return response
 
 @api_view(['GET'])
 def get_mos_report(request):
