@@ -1,6 +1,7 @@
 import decimal
 
 from django.db import models
+from django.db import IntegrityError
 from .manager import CustomerUserManager
 from decimal import Decimal
 from django.contrib.auth.models import AbstractUser
@@ -161,7 +162,8 @@ class TranSum(models.Model):
                 last_purchase_for_part = TranSum.purchase_objects.filter(group=self.group, code=self.code,
                                                                          scriptSno=master_record.sno,
                                                                          part=self.part,
-                                                                         againstType=self.againstType,fy=self.fy).last()
+                                                                         againstType=self.againstType,
+                                                                         fy=self.fy).last()
                 if last_purchase_for_part:
                     sno = last_purchase_for_part.sno + 1
                 else:
@@ -169,7 +171,7 @@ class TranSum(models.Model):
 
             sales_for_current_purchase = MOS_Sales.objects.filter(group=self.group, code=self.code, purSno=self.sno,
                                                                   scriptSno=self.scriptSno,
-                                                                  againstType=self.againstType,fy=self.fy)
+                                                                  againstType=self.againstType, fy=self.fy)
             balQty = self.qty - sum_by_key(sales_for_current_purchase, 'sqty')
             market_rate = services.get_market_rate(self.part)
             if market_rate:
@@ -221,6 +223,17 @@ class TranSum(models.Model):
             queryset = TranSum.master_objects.filter(pk=self.trId)
             queryset.update(**values)
             return self
+
+    def delete(self):
+        master = TranSum.master_objects.filter(group=self.group, code=self.code, againstType=self.againstType,
+                                               fy=self.fy, sno=self.scriptSno, part=self.part).first()
+        sales = MOS_Sales.objects.filter(group=self.group, code=self.code, againstType=self.againstType,
+                                         purSno=self.sno, scriptSno=self.scriptSno)
+        if len(sales) > 0:
+            raise IntegrityError(
+                "Unable to delete purchase records that have sales associated with it. Please delete the sales and try again.")
+        super(TranSum, self).delete()
+        master.save()
 
     class Meta:
         verbose_name = ('MOS_TransSum')
@@ -297,6 +310,13 @@ class MOS_Sales(models.Model):
             self.stcg = 0
             self.ltcg = self.sVal - (self.sqty * purchase_record.rate)
         super(MOS_Sales, self).save()
+
+    def delete(self):
+        purchase = TranSum.purchase_objects.filter(group=self.group, code=self.code, sno=self.purSno,
+                                                   scriptSno=self.scriptSno,
+                                                   againstType=self.againstType).first()
+        super(MOS_Sales, self).delete()
+        purchase.save()
 
     class Meta:
         verbose_name = ('MOS_Sales')

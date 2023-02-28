@@ -433,6 +433,15 @@ class TranSumViewSet(viewsets.ViewSet):
             return Response(response)
         return Response({"status": False, "message": "Purchase record does not exist"})
 
+    @transaction.atomic
+    def delete(self, request, pk):
+        try:
+            purchase = TranSum.purchase_objects.get(pk=pk)
+            purchase.delete()
+        except Exception as e:
+            return Response({"status": False, "message": str(e)})
+        return Response({"status": True, "message": "Deleted purchase id " + pk})
+
 
 class SalesViewSet(viewsets.ViewSet):
 
@@ -496,6 +505,12 @@ class SalesViewSet(viewsets.ViewSet):
             serializer.save()
             response = {"status": True, "message": "Sales Record Updated", "data": serializer.data}
             return Response(response)
+
+    @transaction.atomic
+    def delete(self, request, pk):
+        sale = MOS_Sales.objects.get(pk=pk)
+        sale.delete()
+        return Response({"status": True, "message": "Deleted sale id " + pk})
 
 
 @api_view(['GET'])
@@ -1218,6 +1233,7 @@ def get_transaction_report(request):
 import seaborn as sns
 from matplotlib import pyplot
 
+
 @api_view(['GET'])
 def get_profit_chart(request):
     data = request.query_params.dict()
@@ -1257,14 +1273,15 @@ def get_profit_chart(request):
     rows_df = pandas.DataFrame.from_records(rows)
     rows_df['month'] = pandas.to_datetime(rows_df['sDate'], format="%Y-%m-%d").dt.strftime('%B %Y')
     fig, ax = pyplot.subplots(figsize=a4_dims)
-    lineplot=sns.lineplot(x='month', y='profit', data=rows_df,ci=False,ax=ax)
+    lineplot = sns.lineplot(x='month', y='profit', data=rows_df, ci=False, ax=ax)
 
     fig = lineplot.get_figure()
     fig.savefig("out.png")
-    response = FileResponse(open('out.png', 'rb'),filename="Profit_Chart.png",content_type='image/png')
+    response = FileResponse(open('out.png', 'rb'), filename="Profit_Chart.png", content_type='image/png')
     response['Content-Disposition'] = 'attachment; filename="Profit_Chart.png"'
 
     return response
+
 
 @api_view(['GET'])
 def get_mos_report(request):
