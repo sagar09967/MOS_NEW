@@ -1808,6 +1808,61 @@ def get_strategy(request):
     return response
 
 
+import pyotp
+import base64
+from django.core.mail import send_mail
+
+
+@api_view(['GET'])
+def get_otp(request):
+    data = request.query_params.dict()
+    email = data['email']
+    key = base64.b32encode(email.encode())
+    otp = pyotp.TOTP(key, digits=6, interval=180)
+    otp_str = otp.now()
+    send_mail(
+        'Your One-time Password for changing your password on the MOS app.',
+        'Your One-time Password for changing your password on the MOS app is ' + otp_str,
+        'otp@sinewave.co.in',
+        [email],
+        fail_silently=False,
+    )
+    return Response({"status": True,
+                     "message": "A mail was sent to your registered email address. Please enter the one-time password it contains."})
+
+
+@api_view(['GET'])
+def verify_otp(request):
+    data = request.query_params.dict()
+    email = data['email']
+    otp_str = data['otp']
+    key = base64.b32encode(email.encode())
+    otp = pyotp.TOTP(key, digits=6, interval=180)
+    if otp.verify(otp_str):
+        set_pass_key = base64.b32encode((email + otp_str).encode())
+        set_pass_token = pyotp.TOTP(set_pass_key, digits=6, interval=180).now()
+        return Response({"status": True, "pass_token": set_pass_token})
+    else:
+        return Response({"status": False,
+                         "pass_token": "Incorrect OTP. This might be expired please generate a new one and try again"})
+
+
+@api_view(['POST'])
+def set_password(request):
+    email = request.data['email']
+    set_pass_token = request.data['pass_token']
+    password = request.data['password']
+    otp_str = request.data['otp']
+    set_pass_key = base64.b32encode((email + otp_str).encode())
+    set_pass_otp = pyotp.TOTP(set_pass_key, digits=6, interval=180)
+    if set_pass_otp.verify(set_pass_token):
+        customer = CustomerMaster.objects.get(emailId=email)
+        customer.set_password(password)
+        return Response({"status": True, "message": "Password reset complete"})
+    else:
+        return Response({"status": False, "message": "Password reset session has expired. Please try again."})
+
+
 def round_to_100_percent(number_set, digit_after_decimal=2):
     """
         This function take a list of number and return a list of percentage, which represents the portion of each number in sum of all numbers

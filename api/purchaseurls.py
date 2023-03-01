@@ -69,4 +69,15 @@ urlpatterns.append(
 urlpatterns.append(
     re_path('shift_to_trading', views.shift_to_trading)
 )
+urlpatterns.append(
+    re_path('get_otp', views.get_otp)
+)
+urlpatterns.append(
+    re_path('verify_otp', views.verify_otp)
+)
+urlpatterns.append(
+    re_path('set_password', views.set_password)
+)
+
+
 
