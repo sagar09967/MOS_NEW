@@ -76,6 +76,13 @@ class MemberMaster(models.Model):
     def __str__(self):
         return self.code
 
+    def delete(self, using=None, keep_parents=False):
+        purchases = TranSum.purchase_objects.filter(group=self.group, code=self.code)
+        if len(purchases) > 0:
+            raise IntegrityError(
+                "Member has purchases associated with it. Please delete all transaction records related to the member and try again.")
+        super(MemberMaster, self).delete()
+
 
 # <----------------------> TranSum  <------------------------>
 class TranSum(models.Model):

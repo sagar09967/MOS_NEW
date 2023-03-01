@@ -306,6 +306,15 @@ class MemberUpdadeDelete(generics.RetrieveUpdateDestroyAPIView):
     queryset = MemberMaster.objects.all()
     serializer_class = SaveMemberSerializer
 
+    @transaction.atomic()
+    def delete(self, request, pk):
+        try:
+            member = MemberMaster.objects.get(pk=pk)
+            member.delete()
+            return Response({"status": True, "message": "Deleted member id " + str(pk)})
+        except Exception as e:
+            return Response({"status": False, "message": str(e)})
+
 
 # <-------------------------- SaveCutomer api ---------------------------->
 class SaveCustomer(APIView):
@@ -436,7 +445,7 @@ class TranSumViewSet(viewsets.ViewSet):
     @transaction.atomic
     def delete(self, request, pk):
         try:
-            purchase = TranSum.purchase_objects.get(pk=pk)
+            purchase = TranSum.objects.get(pk=pk)
             purchase.delete()
         except Exception as e:
             return Response({"status": False, "message": str(e)})
