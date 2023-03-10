@@ -1240,7 +1240,7 @@ def get_transaction_report(request):
 
 
 import seaborn as sns
-from matplotlib import pyplot
+from matplotlib import pyplot as plt
 
 
 @api_view(['GET'])
@@ -1274,18 +1274,29 @@ def get_profit_chart(request):
         for sale in sales:
             row = {}
             row['sDate'] = sale.sDate
-            row['profit'] = sale.sVal - temp_purchase.sVal
-            row['cummulative_profit'] = cummulative_profit + row['profit']
+            row['profit'] = float(sale.sVal - temp_purchase.sVal) if sale.sVal - temp_purchase.sVal > 0 else 0
             rows.append(row)
 
-    a4_dims = (14.7, 10.27)
     rows_df = pandas.DataFrame.from_records(rows)
+    rows_df = rows_df.sort_values('sDate')
     rows_df['month'] = pandas.to_datetime(rows_df['sDate'], format="%Y-%m-%d").dt.strftime('%B %Y')
-    fig, ax = pyplot.subplots(figsize=a4_dims)
-    lineplot = sns.lineplot(x='month', y='profit', data=rows_df, ci=False, ax=ax)
+    df2 = rows_df.groupby('month', sort=False, as_index=False)['profit'].sum()
+    df2['cummulative_profit'] = df2['profit'].cumsum()
+    fig = plt.figure()
+    plt.ylim((int(df2['cummulative_profit'].min()), int(df2['cummulative_profit'].max())))
+    plt.ticklabel_format(style='plain')
+    plt.autoscale(False)
+    plt.plot(df2['month'], df2['profit'], marker='o', label="Profit")
+    plt.plot(df2['month'], df2['cummulative_profit'], marker='o', label="Cummulative Profit")
+    plt.legend()
 
-    fig = lineplot.get_figure()
-    fig.savefig("out.png")
+    # fig, ax = pyplot.subplots(figsize=a4_dims)
+    # ax.plot(df2['month'],df2['profit'])
+    # ax.plot(df2['month'],df2['cummulative_profit'])
+    # lineplot = sns.lineplot(x='month', y='profit', data=df2, ci=False, ax=ax)
+    # plt.show()
+    plt.savefig('out.png')
+    # fig.savefig("out.png")
     response = FileResponse(open('out.png', 'rb'), filename="Profit_Chart.png", content_type='image/png')
     response['Content-Disposition'] = 'attachment; filename="Profit_Chart.png"'
 
@@ -1806,6 +1817,44 @@ def get_strategy(request):
     response['Content-Disposition'] = 'attachment; filename=strategy.xlsx'
 
     return response
+
+
+from django.core.files.storage import default_storage, FileSystemStorage
+
+
+class DataExchangeView(APIView):
+
+    def post(self, request):
+        file_uploaded = request.FILES.get('file_uploaded')
+        extension = file_uploaded.name.split(".")[1].lower()
+        if extension != 'json':
+            return Response({"status": False, "message": "Only JSON files are allowed"},
+                            status=403)
+        username = request.data['username']
+        password = request.data['password']
+        customer = authenticate(username=username, password=password)
+        if customer:
+            dir_name = "_".join([customer.group, customer.username])
+            file_name = dir_name + "." + extension
+            saved_file = default_storage.save("/".join(["customer_exports", dir_name, file_name]), file_uploaded)
+            return Response({"status": True, "message": "File uploaded successfully"},
+                            status=200)
+        else:
+            return Response({"status": False, "message": "Authentication Failed. Please check your credentials"},
+                            status=403)
+        content_type = file_uploaded.content_type
+        response = "POST API and you have uploaded a {} file".format(content_type) + file_uploaded.name
+        return Response(response)
+
+    def get(self, request):
+        req = request.query_params.dict()
+        group = req['group']
+        customer = CustomerMaster.objects.filter(group=group).first()
+        if customer:
+            dir_name = "_".join([customer.group, customer.username])
+            dirs, files = default_storage.listdir("/".join(["customer_exports", dir_name]))
+            return Response({"status": True, "message": "Files retrieved", "data": files},
+                            status=200)
 
 
 import pyotp
