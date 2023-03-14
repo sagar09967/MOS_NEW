@@ -1857,6 +1857,20 @@ class DataExchangeView(APIView):
                             status=200)
 
 
+@api_view(['POST'])
+def import_data(request):
+    file_name = request.data['file_name']
+    dir_name = "_".join([request.data['group'], request.data['username']])
+    try:
+        dirs, files = default_storage.listdir("/".join(["customer_exports", dir_name]))
+        if file_name in files:
+            return Response({"status": True, "message": "File import initiated successfully."})
+        else:
+            return Response({"status": False, "message": "File not found. Please check the name of the file."})
+    except:
+        return Response({"status": False, "message": "Error while importing file."})
+
+
 import pyotp
 import base64
 from django.core.mail import send_mail

@@ -78,6 +78,9 @@ urlpatterns.append(
 urlpatterns.append(
     re_path('set_password', views.set_password)
 )
+urlpatterns.append(
+    re_path('import_data', views.import_data)
+)
 
 
 
