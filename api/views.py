@@ -726,10 +726,10 @@ def prepare_purchases_response(request):
         raise Http404
 
     if sp == 'O':
-        queryset = queryset.filter(trDate__lt=start_fy,fy=dfy)
+        queryset = queryset.filter(trDate__lt=start_fy, fy=dfy)
     # data = request.query_params.dict()
     elif sp == 'A':
-        queryset = queryset.filter(trDate__range=(start_fy, end_fy),fy=dfy)
+        queryset = queryset.filter(trDate__range=(start_fy, end_fy), fy=dfy)
 
     # queryset = TranSum.objects.filter(**data)
     serializer = serializers.RetrieveTranSumSerializer(queryset, many=True)
@@ -751,8 +751,9 @@ def prepare_holdings_response(request):
     #     invVal=Sum(F('rate') * F('balQty'))).annotate(mktVal=Sum(F('balQty') * F('marketRate')))
     # print("Ballllllll--->",holding)
     holdings = []
-    masters = TranSum.master_objects.filter(group=group, code=code, againstType=againstType,fy=dfy)
+    masters = TranSum.master_objects.filter(group=group, code=code, againstType=againstType, fy=dfy)
     for master in masters.values():
+
         holding = {
             "part": master['part'],
             "balQty": int(master['balQty']),
@@ -764,7 +765,9 @@ def prepare_holdings_response(request):
             "avgRate": master['avgRate']
         }
         purchases = TranSum.purchase_objects.filter(group=group, code=code, againstType=againstType,
-                                                    scriptSno=master['sno'], part=master['part'],fy=dfy)
+                                                    scriptSno=master['sno'], part=master['part'], fy=dfy)
+        if len(purchases) == 0:
+            continue
         openings = purchases.filter(trDate__lt=from_date)
         sum_opening = list(openings.aggregate(Sum('balQty')).values())[0]
         additions = purchases.filter(trDate__range=(from_date, to_date))
