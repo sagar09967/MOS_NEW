@@ -1,4 +1,5 @@
 import datetime
+import json
 import operator
 from decimal import Decimal
 from io import StringIO, BytesIO
@@ -401,10 +402,10 @@ class TranSumViewSet(viewsets.ViewSet):
             raise Http404
 
         if sp == 'O':
-            queryset = queryset.filter(trDate__lt=start_fy)
+            queryset = queryset.filter(trDate__lt=start_fy, fy=dfy)
         # data = request.query_params.dict()
         elif sp == 'A':
-            queryset = queryset.filter(trDate__range=(start_fy, end_fy))
+            queryset = queryset.filter(trDate__range=(start_fy, end_fy), fy=dfy)
 
         # queryset = TranSum.objects.filter(**data)
         serializer = serializers.RetrieveTranSumSerializer(queryset, many=True)
@@ -725,10 +726,10 @@ def prepare_purchases_response(request):
         raise Http404
 
     if sp == 'O':
-        queryset = queryset.filter(trDate__lt=start_fy)
+        queryset = queryset.filter(trDate__lt=start_fy,fy=dfy)
     # data = request.query_params.dict()
     elif sp == 'A':
-        queryset = queryset.filter(trDate__range=(start_fy, end_fy))
+        queryset = queryset.filter(trDate__range=(start_fy, end_fy),fy=dfy)
 
     # queryset = TranSum.objects.filter(**data)
     serializer = serializers.RetrieveTranSumSerializer(queryset, many=True)
@@ -1864,10 +1865,13 @@ def import_data(request):
     try:
         dirs, files = default_storage.listdir("/".join(["customer_exports", dir_name]))
         if file_name in files:
+            with default_storage.open("/".join(["customer_exports", dir_name, file_name]), mode='r') as import_file:
+                import_data = json.loads(import_file.read())
+
             return Response({"status": True, "message": "File import initiated successfully."})
         else:
             return Response({"status": False, "message": "File not found. Please check the name of the file."})
-    except:
+    except Exception as e:
         return Response({"status": False, "message": "Error while importing file."})
 
 
