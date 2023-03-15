@@ -751,7 +751,7 @@ def prepare_holdings_response(request):
     #     invVal=Sum(F('rate') * F('balQty'))).annotate(mktVal=Sum(F('balQty') * F('marketRate')))
     # print("Ballllllll--->",holding)
     holdings = []
-    masters = TranSum.master_objects.filter(group=group, code=code, againstType=againstType)
+    masters = TranSum.master_objects.filter(group=group, code=code, againstType=againstType,fy=dfy)
     for master in masters.values():
         holding = {
             "part": master['part'],
@@ -764,7 +764,7 @@ def prepare_holdings_response(request):
             "avgRate": master['avgRate']
         }
         purchases = TranSum.purchase_objects.filter(group=group, code=code, againstType=againstType,
-                                                    scriptSno=master['sno'], part=master['part'])
+                                                    scriptSno=master['sno'], part=master['part'],fy=dfy)
         openings = purchases.filter(trDate__lt=from_date)
         sum_opening = list(openings.aggregate(Sum('balQty')).values())[0]
         additions = purchases.filter(trDate__range=(from_date, to_date))
