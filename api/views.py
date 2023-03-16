@@ -1286,20 +1286,23 @@ def get_profit_chart(request):
     rows_df['month'] = pandas.to_datetime(rows_df['sDate'], format="%Y-%m-%d").dt.strftime('%B %Y')
     df2 = rows_df.groupby('month', sort=False, as_index=False)['profit'].sum()
     df2['cummulative_profit'] = df2['profit'].cumsum()
-    fig = plt.figure()
-    plt.ylim((int(df2['cummulative_profit'].min()), int(df2['cummulative_profit'].max())))
-    plt.ticklabel_format(style='plain')
-    plt.autoscale(False)
-    plt.plot(df2['month'], df2['profit'], marker='o', label="Profit")
-    plt.plot(df2['month'], df2['cummulative_profit'], marker='o', label="Cummulative Profit")
-    plt.legend()
+    # fig, ax = plt.subplots()
+    # ax.axis(ymin=int(df2['cummulative_profit'].min()), ymax=int(df2['cummulative_profit'].max()))
+    # ax.ticklabel_format(style='plain')
+    # ax.autoscale(False)
 
+    df2.plot(x='month', ylim=(int(df2['cummulative_profit'].min()), int(df2['cummulative_profit'].max())))
+
+    # ax.plot(df2['month'], df2['profit'])
+    # ax.plot(df2['month'], df2['profit'], marker='o', label="Profit")
+    # ax.plot(df2['month'], df2['cummulative_profit'], marker='o', label="Cummulative Profit")
+    # ax.legend()
     # fig, ax = pyplot.subplots(figsize=a4_dims)
     # ax.plot(df2['month'],df2['profit'])
     # ax.plot(df2['month'],df2['cummulative_profit'])
     # lineplot = sns.lineplot(x='month', y='profit', data=df2, ci=False, ax=ax)
-    # plt.show()
-    plt.savefig('out.png')
+    # fig.show()
+    # fig.savefig('out.png')
     # fig.savefig("out.png")
     response = FileResponse(open('out.png', 'rb'), filename="Profit_Chart.png", content_type='image/png')
     response['Content-Disposition'] = 'attachment; filename="Profit_Chart.png"'
@@ -1856,9 +1859,14 @@ class DataExchangeView(APIView):
         customer = CustomerMaster.objects.filter(group=group).first()
         if customer:
             dir_name = "_".join([customer.group, customer.username])
-            dirs, files = default_storage.listdir("/".join(["customer_exports", dir_name]))
-            return Response({"status": True, "message": "Files retrieved", "data": files},
-                            status=200)
+            def_dirs, def_files = default_storage.listdir("customer_exports")
+            if dir_name in def_dirs:
+                dirs, files = default_storage.listdir("/".join(["customer_exports", dir_name]))
+                return Response({"status": True, "message": "Files retrieved", "data": files},
+                                status=200)
+            else:
+                return Response({"status": False, "message": "No files present."},
+                                status=200)
 
 
 @api_view(['POST'])
