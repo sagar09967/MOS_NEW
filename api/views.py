@@ -1313,7 +1313,7 @@ def get_profit_chart(request):
     # lineplot = sns.lineplot(x='month', y='profit', data=df2, ci=False, ax=ax)
     # fig.show()
     fig.tight_layout()
-    fig.set_size_inches(16,4)
+    fig.set_size_inches(16, 4)
     fig.savefig('out.png')
     # fig.savefig("out.png")
     response = FileResponse(open('out.png', 'rb'), filename="Profit_Chart.png", content_type='image/png')
@@ -1888,7 +1888,9 @@ class DataExchangeView(APIView):
 
 
 @api_view(['POST'])
+@transaction.atomic()
 def import_data(request):
+    group = request.data['group']
     file_name = request.data['file_name']
     dir_name = "_".join([request.data['group'], request.data['username']])
     try:
@@ -1896,11 +1898,44 @@ def import_data(request):
         if file_name in files:
             with default_storage.open("/".join(["customer_exports", dir_name, file_name]), mode='r') as import_file:
                 import_data = json.loads(import_file.read())
+            if len(import_data) < 0:
+                return Response({"status": False, "message": "Selected import file was empty."})
+
+            old_purchase_set = TranSum.objects.filter(group=group)
+            old_purchase_set.delete()
+            old_sale_set = MOS_Sales.objects.filter(group=group)
+            old_sale_set.delete()
+
+            for purchase in import_data:
+                purchase_obj = TranSum(group=group, code=purchase['code'], part=purchase['part'],
+                                       fy=purchase['fy'],
+                                       trDate=datetime.datetime.strptime(purchase['trDate'], '%Y-%m-%d'),
+                                       againstType=purchase['againstType'], sp=purchase['sp'], qty=purchase['qty'],
+                                       sVal=purchase['sVal'], rate=purchase['rate'], fmr=purchase['fmr'],
+                                       isinCode=purchase['isinCode'], empCode=purchase['empCode'],
+                                       sttCharges=purchase['sttCharges'], otherCharges=purchase['otherCharges'],
+                                       noteAdd=purchase['noteAdd'])
+
+                purchase_obj.save()
+                purchase_obj.refresh_from_db()
+                for sale in purchase['sales']:
+                    sale_obj = MOS_Sales(group=group, code=sale['code'],
+                                         sDate=datetime.datetime.strptime(sale['sDate'], '%Y-%m-%d'),
+                                         srate=sale['srate'],
+                                         sqty=sale['sqty'], sVal=sale['sVal'], purSno=purchase_obj.sno,
+                                         scriptSno=purchase_obj.scriptSno, againstType=sale['againstType'],
+                                         stt_Paid=sale['stt_Paid'], stt=sale['stt'], other=sale['other'],
+                                         fno=sale['fno'], empCode=sale['empCode'])
+                    sale_obj.group = purchase_obj.group
+                    sale_obj.purSno = purchase_obj.sno
+                    sale_obj.scriptSno = purchase_obj.scriptSno
+                    sale_obj.save()
 
             return Response({"status": True, "message": "File import initiated successfully."})
         else:
             return Response({"status": False, "message": "File not found. Please check the name of the file."})
     except Exception as e:
+        raise e
         return Response({"status": False, "message": "Error while importing file."})
 
 
