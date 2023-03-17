@@ -4,6 +4,7 @@ import operator
 from decimal import Decimal
 from io import StringIO, BytesIO
 
+import matplotlib
 import numpy
 import pandas
 from dateutil.relativedelta import relativedelta
@@ -1286,28 +1287,45 @@ def get_profit_chart(request):
     rows_df['month'] = pandas.to_datetime(rows_df['sDate'], format="%Y-%m-%d").dt.strftime('%B %Y')
     df2 = rows_df.groupby('month', sort=False, as_index=False)['profit'].sum()
     df2['cummulative_profit'] = df2['profit'].cumsum()
-    # fig, ax = plt.subplots()
+    fig, ax = plt.subplots()
     # ax.axis(ymin=int(df2['cummulative_profit'].min()), ymax=int(df2['cummulative_profit'].max()))
     # ax.ticklabel_format(style='plain')
     # ax.autoscale(False)
+    line1 = ax.plot(df2['month'].values, df2['profit'].values, marker='o', label="Profit")[0]
+    line2 = ax.plot(df2['month'].values, df2['cummulative_profit'].values, marker='o', label="Cummulative Profit")[0]
+    add_labels(ax, line1)
+    add_labels(ax, line2)
 
-    df2.plot(x='month', ylim=(int(df2['cummulative_profit'].min()), int(df2['cummulative_profit'].max())))
+    # ax = df2.plot(x='month', marker='o')
+    ax.ticklabel_format(style='plain', axis='y')
+    # ax.set_ylim(int(df2['cummulative_profit'].min()), int(df2['cummulative_profit'].max()))
 
+    # ax.get_yaxis().set_major_formatter(
+    #     matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+    # ax.ticklabel_format(style='plain',axis='y')
     # ax.plot(df2['month'], df2['profit'])
     # ax.plot(df2['month'], df2['profit'], marker='o', label="Profit")
     # ax.plot(df2['month'], df2['cummulative_profit'], marker='o', label="Cummulative Profit")
-    # ax.legend()
+    ax.legend()
     # fig, ax = pyplot.subplots(figsize=a4_dims)
     # ax.plot(df2['month'],df2['profit'])
     # ax.plot(df2['month'],df2['cummulative_profit'])
     # lineplot = sns.lineplot(x='month', y='profit', data=df2, ci=False, ax=ax)
     # fig.show()
-    # fig.savefig('out.png')
+    fig.tight_layout()
+    fig.set_size_inches(16,4)
+    fig.savefig('out.png')
     # fig.savefig("out.png")
     response = FileResponse(open('out.png', 'rb'), filename="Profit_Chart.png", content_type='image/png')
     response['Content-Disposition'] = 'attachment; filename="Profit_Chart.png"'
 
     return response
+
+
+def add_labels(ax, line):
+    x, y = line.get_data()
+    labels = map(','.join, zip(map(lambda s: '%g' % s, x), map(lambda s: '%g' % s, y)))
+    map(ax.text, x, y, labels)
 
 
 @api_view(['GET'])
