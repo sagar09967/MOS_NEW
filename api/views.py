@@ -1861,7 +1861,10 @@ class DataExchangeView(APIView):
         if customer:
             dir_name = "_".join([customer.group, customer.username])
             file_name = dir_name + "." + extension
-            saved_file = default_storage.save("/".join(["customer_exports", dir_name, file_name]), file_uploaded)
+            abs_path = "/".join(["customer_exports", dir_name, file_name])
+            if default_storage.exists(abs_path):
+                default_storage.delete(abs_path)
+            saved_file = default_storage.save(abs_path, file_uploaded)
             return Response({"status": True, "message": "File uploaded successfully"},
                             status=200)
         else:
