@@ -769,17 +769,18 @@ def prepare_holdings_response(request):
                                                     scriptSno=master['sno'], part=master['part'], fy=dfy)
         if len(purchases) == 0:
             continue
-        openings = purchases.filter(trDate__lt=from_date)
-        sum_opening = list(openings.aggregate(Sum('balQty')).values())[0]
-        additions = purchases.filter(trDate__range=(from_date, to_date))
-        sum_addition = list(additions.aggregate(Sum('balQty')).values())[0]
-        sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'])
+        openings = purchases.filter(sp='O')
+        sum_opening = list(openings.aggregate(Sum('qty')).values())[0]
+        additions = purchases.filter(sp='A')
+        sum_addition = list(additions.aggregate(Sum('qty')).values())[0]
+        sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'], againstType=againstType)
         sum_sales = list(sales.aggregate(Sum('sqty')).values())[0]
+
         holding['profitLoss'] = Decimal(master['marketValue']) - master['HoldingValue']
         holding['opening'] = 0 if sum_opening is None else int(sum_opening)
         holding['addition'] = 0 if sum_addition is None else int(sum_addition)
         holding['sales'] = 0 if sum_sales is None else int(sum_sales)
-        holding['closing'] = holding['opening'] + holding['addition']
+        holding['closing'] = holding['opening'] + holding['addition'] - holding['sales']
         holding['stcg'] = list(sales.aggregate(Sum('stcg')).values())[0]
         holding['ltcg'] = list(sales.aggregate(Sum('ltcg')).values())[0]
         holdings.append(holding)
