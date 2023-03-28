@@ -893,7 +893,11 @@ def get_holding_report(request):
         group = CustomerMaster.objects.filter(group=data['group']).first()
         name = group.firstName + " " + group.lastName
 
-    masters = TranSum.master_objects.filter(**data).filter(balQty__gt=0).order_by('part')
+    masters = TranSum.master_objects.filter(**data).order_by('part')
+    for master in masters:
+        purchases = master.get_child_objects()
+        if purchases.count() == 0:
+            masters = masters.exclude(pk=master.pk)
     if len(masters) == 0:
         return Response({"status": False, "message": "No data present for selected parameters"})
 
@@ -958,7 +962,10 @@ def get_scriptwise_profit_report(request):
         name = group.firstName + " " + group.lastName
 
     masters = TranSum.master_objects.filter(**data).order_by('part')
-
+    for master in masters:
+        purchases = master.get_child_objects()
+        if purchases.count() == 0:
+            masters = masters.exclude(pk=master.pk)
     if len(masters) == 0:
         return Response({"status": False, "message": "No data present for selected parameters"})
     locale.setlocale(locale.LC_ALL, 'en_IN.utf8')

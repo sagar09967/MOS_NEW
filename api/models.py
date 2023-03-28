@@ -242,6 +242,11 @@ class TranSum(models.Model):
         super(TranSum, self).delete()
         master.save()
 
+    def get_child_objects(self):
+        purchases = TranSum.purchase_objects.filter(group=self.group, code=self.code, againstType=self.againstType,
+                                                    fy=self.fy, scriptSno=self.sno)
+        return purchases
+
     class Meta:
         verbose_name = ('MOS_TransSum')
         verbose_name_plural = ('MOS_TransSum')
