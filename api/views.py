@@ -36,6 +36,7 @@ import decimal
 from . import services
 from django.template.loader import render_to_string
 import locale
+from .constants import AGAINST_TYPE_MAP
 
 
 # <-------------------- SavePurch API ---------------------->
@@ -473,8 +474,7 @@ class SalesViewSet(viewsets.ViewSet):
         purchase_data = serializer.data
         for i in range(0, len(purchase_data)):
             sales = MOS_Sales.objects.filter(group=purchase_data[i]['group'], code=purchase_data[i]['code'],
-                                             purSno=purchase_data[i]['sno'], scriptSno=purchase_data[i]['scriptSno'],
-                                             againstType=againstType)
+                                             purSno=purchase_data[i]['sno'], scriptSno=purchase_data[i]['scriptSno'])
             totalSoldQty = list(sales.aggregate(Sum('sqty')).values())[0]
             stcg = list(sales.aggregate(Sum('stcg')).values())[0]
             ltcg = list(sales.aggregate(Sum('ltcg')).values())[0]
@@ -569,7 +569,7 @@ def get_holdings_for_member(request):
         sum_opening = list(openings.aggregate(Sum('qty')).values())[0]
         additions = purchases.filter(sp='A')
         sum_addition = list(additions.aggregate(Sum('qty')).values())[0]
-        sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'], againstType=againstType)
+        sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'])
         sum_sales = list(sales.aggregate(Sum('sqty')).values())[0]
 
         holding['profitLoss'] = Decimal(master['marketValue']) - master['HoldingValue']
@@ -641,7 +641,12 @@ def member_capital_gain(request):
     code = request.query_params.get('code')
     dfy = request.query_params.get('dfy')
     againstType = request.query_params.get('againstType')
-    sales = MOS_Sales.objects.filter(group=group, code=code, fy=dfy, againstType=againstType)
+    purchases = TranSum.purchase_objects.filter(group=group, code=code, againstType=againstType, fy=dfy)
+    sales = MOS_Sales.objects.none()
+    for purchase in purchases:
+        temp_sales = MOS_Sales.objects.filter(group=group, code=code, fy=dfy, purSno=purchase.sno,
+                                              scriptSno=purchase.scriptSno)
+        sales = sales | temp_sales
     sum_stcg = list(sales.aggregate(Sum('stcg')).values())[0]
     sum_ltcg = list(sales.aggregate(Sum('ltcg')).values())[0]
     sum_speculation = list(sales.aggregate(Sum('speculation')).values())[0]
@@ -773,7 +778,8 @@ def prepare_holdings_response(request):
         sum_opening = list(openings.aggregate(Sum('qty')).values())[0]
         additions = purchases.filter(sp='A')
         sum_addition = list(additions.aggregate(Sum('qty')).values())[0]
-        sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'], againstType=againstType)
+        #sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'], againstType=againstType)
+        sales = TranSum.get_all_sales(group=group, code=code,againstType=againstType, fy=dfy).filter(scriptSno=master['sno'])
         sum_sales = list(sales.aggregate(Sum('sqty')).values())[0]
 
         holding['profitLoss'] = Decimal(master['marketValue']) - master['HoldingValue']
@@ -805,7 +811,7 @@ class DayTradingViewSet(viewsets.ModelViewSet):
             data={'group': data['group'], 'code': data['code'], 'fy': data['fy'], 'sDate': data['trDate'],
                   'sqty': data['qty'], 'srate': data['srate'], 'sVal': data['saleValue'],
                   'part': data['part'], 'purSno': updated_purchase.sno, 'scriptSno': updated_purchase.scriptSno,
-                  'againstType': 'Day Trading', 'speculation': data['saleValue'] - data['purchaseValue']})
+                  'againstType': purchase_record.sp, 'speculation': data['saleValue'] - data['purchaseValue']})
         sale_serializer.is_valid(raise_exception=True)
         sale_serializer.save()
 
@@ -866,7 +872,7 @@ class DayTradingViewSet(viewsets.ModelViewSet):
                                                                      'part': data['part'],
                                                                      'purSno': updated_purchase.sno,
                                                                      'scriptSno': updated_purchase.scriptSno,
-                                                                     'againstType': 'Day Trading',
+                                                                     'againstType': purchase_record.sp,
                                                                      'speculation': data['saleValue'] - data[
                                                                          'purchaseValue']})
         sale_serializer.is_valid(raise_exception=True)
@@ -993,7 +999,7 @@ def get_scriptwise_profit_report(request):
         temp_masters = masters.filter(part=total_holding_values_by_script[i]['part'])
         gain = Decimal(0)
         for master in temp_masters:
-            sales = MOS_Sales.objects.filter(group=data['group'], fy=data['fy'], againstType=data['againstType'],
+            sales = MOS_Sales.objects.filter(group=data['group'], fy=data['fy'],
                                              scriptSno=master.sno, code=master.code)
             sum_stcg = list(sales.aggregate(Sum('stcg')).values())[0]
             if sum_stcg:
@@ -1055,6 +1061,10 @@ def get_profit_adj_report(request):
         name = group.firstName + " " + group.lastName
 
     masters = TranSum.master_objects.filter(**data).order_by('part')
+    for master in masters:
+        purchases = master.get_child_objects()
+        if purchases.count() == 0:
+            masters = masters.exclude(pk=master.pk)
     if len(masters) == 0:
         return Response({"status": False, "message": "No data present for selected parameters"})
     locale.setlocale(locale.LC_ALL, 'en_IN.utf8')
@@ -1459,6 +1469,10 @@ def script_review_report(request):
 
     locale.setlocale(locale.LC_ALL, 'en_IN.utf8')
     masters = TranSum.master_objects.filter(**data).order_by('part')
+    for master in masters:
+        purchases = master.get_child_objects()
+        if purchases.count() == 0:
+            masters = masters.exclude(pk=master.pk)
     master_rows = []
     for master in masters:
         purchases = TranSum.purchase_objects.filter(**data, part=master.part, scriptSno=master.sno).order_by('trDate')
@@ -1506,6 +1520,7 @@ def script_review_report(request):
                 purchase_row['sales_range'] = range(0, 1)
             else:
                 for sale in sales:
+                    s_time_delta = relativedelta(sale.sDate,purchase.trDate)
                     sale_row = {
                         "s_date": sale.sDate.strftime('%d-%m-%Y'),
                         "s_qty": locale.format_string('%d', sale.sqty, grouping=True),
@@ -1515,7 +1530,7 @@ def script_review_report(request):
                         "ltcg": " ",
                         "speculation": sale.speculation if sale.speculation else " "
                     }
-                    if (time_delta.years * 12 + time_delta.months) <= 12:
+                    if (s_time_delta.years * 12 + s_time_delta.months) <= 12:
                         sale_row['stcg'] = (sale.srate - purchase.rate) * sale.sqty
                         sale_row['stcg'] = locale.format_string("%.2f", round(sale_row['stcg'], 2), grouping=True)
                     else:
@@ -1918,10 +1933,17 @@ def import_data(request):
             old_sale_set.delete()
 
             for purchase in import_data:
+                if purchase['trDate'] == "":
+                    purchase['trDate'] = None
+                if purchase['sp'] == '':
+                    continue
                 purchase_obj = TranSum(group=group, code=purchase['code'], part=purchase['part'],
                                        fy=purchase['fy'],
-                                       trDate=datetime.datetime.strptime(purchase['trDate'], '%Y-%m-%d'),
-                                       againstType=purchase['againstType'], sp=purchase['sp'], qty=purchase['qty'],
+                                       trDate=datetime.datetime.strptime(purchase['trDate'], '%d/%m/%Y %H:%M:%S') if
+                                       purchase[
+                                           'trDate'] is not None else None,
+                                       againstType=AGAINST_TYPE_MAP[purchase['againstType']], sp=purchase['sp'],
+                                       qty=purchase['qty'],
                                        sVal=purchase['sVal'], rate=purchase['rate'], fmr=purchase['fmr'],
                                        isinCode=purchase['isinCode'], empCode=purchase['empCode'],
                                        sttCharges=purchase['sttCharges'], otherCharges=purchase['otherCharges'],
@@ -1930,11 +1952,14 @@ def import_data(request):
                 purchase_obj.save()
                 purchase_obj.refresh_from_db()
                 for sale in purchase['sales']:
-                    sale_obj = MOS_Sales(group=group, code=sale['code'],
-                                         sDate=datetime.datetime.strptime(sale['sDate'], '%Y-%m-%d'),
+                    if sale['sDate'] == "":
+                        sale['sDate'] = None
+                    sale_obj = MOS_Sales(group=group, code=purchase['code'],
+                                         sDate=datetime.datetime.strptime(sale['sDate'], '%d/%m/%Y %H:%M:%S'),
                                          srate=sale['srate'],
                                          sqty=sale['sqty'], sVal=sale['sVal'], purSno=purchase_obj.sno,
-                                         scriptSno=purchase_obj.scriptSno, againstType=sale['againstType'],
+                                         scriptSno=purchase_obj.scriptSno,
+                                         againstType=sale['againstType'],
                                          stt_Paid=sale['stt_Paid'], stt=sale['stt'], other=sale['other'],
                                          fno=sale['fno'], empCode=sale['empCode'])
                     sale_obj.group = purchase_obj.group

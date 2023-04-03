@@ -177,8 +177,7 @@ class TranSum(models.Model):
                     sno = 1
 
             sales_for_current_purchase = MOS_Sales.objects.filter(group=self.group, code=self.code, purSno=self.sno,
-                                                                  scriptSno=self.scriptSno,
-                                                                  againstType=self.againstType, fy=self.fy)
+                                                                  scriptSno=self.scriptSno, fy=self.fy)
             balQty = self.qty - sum_by_key(sales_for_current_purchase, 'sqty')
             market_rate = services.get_market_rate(self.part)
             if market_rate:
@@ -205,7 +204,7 @@ class TranSum(models.Model):
             sno = self.sno
             if self.sno is 0:
                 last_master_for_user = TranSum.master_objects.filter(group=self.group, code=self.code,
-                                                                     againstType=self.againstType, fy=self.fy).exclude(
+                                                                     fy=self.fy).exclude(
                     pk=self.trId).last()
                 if last_master_for_user:
                     sno = last_master_for_user.sno + 1
@@ -234,7 +233,7 @@ class TranSum(models.Model):
     def delete(self):
         master = TranSum.master_objects.filter(group=self.group, code=self.code, againstType=self.againstType,
                                                fy=self.fy, sno=self.scriptSno, part=self.part).first()
-        sales = MOS_Sales.objects.filter(group=self.group, code=self.code, againstType=self.againstType,
+        sales = MOS_Sales.objects.filter(group=self.group, code=self.code,
                                          purSno=self.sno, scriptSno=self.scriptSno)
         if len(sales) > 0:
             raise IntegrityError(
@@ -246,6 +245,16 @@ class TranSum(models.Model):
         purchases = TranSum.purchase_objects.filter(group=self.group, code=self.code, againstType=self.againstType,
                                                     fy=self.fy, scriptSno=self.sno)
         return purchases
+
+    @classmethod
+    def get_all_sales(cls, group, code, againstType, fy):
+        sales = MOS_Sales.objects.none()
+        purchases = TranSum.purchase_objects.filter(group=group, code=code, againstType=againstType, fy=fy)
+        for purchase in purchases:
+            temp_sales = MOS_Sales.objects.filter(group=group, code=code, fy=fy,
+                                                  purSno=purchase.sno, scriptSno=purchase.scriptSno)
+            sales = sales | temp_sales
+        return sales
 
     class Meta:
         verbose_name = ('MOS_TransSum')
@@ -283,11 +292,11 @@ class MOS_Sales(models.Model):
     stcg = models.DecimalField(max_digits=65, decimal_places=17, blank=True, null=True)
     ltcg = models.DecimalField(max_digits=65, decimal_places=17, blank=True, null=True)
     fno = models.DecimalField(max_digits=65, decimal_places=17, blank=True, null=True)
-    empCode = models.CharField(max_length=10)
+    empCode = models.CharField(max_length=10, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         purchase_record = TranSum.purchase_objects.filter(sno=self.purSno, scriptSno=self.scriptSno, group=self.group,
-                                                          code=self.code, againstType=self.againstType).first()
+                                                          code=self.code).first()
         existing_qty = 0
         if self.trId:
             existing_sale_record = MOS_Sales.objects.filter(pk=self.trId).first()
@@ -297,8 +306,7 @@ class MOS_Sales(models.Model):
             raise ValidationError(
                 "Balance Quantity on purchase record is not sufficient to record this sale against it.")
         master_record = TranSum.master_objects.filter(group=self.group, code=self.code,
-                                                      sno=purchase_record.scriptSno,
-                                                      againstType=self.againstType).first()
+                                                      sno=purchase_record.scriptSno).first()
         purchase_record.clDate = self.sDate
         purchase_record.clRate = self.srate
         purchase_record.clQTY = self.sqty
@@ -306,6 +314,7 @@ class MOS_Sales(models.Model):
         purchase_record.clsttCharges = self.stt
         purchase_record.clOtherCharges = self.other
         self.scriptSno = master_record.sno
+        self.againstType = purchase_record.sp
         super(MOS_Sales, self).save(*args, **kwargs)
         self.refresh_stcg_ltcg(purchase_record, *args, **kwargs)
         purchase_record.save()  # refreshes master
@@ -325,8 +334,7 @@ class MOS_Sales(models.Model):
 
     def delete(self):
         purchase = TranSum.purchase_objects.filter(group=self.group, code=self.code, sno=self.purSno,
-                                                   scriptSno=self.scriptSno,
-                                                   againstType=self.againstType).first()
+                                                   scriptSno=self.scriptSno).first()
         super(MOS_Sales, self).delete()
         purchase.save()
 
