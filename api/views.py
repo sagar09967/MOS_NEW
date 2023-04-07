@@ -1188,7 +1188,7 @@ def get_transaction_report(request):
     i = 1
     for purchase in purchases:
         sales = MOS_Sales.objects.filter(group=data['group'], code=data['code'], fy=data['fy'], purSno=purchase.sno,
-                                         scriptSno=purchase.scriptSno, againstType=purchase.againstType).order_by(
+                                         scriptSno=purchase.scriptSno).order_by(
             'sDate')
         temp_purchase = purchase
         for sale in sales:
@@ -1291,13 +1291,19 @@ def get_profit_chart(request):
     cummulative_profit = Decimal(0)
     for purchase in purchases:
         sales = MOS_Sales.objects.filter(group=data['group'], code=data['code'], fy=data['fy'], purSno=purchase.sno,
-                                         scriptSno=purchase.scriptSno, againstType=purchase.againstType).order_by(
+                                         scriptSno=purchase.scriptSno).order_by(
             'sDate')
         temp_purchase = purchase
-        for sale in sales:
+        if len(sales) > 0:
+            for sale in sales:
+                row = {}
+                row['sDate'] = sale.sDate
+                row['profit'] = float(sale.sVal - temp_purchase.sVal) if sale.sVal - temp_purchase.sVal > 0 else 0
+                rows.append(row)
+        else:
             row = {}
-            row['sDate'] = sale.sDate
-            row['profit'] = float(sale.sVal - temp_purchase.sVal) if sale.sVal - temp_purchase.sVal > 0 else 0
+            row['sDate'] = purchase.trDate
+            row['profit'] = 0
             rows.append(row)
 
     rows_df = pandas.DataFrame.from_records(rows)
@@ -1306,6 +1312,7 @@ def get_profit_chart(request):
     df2 = rows_df.groupby('month', sort=False, as_index=False)['profit'].sum()
     df2['cummulative_profit'] = df2['profit'].cumsum()
     fig, ax = plt.subplots()
+    #ax.set_ylim(bottom=int(df2['cummulative_profit'].min()),top=int(df2['cummulative_profit'].max()))
     # ax.axis(ymin=int(df2['cummulative_profit'].min()), ymax=int(df2['cummulative_profit'].max()))
     # ax.ticklabel_format(style='plain')
     # ax.autoscale(False)
