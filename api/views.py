@@ -1007,7 +1007,7 @@ def get_scriptwise_profit_report(request):
             sum_ltcg = list(sales.aggregate(Sum('ltcg')).values())[0]
             if sum_ltcg:
                 gain = gain + sum_ltcg
-            gains_list.append(gain)
+        gains_list.append(gain)
     total_gain = sum(gains_list)
     gains_percentages = round_to_100_percent(gains_list)
     for i in range(0, len(total_holding_values_by_script)):
