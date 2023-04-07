@@ -1844,9 +1844,8 @@ def shift_to_trading(request):
         purchase.againstType = "Trading"
         purchase.save()
         purchase.refresh_from_db()
-        sales_queryset = MOS_Sales.objects.filter(group=group, code=code, purSno=sno, scriptSno=scriptSno,
-                                                  againstType=current_againstType)
-        values = {"againstType": "Trading", "purSno": purchase.sno, "scriptSno": purchase.scriptSno}
+        sales_queryset = MOS_Sales.objects.filter(group=group, code=code, purSno=sno, scriptSno=scriptSno)
+        values = {"againstType": purchase.sp, "purSno": purchase.sno, "scriptSno": purchase.scriptSno}
         sales_queryset.update(**values)
         master.save()
 
