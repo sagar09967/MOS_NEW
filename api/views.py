@@ -1184,10 +1184,12 @@ def get_transaction_report(request):
         masters[i].refresh_from_db()
 
     purchases = TranSum.purchase_objects.filter(**data).order_by('part')
+    data_copy = data.copy()
+    data_copy.pop("againstType")
     rows = []
     i = 1
     for purchase in purchases:
-        sales = MOS_Sales.objects.filter(group=data['group'], code=data['code'], fy=data['fy'], purSno=purchase.sno,
+        sales = MOS_Sales.objects.filter(**data_copy, purSno=purchase.sno,
                                          scriptSno=purchase.scriptSno).order_by(
             'sDate')
         temp_purchase = purchase
