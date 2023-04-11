@@ -474,7 +474,7 @@ class SalesViewSet(viewsets.ViewSet):
         purchase_data = serializer.data
         for i in range(0, len(purchase_data)):
             sales = MOS_Sales.objects.filter(group=purchase_data[i]['group'], code=purchase_data[i]['code'],
-                                             purSno=purchase_data[i]['sno'], scriptSno=purchase_data[i]['scriptSno'])
+                                             purSno=purchase_data[i]['sno'], scriptSno=purchase_data[i]['scriptSno'],fy=dfy)
             totalSoldQty = list(sales.aggregate(Sum('sqty')).values())[0]
             stcg = list(sales.aggregate(Sum('stcg')).values())[0]
             ltcg = list(sales.aggregate(Sum('ltcg')).values())[0]
@@ -569,7 +569,7 @@ def get_holdings_for_member(request):
         sum_opening = list(openings.aggregate(Sum('qty')).values())[0]
         additions = purchases.filter(sp='A')
         sum_addition = list(additions.aggregate(Sum('qty')).values())[0]
-        sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'])
+        sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'],fy=dfy)
         sum_sales = list(sales.aggregate(Sum('sqty')).values())[0]
 
         holding['profitLoss'] = Decimal(master['marketValue']) - master['HoldingValue']
