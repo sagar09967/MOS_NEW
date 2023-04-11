@@ -474,7 +474,8 @@ class SalesViewSet(viewsets.ViewSet):
         purchase_data = serializer.data
         for i in range(0, len(purchase_data)):
             sales = MOS_Sales.objects.filter(group=purchase_data[i]['group'], code=purchase_data[i]['code'],
-                                             purSno=purchase_data[i]['sno'], scriptSno=purchase_data[i]['scriptSno'],fy=dfy)
+                                             purSno=purchase_data[i]['sno'], scriptSno=purchase_data[i]['scriptSno'],
+                                             fy=dfy)
             totalSoldQty = list(sales.aggregate(Sum('sqty')).values())[0]
             stcg = list(sales.aggregate(Sum('stcg')).values())[0]
             ltcg = list(sales.aggregate(Sum('ltcg')).values())[0]
@@ -569,7 +570,7 @@ def get_holdings_for_member(request):
         sum_opening = list(openings.aggregate(Sum('qty')).values())[0]
         additions = purchases.filter(sp='A')
         sum_addition = list(additions.aggregate(Sum('qty')).values())[0]
-        sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'],fy=dfy)
+        sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'], fy=dfy)
         sum_sales = list(sales.aggregate(Sum('sqty')).values())[0]
 
         holding['profitLoss'] = Decimal(master['marketValue']) - master['HoldingValue']
@@ -778,8 +779,9 @@ def prepare_holdings_response(request):
         sum_opening = list(openings.aggregate(Sum('qty')).values())[0]
         additions = purchases.filter(sp='A')
         sum_addition = list(additions.aggregate(Sum('qty')).values())[0]
-        #sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'], againstType=againstType)
-        sales = TranSum.get_all_sales(group=group, code=code,againstType=againstType, fy=dfy).filter(scriptSno=master['sno'])
+        # sales = MOS_Sales.objects.filter(group=group, code=code, scriptSno=master['sno'], againstType=againstType)
+        sales = TranSum.get_all_sales(group=group, code=code, againstType=againstType, fy=dfy).filter(
+            scriptSno=master['sno'])
         sum_sales = list(sales.aggregate(Sum('sqty')).values())[0]
 
         holding['profitLoss'] = Decimal(master['marketValue']) - master['HoldingValue']
@@ -1314,7 +1316,7 @@ def get_profit_chart(request):
     df2 = rows_df.groupby('month', sort=False, as_index=False)['profit'].sum()
     df2['cummulative_profit'] = df2['profit'].cumsum()
     fig, ax = plt.subplots()
-    #ax.set_ylim(bottom=int(df2['cummulative_profit'].min()),top=int(df2['cummulative_profit'].max()))
+    # ax.set_ylim(bottom=int(df2['cummulative_profit'].min()),top=int(df2['cummulative_profit'].max()))
     # ax.axis(ymin=int(df2['cummulative_profit'].min()), ymax=int(df2['cummulative_profit'].max()))
     # ax.ticklabel_format(style='plain')
     # ax.autoscale(False)
@@ -1529,7 +1531,7 @@ def script_review_report(request):
                 purchase_row['sales_range'] = range(0, 1)
             else:
                 for sale in sales:
-                    s_time_delta = relativedelta(sale.sDate,purchase.trDate)
+                    s_time_delta = relativedelta(sale.sDate, purchase.trDate)
                     sale_row = {
                         "s_date": sale.sDate.strftime('%d-%m-%Y'),
                         "s_qty": locale.format_string('%d', sale.sqty, grouping=True),
@@ -1844,7 +1846,8 @@ def shift_to_trading(request):
         purchase.againstType = "Trading"
         purchase.save()
         purchase.refresh_from_db()
-        sales_queryset = MOS_Sales.objects.filter(group=group, code=code, purSno=sno, scriptSno=scriptSno)
+        sales_queryset = MOS_Sales.objects.filter(group=group, code=code, purSno=sno, scriptSno=scriptSno,
+                                                  fy=purchase.fy)
         values = {"againstType": purchase.sp, "purSno": purchase.sno, "scriptSno": purchase.scriptSno}
         sales_queryset.update(**values)
         master.save()
