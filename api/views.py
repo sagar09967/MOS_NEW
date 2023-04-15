@@ -1372,7 +1372,7 @@ def get_mos_report(request):
     filter = "both"
     if data.get("filter"):
         filter = data.pop('filter')
-
+    againstType = data.pop('againstType')
     ltcg_released = []
     ltcg_unreleased = []
     stcg_released = []
@@ -1382,7 +1382,8 @@ def get_mos_report(request):
     if filter == 'both' or filter == 'released':
         for sale in sales:
             purchase = TranSum.purchase_objects.filter(group=data['group'], code=sale.code, sno=sale.purSno,
-                                                       scriptSno=sale.scriptSno).first()
+                                                       scriptSno=sale.scriptSno,
+                                                       againstType=againstType).first()
             if purchase is None:
                 continue
             sale_row = {}
@@ -1439,7 +1440,7 @@ def get_mos_report(request):
     }
     pre_table = "Report Date : " + datetime.date.today().strftime('%d/%m/%Y')
     heading = name
-    description = 'MOS Report ( ' + data['againstType'] + ' )' + " FY " + "2021-2022"
+    description = 'MOS Report ( ' + againstType + ' )' + " FY " + "2021-2022"
     context = {
         'released': filter == 'both' or filter == 'released',
         'unreleased': filter == 'both' or filter == 'unreleased',
@@ -1956,7 +1957,7 @@ def import_data(request):
                                        againstType=AGAINST_TYPE_MAP[purchase['againstType']], sp=purchase['sp'],
                                        qty=purchase['qty'],
                                        sVal=purchase['sVal'], rate=purchase['rate'], fmr=purchase['fmr'],
-                                       isinCode=purchase['isinCode'], empCode=purchase['empCode'],
+                                       isinCode=purchase['isinCode'],
                                        sttCharges=purchase['sttCharges'], otherCharges=purchase['otherCharges'],
                                        noteAdd=purchase['noteAdd'])
 
@@ -1972,7 +1973,7 @@ def import_data(request):
                                          scriptSno=purchase_obj.scriptSno,
                                          againstType=sale['againstType'],
                                          stt_Paid=sale['stt_Paid'], stt=sale['stt'], other=sale['other'],
-                                         fno=sale['fno'], empCode=sale['empCode'])
+                                         fno=sale['fno'])
                     sale_obj.group = purchase_obj.group
                     sale_obj.purSno = purchase_obj.sno
                     sale_obj.scriptSno = purchase_obj.scriptSno
