@@ -1625,7 +1625,7 @@ def script_review_report(request):
 @api_view(['GET'])
 def portfolio_returns_report(request):
     data = request.query_params.dict()
-    data['fy'] = data.pop('dfy')
+    # data['fy'] = data.pop('dfy')
     name = ""
     if data.get('code'):
         member = MemberMaster.objects.filter(group=data['group'], code=data['code']).first()
@@ -1637,69 +1637,108 @@ def portfolio_returns_report(request):
     locale.setlocale(locale.LC_ALL, 'en_IN.utf8')
     purchases = TranSum.purchase_objects.filter(**data).order_by('part', 'trDate')
     total_purchase_value = purchases.aggregate(total_pur_value=Sum("sVal"))['total_pur_value']
+    result_rows = []
     purchases_rows = []
     for purchase in purchases:
-        pur_wtg = purchase.sVal / total_purchase_value * 100
-        purchase_row = {
-            "part": purchase.part,
-            "pur_date": purchase.trDate.strftime("%d-%m-%Y"),
-            "pur_qty": purchase.qty,
-            "pur_rate": purchase.rate,
-            "pur_value": purchase.sVal,
-            "pur_wtg": pur_wtg,
-            "sales_rows": []
-        }
-        sales = MOS_Sales.objects.filter(**data, purSno=purchase.sno, scriptSno=purchase.scriptSno).order_by("sDate")
+
+        # purchase_row = {
+        #     "part": purchase.part,
+        #     "pur_date": purchase.trDate.strftime("%d-%m-%Y"),
+        #     "pur_qty": purchase.qty,
+        #     "pur_rate": purchase.rate,
+        #     "pur_value": purchase.sVal,
+        #     "pur_wtg": pur_wtg,
+        #     "sales_rows": []
+        # }
+        sales = MOS_Sales.objects.filter(group=data['group'], code=data['code'], purSno=purchase.sno,
+                                         scriptSno=purchase.scriptSno).order_by("sDate")
         if len(sales) == 0:
-            sale_row = {}
-            sale_row['valuation_date'] = datetime.datetime.today().strftime("%d-%m-%Y")
-            sale_row['days_held'] = (datetime.date.today() - purchase.trDate).days
+            pur_wtg = purchase.sVal / total_purchase_value * 100
+            result_row = {"part": purchase.part, "pur_date": purchase.trDate.strftime("%d-%m-%Y"),
+                          "pur_qty": purchase.qty, "pur_rate": purchase.rate, "pur_value": purchase.sVal,
+                          "pur_wtg": pur_wtg, 'valuation_date': datetime.datetime.today().strftime("%d-%m-%Y"),
+                          'days_held': (datetime.date.today() - purchase.trDate).days}
             mkt_rate = services.get_market_rate_value(purchase.part)
-            sale_row['sale_rate'] = mkt_rate
+            result_row['sale_rate'] = mkt_rate
             sale_value = purchase.qty * mkt_rate
-            sale_row['sale_value'] = sale_value
+            result_row['sale_value'] = sale_value
             profit = Decimal(sale_value) - purchase.sVal
-            sale_row['profit'] = profit
+            result_row['realized_profit'] = None
+            result_row['unrealized_profit'] = profit
+            result_row['profit'] = profit
             returns = profit / purchase.sVal
-            sale_row['returns'] = returns
-            per_day_return = returns / sale_row['days_held']
-            sale_row['per_day_return'] = per_day_return
+            result_row['returns'] = returns
+            per_day_return = returns / result_row['days_held']
+            result_row['per_day_return'] = per_day_return
             annual_return = per_day_return * 365
-            sale_row['annual_return'] = annual_return
+            result_row['annual_return'] = annual_return
             return_wtg = annual_return * pur_wtg
-            sale_row['return_wtg'] = return_wtg
+            result_row['return_wtg'] = return_wtg
             return_perc = profit / purchase.sVal * 100
-            sale_row['return_perc'] = return_perc
-            ann_return_perc = returns / sale_row['days_held'] * 365
-            sale_row['ann_return_perc'] = ann_return_perc
+            result_row['return_perc'] = return_perc
+            ann_return_perc = returns / result_row['days_held'] * 365
+            result_row['ann_return_perc'] = ann_return_perc
             wtg_ret = ann_return_perc * pur_wtg
-            sale_row['wtg_ret'] = wtg_ret
-            purchase_row['sales_rows'].append(sale_row)
+            result_row['wtg_ret'] = wtg_ret
+            result_rows.append(result_row)
         else:
             for sale in sales:
-                sale_row = {}
-                sale_row['valuation_date'] = sale.sDate.strftime("%d-%m-%Y")
-                sale_row['days_held'] = (sale.sDate - purchase.trDate).days
-                sale_row['sale_rate'] = sale.srate
-                sale_row['sale_value'] = sale.sVal
+                pur_wtg = sale.sqty * purchase.rate / total_purchase_value * 100
+                result_row = {"part": purchase.part, "pur_date": purchase.trDate.strftime("%d-%m-%Y"),
+                              "pur_qty": sale.sqty, "pur_rate": purchase.rate, "pur_value": sale.sqty * purchase.rate,
+                              "pur_wtg": pur_wtg, }
+                result_row['valuation_date'] = sale.sDate.strftime("%d-%m-%Y")
+                result_row['days_held'] = (datetime.date.today() - purchase.trDate).days
+                result_row['sale_rate'] = sale.srate
+                result_row['sale_value'] = sale.sVal
                 profit = sale.sVal - purchase.sVal
-                sale_row['profit'] = profit
+                result_row['realized_profit'] = profit
+                result_row['unrealized_profit'] = None
+                result_row['profit'] = profit
+
                 returns = profit / purchase.sVal
-                sale_row['returns'] = returns
-                per_day_return = returns / sale_row['days_held']
-                sale_row['per_day_return'] = per_day_return
+                result_row['returns'] = returns
+                per_day_return = returns / result_row['days_held']
+                result_row['per_day_return'] = per_day_return
                 annual_return = per_day_return * 365
-                sale_row['annual_return'] = annual_return
+                result_row['annual_return'] = annual_return
                 return_wtg = annual_return * pur_wtg
-                sale_row['return_wtg'] = return_wtg
+                result_row['return_wtg'] = return_wtg
                 return_perc = profit / purchase.sVal * 100
-                sale_row['return_perc'] = return_perc
-                ann_return_perc = returns / sale_row['days_held'] * 365
-                sale_row['ann_return_perc'] = ann_return_perc
+                result_row['return_perc'] = return_perc
+                ann_return_perc = returns / result_row['days_held'] * 365
+                result_row['ann_return_perc'] = ann_return_perc
                 wtg_ret = ann_return_perc * pur_wtg
-                sale_row['wtg_ret'] = wtg_ret
-                purchase_row['sales_rows'].append(sale_row)
-        purchases_rows.append(purchase_row)
+                result_row['wtg_ret'] = wtg_ret
+                result_rows.append(result_row)
+            pur_wtg = purchase.balQty * purchase.rate / total_purchase_value * 100
+            result_row = {"part": purchase.part, "pur_date": purchase.trDate.strftime("%d-%m-%Y"),
+                          "pur_qty": purchase.balQty, "pur_rate": purchase.rate, "pur_value": purchase.sVal,
+                          "pur_wtg": pur_wtg, 'valuation_date': datetime.datetime.today().strftime("%d-%m-%Y"),
+                          'days_held': (datetime.date.today() - purchase.trDate).days}
+            mkt_rate = Decimal(services.get_market_rate_value(purchase.part))
+            result_row['sale_rate'] = mkt_rate
+            sale_value = purchase.balQty * mkt_rate
+            result_row['sale_value'] = sale_value
+            profit = Decimal(sale_value) - purchase.sVal
+            result_row['realized_profit'] = None
+            result_row['unrealized_profit'] = profit
+            result_row['profit'] = profit
+            returns = profit / purchase.sVal
+            result_row['returns'] = returns
+            per_day_return = returns / result_row['days_held']
+            result_row['per_day_return'] = per_day_return
+            annual_return = per_day_return * 365
+            result_row['annual_return'] = annual_return
+            return_wtg = annual_return * pur_wtg
+            result_row['return_wtg'] = return_wtg
+            return_perc = profit / purchase.sVal * 100
+            result_row['return_perc'] = return_perc
+            ann_return_perc = returns / result_row['days_held'] * 365
+            result_row['ann_return_perc'] = ann_return_perc
+            wtg_ret = ann_return_perc * pur_wtg
+            result_row['wtg_ret'] = wtg_ret
+            result_rows.append(result_row)
     total_pur_qty = Decimal(0)
     total_pur_val = Decimal(0)
     total_annual_returns = Decimal(0)
@@ -1713,71 +1752,75 @@ def portfolio_returns_report(request):
     total_return_wtg = Decimal(0)
     total_sale_value = Decimal(0)
 
-    for purchase_row in purchases_rows:
-        total_pur_qty += purchase_row['pur_qty']
-        total_pur_val += purchase_row['pur_value']
-        for sale_row in purchase_row['sales_rows']:
-            total_sale_value += Decimal(sale_row['sale_value'])
-            total_annual_returns += sale_row['annual_return']
-            total_profit += sale_row['profit']
-            total_returns += sale_row['returns']
-            total_per_day_return += sale_row['per_day_return']
-            total_return_wtg += sale_row['wtg_ret']
-            total_return_perc += sale_row['return_perc']
-            total_ann_return_perc += sale_row['ann_return_perc']
+    for result_row in result_rows:
+        total_pur_qty += result_row['pur_qty']
+        total_pur_val += result_row['pur_value']
+        total_sale_value += Decimal(result_row['sale_value'])
+        total_annual_returns += result_row['annual_return']
+        total_profit += result_row['profit']
+        total_returns += result_row['returns']
+        total_per_day_return += result_row['per_day_return']
+        total_return_wtg += result_row['wtg_ret']
+        total_return_perc += result_row['return_perc']
+        total_ann_return_perc += result_row['ann_return_perc']
     total_ann_return_wtg_perc = Decimal(0)
-    for purchase_row in purchases_rows:
-        for sale_row in purchase_row['sales_rows']:
-            sale_row['ann_return_wtg_perc'] = sale_row['annual_return'] / total_annual_returns * 100
-            total_ann_return_wtg_perc += sale_row['ann_return_wtg_perc']
-    result_df = pandas.DataFrame(
-        columns=["Name of Script", "Purchase Date", "Qty", "PR", "PV", "Wtg", "Sale/Valuation Date", "Days Held", "SR",
-                 "SV", "Profit", "Returns", "Per Day Return", "Annual Return", "Return Weightage", "Return Weightage %",
-                 "Return %", "Wtg * Ret", "Ann Return %"])
-    for index, purchase_row in enumerate(purchases_rows):
-        sales_rows = purchase_row.pop('sales_rows')
-        first_row = list({**purchase_row, **sales_rows[0]}.values())
-        result_df = pandas.concat([result_df, pandas.DataFrame([first_row], columns=result_df.columns)],
-                                  ignore_index=True)
-        if len(sales_rows) > 1:
-            for i in range(1, len(sales_rows)):
-                blanks = numpy.full(6, numpy.nan).tolist()
-                sale_line = list(sales_rows[i].values())
-                result_df = pandas.concat(
-                    [result_df, pandas.DataFrame([blanks + sale_line], columns=result_df.columns)],
-                    ignore_index=True)
-    totals_list = [numpy.nan, numpy.nan, total_pur_qty, numpy.nan, total_pur_val, 100, numpy.nan, total_days_held,
-                   numpy.nan, total_sale_value, total_profit, total_returns, total_per_day_return, total_annual_returns,
+    for result_row in result_rows:
+        result_row['ann_return_wtg_perc'] = result_row['annual_return'] / total_annual_returns * 100
+        total_ann_return_wtg_perc += result_row['ann_return_wtg_perc']
+    result_df = pandas.DataFrame(result_rows)
+    result_df.columns = ["Name of Script", "Purchase Date", "Qty", "PR", "PV", "Wtg", "Sale/Valuation Date",
+                         "Days Held", "SR",
+                         "SV", "Realized Profit", "Unrealized Profit", "Profit", "Returns", "Per Day Return",
+                         "Annual Return", "Return Weightage", "Return Weightage %",
+                         "Return %", "Wtg * Ret", "Ann Return %"]
+    # for index, purchase_row in enumerate(purchases_rows):
+    #     sales_rows = purchase_row.pop('sales_rows')
+    #     first_row = list({**purchase_row, **sales_rows[0]}.values())
+    #     result_df = pandas.concat([result_df, pandas.DataFrame([first_row], columns=result_df.columns)],
+    #                               ignore_index=True)
+    #     if len(sales_rows) > 1:
+    #         for i in range(1, len(sales_rows)):
+    #             blanks = numpy.full(6, numpy.nan).tolist()
+    #             sale_line = list(sales_rows[i].values())
+    #             result_df = pandas.concat(
+    #                 [result_df, pandas.DataFrame([blanks + sale_line], columns=result_df.columns)],
+    #                 ignore_index=True)
+    totals_list = [None, None, total_pur_qty, None, total_pur_val, 100, None, total_days_held,
+                   None, total_sale_value, None, None, total_profit, total_returns, total_per_day_return,
+                   total_annual_returns,
                    total_return_wtg, 100, total_return_perc, total_return_wtg, total_ann_return_wtg_perc]
     result_df = pandas.concat(
         [result_df, pandas.DataFrame([totals_list], columns=result_df.columns)],
         ignore_index=True)
 
-    for key in ["Qty", "PR", "PV", "Wtg", "SR", "SV", "Profit", "Returns", "Per Day Return", "Annual Return",
+    for key in ["Qty", "PR", "PV", "Wtg", "SR", "SV","Realized Profit","Unrealized Profit", "Profit", "Returns", "Per Day Return", "Annual Return",
                 "Return Weightage",
                 "Return Weightage %", "Return %",
                 "Wtg * Ret", "Ann Return %"]:
         result_df[key] = result_df[key].apply(localize)
 
     sio = BytesIO()
-    PandasWriter = pandas.ExcelWriter(sio, engine='xlsxwriter')
-    result_df.to_excel(PandasWriter, sheet_name="Sheet 1", index=False, na_rep=" ")
-    for column in result_df:
-        column_length = max(result_df[column].astype(str).map(len).max(), len(column))
-        col_idx = result_df.columns.get_loc(column)
-        PandasWriter.sheets['Sheet 1'].set_column(col_idx, col_idx, column_length)
-    PandasWriter.save()
-    sio.seek(0)
-    workbook = sio.getvalue()
-    response = HttpResponse(workbook,
-                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=%s' % "Portfolio_Returns_Report.xlsx"
-    return response
+    with pandas.ExcelWriter(sio, engine='xlsxwriter') as PandasWriter:
+        result_df.to_excel(PandasWriter, sheet_name="Sheet 1", index=False, na_rep="")
+        for column in result_df:
+            column_length = max(result_df[column].astype(str).map(len).max(), len(column))
+            col_idx = result_df.columns.get_loc(column)
+            PandasWriter.sheets['Sheet 1'].set_column(col_idx, col_idx, column_length)
+        PandasWriter.save()
+        sio.seek(0)
+        workbook = sio.getvalue()
+        response = HttpResponse(workbook,
+                                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename=%s' % "Portfolio_Returns_Report.xlsx"
+        return response
 
 
 def localize(x):
     locale.setlocale(locale.LC_ALL, 'en_IN.utf8')
-    return locale.format_string("%.2f", float(x), grouping=True)
+    if x:
+        return locale.format_string("%.2f", float(x), grouping=True)
+    else:
+        return x
 
 
 @api_view(['GET'])
@@ -1895,7 +1938,7 @@ class DataExchangeView(APIView):
         customer = authenticate(username=username, password=password)
         if customer:
             dir_name = "_".join([customer.group, customer.username])
-            file_name = dir_name + "." + extension
+            file_name = file_uploaded.name
             abs_path = "/".join(["customer_exports", dir_name, file_name])
             if default_storage.exists(abs_path):
                 default_storage.delete(abs_path)
@@ -1929,6 +1972,7 @@ class DataExchangeView(APIView):
 @transaction.atomic()
 def import_data(request):
     group = request.data['group']
+    code = request.data['code']
     file_name = request.data['file_name']
     dir_name = "_".join([request.data['group'], request.data['username']])
     try:
@@ -1939,9 +1983,9 @@ def import_data(request):
             if len(import_data) < 0:
                 return Response({"status": False, "message": "Selected import file was empty."})
 
-            old_purchase_set = TranSum.objects.filter(group=group)
+            old_purchase_set = TranSum.objects.filter(group=group, code=code)
             old_purchase_set.delete()
-            old_sale_set = MOS_Sales.objects.filter(group=group)
+            old_sale_set = MOS_Sales.objects.filter(group=group, code=code)
             old_sale_set.delete()
 
             for purchase in import_data:
@@ -1949,7 +1993,7 @@ def import_data(request):
                     purchase['trDate'] = None
                 if purchase['sp'] == '':
                     continue
-                purchase_obj = TranSum(group=group, code=purchase['code'], part=purchase['part'],
+                purchase_obj = TranSum(group=group, code=code, part=purchase['part'],
                                        fy=purchase['fy'],
                                        trDate=datetime.datetime.strptime(purchase['trDate'], '%d/%m/%Y %H:%M:%S') if
                                        purchase[
@@ -1966,7 +2010,7 @@ def import_data(request):
                 for sale in purchase['sales']:
                     if sale['sDate'] == "":
                         sale['sDate'] = None
-                    sale_obj = MOS_Sales(group=group, code=purchase['code'],
+                    sale_obj = MOS_Sales(group=group, code=code,
                                          sDate=datetime.datetime.strptime(sale['sDate'], '%d/%m/%Y %H:%M:%S'),
                                          srate=sale['srate'],
                                          sqty=sale['sqty'], sVal=sale['sVal'], purSno=purchase_obj.sno,
