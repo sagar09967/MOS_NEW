@@ -1995,7 +1995,7 @@ def import_data(request):
                     continue
                 purchase_obj = TranSum(group=group, code=code, part=purchase['part'],
                                        fy=purchase['fy'],
-                                       trDate=datetime.datetime.strptime(purchase['trDate'], '%d/%m/%Y %H:%M:%S') if
+                                       trDate=datetime.datetime.strptime(purchase['trDate'], '%d/%m/%Y %I:%M:%S %p') if
                                        purchase[
                                            'trDate'] is not None else None,
                                        againstType=AGAINST_TYPE_MAP[purchase['againstType']], sp=purchase['sp'],
@@ -2011,7 +2011,7 @@ def import_data(request):
                     if sale['sDate'] == "":
                         sale['sDate'] = None
                     sale_obj = MOS_Sales(group=group, code=code,
-                                         sDate=datetime.datetime.strptime(sale['sDate'], '%d/%m/%Y %H:%M:%S'),
+                                         sDate=datetime.datetime.strptime(sale['sDate'], '%d/%m/%Y %I:%M:%S %p'),
                                          srate=sale['srate'],
                                          sqty=sale['sqty'], sVal=sale['sVal'], purSno=purchase_obj.sno,
                                          scriptSno=purchase_obj.scriptSno,
