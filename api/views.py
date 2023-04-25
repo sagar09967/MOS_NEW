@@ -1625,7 +1625,7 @@ def script_review_report(request):
 @api_view(['GET'])
 def portfolio_returns_report(request):
     data = request.query_params.dict()
-    # data['fy'] = data.pop('dfy')
+    data['fy'] = data.pop('dfy')
     name = ""
     if data.get('code'):
         member = MemberMaster.objects.filter(group=data['group'], code=data['code']).first()
