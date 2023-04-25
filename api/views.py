@@ -336,6 +336,12 @@ class SaveCustomer(APIView):
         request.data['group'] = group
         # print("requ grp",request.data.get("group"))
         serializer = SavecustomerSerializer(data=request.data)
+        existing_user = CustomerMaster.objects.filter(emailId=request.data['emailId']).first()
+        if existing_user:
+            return Response({"status": False, "message": "User with this email already exists."})
+        existing_user = CustomerMaster.objects.filter(username=request.data['username']).first()
+        if existing_user:
+            return Response({"status": False, "message": "User with this username already exists."})
         if serializer.is_valid():
             serializer.save()
             return Response({'status': True, 'message': 'You have successfully Created', 'data': serializer.data},
@@ -832,7 +838,8 @@ class DayTradingViewSet(viewsets.ModelViewSet):
         purchase_queryset = TranSum.purchase_objects.filter(**data)
         result = []
         for purchase in purchase_queryset:
-            sale = MOS_Sales.objects.filter(group=data['group'],code=data['code'],fy=data['fy'], purSno=purchase.sno, scriptSno=purchase.scriptSno).first()
+            sale = MOS_Sales.objects.filter(group=data['group'], code=data['code'], fy=data['fy'], purSno=purchase.sno,
+                                            scriptSno=purchase.scriptSno).first()
             object = {
                 "trId": purchase.trId,
                 "part": purchase.part,
@@ -2047,24 +2054,25 @@ def export_data(request):
                                                            'sVal', 'rate', 'fmr',
                                                            'isinCode',
                                                            'sttCharges', 'otherCharges',
-                                                           'noteAdd','sno','scriptSno'))
+                                                           'noteAdd', 'sno', 'scriptSno'))
     for i in range(0, len(purchases)):
         purchase = purchases[i]
-        sales =list(MOS_Sales.objects.filter(group=purchase['group'], code=purchase['code'], purSno=purchase['sno'],
-                                         scriptSno=purchase['scriptSno']).values('group', 'code',
-                                                                                 'sDate',
-                                                                                 'srate',
-                                                                                 'sqty', 'purSno',
-                                                                                 'scriptSno',
-                                                                                 'againstType',
-                                                                                 'stt_Paid', 'stt', 'other',
-                                                                                 'fno'))
+        sales = list(MOS_Sales.objects.filter(group=purchase['group'], code=purchase['code'], purSno=purchase['sno'],
+                                              scriptSno=purchase['scriptSno']).values('group', 'code',
+                                                                                      'sDate',
+                                                                                      'srate',
+                                                                                      'sqty', 'purSno',
+                                                                                      'scriptSno',
+                                                                                      'againstType',
+                                                                                      'stt_Paid', 'stt', 'other',
+                                                                                      'fno'))
         purchases[i]['againstType'] = AGAINST_TYPE_MAP_REVERSE[purchase['againstType']]
         purchases[i]['sales'] = sales
-    abs_path = "/".join(['mos_exports',dir_name,file_name])
+    abs_path = "/".join(['mos_exports', dir_name, file_name])
     with default_storage.open(abs_path, 'w') as f:
         json.dump(purchases, f)
     return Response({"status": True, "message": "Export file created and stored"})
+
 
 import pyotp
 import base64
