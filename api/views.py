@@ -36,7 +36,7 @@ import decimal
 from . import services
 from django.template.loader import render_to_string
 import locale
-from .constants import AGAINST_TYPE_MAP
+from .constants import AGAINST_TYPE_MAP, AGAINST_TYPE_MAP_REVERSE
 
 
 # <-------------------- SavePurch API ---------------------->
@@ -832,7 +832,7 @@ class DayTradingViewSet(viewsets.ModelViewSet):
         purchase_queryset = TranSum.purchase_objects.filter(**data)
         result = []
         for purchase in purchase_queryset:
-            sale = MOS_Sales.objects.filter(**data, purSno=purchase.sno, scriptSno=purchase.scriptSno).first()
+            sale = MOS_Sales.objects.filter(group=data['group'],code=data['code'],fy=data['fy'], purSno=purchase.sno, scriptSno=purchase.scriptSno).first()
             object = {
                 "trId": purchase.trId,
                 "part": purchase.part,
@@ -1793,7 +1793,8 @@ def portfolio_returns_report(request):
         [result_df, pandas.DataFrame([totals_list], columns=result_df.columns)],
         ignore_index=True)
 
-    for key in ["Qty", "PR", "PV", "Wtg", "SR", "SV","Realized Profit","Unrealized Profit", "Profit", "Returns", "Per Day Return", "Annual Return",
+    for key in ["Qty", "PR", "PV", "Wtg", "SR", "SV", "Realized Profit", "Unrealized Profit", "Profit", "Returns",
+                "Per Day Return", "Annual Return",
                 "Return Weightage",
                 "Return Weightage %", "Return %",
                 "Wtg * Ret", "Ann Return %"]:
@@ -2030,6 +2031,40 @@ def import_data(request):
         raise e
         return Response({"status": False, "message": "Error while importing file."})
 
+
+@api_view(['POST'])
+@transaction.atomic()
+def export_data(request):
+    group = request.data['group']
+    code = request.data['code']
+    file_name = request.data['file_name']
+    dir_name = "_".join([request.data['group'], request.data['username']])
+    purchases = list(TranSum.purchase_objects.all().values('group', 'code', 'part',
+                                                           'fy',
+                                                           'trDate',
+                                                           'againstType',
+                                                           'qty',
+                                                           'sVal', 'rate', 'fmr',
+                                                           'isinCode',
+                                                           'sttCharges', 'otherCharges',
+                                                           'noteAdd','sno','scriptSno'))
+    for i in range(0, len(purchases)):
+        purchase = purchases[i]
+        sales =list(MOS_Sales.objects.filter(group=purchase['group'], code=purchase['code'], purSno=purchase['sno'],
+                                         scriptSno=purchase['scriptSno']).values('group', 'code',
+                                                                                 'sDate',
+                                                                                 'srate',
+                                                                                 'sqty', 'purSno',
+                                                                                 'scriptSno',
+                                                                                 'againstType',
+                                                                                 'stt_Paid', 'stt', 'other',
+                                                                                 'fno'))
+        purchases[i]['againstType'] = AGAINST_TYPE_MAP_REVERSE[purchase['againstType']]
+        purchases[i]['sales'] = sales
+    abs_path = "/".join(['mos_exports',dir_name,file_name])
+    with default_storage.open(abs_path, 'w') as f:
+        json.dump(purchases, f)
+    return Response({"status": True, "message": "Export file created and stored"})
 
 import pyotp
 import base64

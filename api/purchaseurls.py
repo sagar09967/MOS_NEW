@@ -81,6 +81,10 @@ urlpatterns.append(
 urlpatterns.append(
     re_path('import_data', views.import_data)
 )
+urlpatterns.append(
+    re_path('export_data', views.export_data)
+)
+
 
 
 
