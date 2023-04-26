@@ -2019,7 +2019,7 @@ def import_data(request):
                     if sale['sDate'] == "":
                         sale['sDate'] = None
                     sale_obj = MOS_Sales(group=group, code=code,
-                                         sDate=datetime.datetime.strptime(sale['sDate'], '%d/%m/%Y %H:%M:%S'),
+                                         sDate=datetime.datetime.strptime(sale['sDate'], '%d/%m/%Y %H:%M:%S'),fy=sale['fy'],
                                          srate=sale['srate'],
                                          sqty=sale['sqty'], sVal=sale['sVal'], purSno=purchase_obj.sno,
                                          scriptSno=purchase_obj.scriptSno,
