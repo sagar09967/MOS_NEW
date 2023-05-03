@@ -2165,6 +2165,7 @@ def set_password(request):
     if set_pass_otp.verify(set_pass_token):
         customer = CustomerMaster.objects.get(emailId=email)
         customer.set_password(password)
+        customer.save()
         return Response({"status": True, "message": "Password reset complete"})
     else:
         return Response({"status": False, "message": "Password reset session has expired. Please try again."})
