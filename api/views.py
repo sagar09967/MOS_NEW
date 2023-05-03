@@ -2124,6 +2124,9 @@ from django.core.mail import send_mail
 def get_otp(request):
     data = request.query_params.dict()
     email = data['email']
+    customer = CustomerMaster.objects.filter(emailId=email).first()
+    if not customer:
+        return Response({"status":False,"message":"User with this email does not exist"})
     key = base64.b32encode(email.encode())
     otp = pyotp.TOTP(key, digits=6, interval=180)
     otp_str = otp.now()
