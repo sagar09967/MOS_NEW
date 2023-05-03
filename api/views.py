@@ -2154,7 +2154,7 @@ def verify_otp(request):
         return Response({"status": True, "pass_token": set_pass_token})
     else:
         return Response({"status": False,
-                         "pass_token": "Incorrect OTP. This might be expired please generate a new one and try again"})
+                         "message": "Incorrect OTP. This might be expired please generate a new one and try again"})
 
 
 @api_view(['POST'])
