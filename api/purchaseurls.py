@@ -84,7 +84,9 @@ urlpatterns.append(
 urlpatterns.append(
     re_path('export_data', views.export_data)
 )
-
+urlpatterns.append(
+    re_path('export_file', views.get_export_file)
+)
 
 
 

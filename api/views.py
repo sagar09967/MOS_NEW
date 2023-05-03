@@ -1963,12 +1963,19 @@ class DataExchangeView(APIView):
     def get(self, request):
         req = request.query_params.dict()
         group = req['group']
+        if 'type' in req:
+            if req['type'] == 'export':
+                type = "mos_exports"
+            else:
+                type = "customer_exports"
+        else:
+            type = "customer_exports"
         customer = CustomerMaster.objects.filter(group=group).first()
         if customer:
             dir_name = "_".join([customer.group, customer.username])
-            def_dirs, def_files = default_storage.listdir("customer_exports")
+            def_dirs, def_files = default_storage.listdir(type)
             if dir_name in def_dirs:
-                dirs, files = default_storage.listdir("/".join(["customer_exports", dir_name]))
+                dirs, files = default_storage.listdir("/".join([type, dir_name]))
                 return Response({"status": True, "message": "Files retrieved", "data": files},
                                 status=200)
             else:
@@ -2019,7 +2026,8 @@ def import_data(request):
                     if sale['sDate'] == "":
                         sale['sDate'] = None
                     sale_obj = MOS_Sales(group=group, code=code,
-                                         sDate=datetime.datetime.strptime(sale['sDate'], '%d/%m/%Y %H:%M:%S'),fy=sale['fy'],
+                                         sDate=datetime.datetime.strptime(sale['sDate'], '%d/%m/%Y %H:%M:%S'),
+                                         fy=sale['fy'],
                                          srate=sale['srate'],
                                          sqty=sale['sqty'], sVal=sale['sVal'], purSno=purchase_obj.sno,
                                          scriptSno=purchase_obj.scriptSno,
@@ -2037,6 +2045,16 @@ def import_data(request):
     except Exception as e:
         raise e
         return Response({"status": False, "message": "Error while importing file."})
+
+
+from django.core.serializers.json import DjangoJSONEncoder
+
+
+class DecimalEncoder(DjangoJSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return str(obj)  # Convert decimal to string
+        return super().default(obj)
 
 
 @api_view(['POST'])
@@ -2066,12 +2084,35 @@ def export_data(request):
                                                                                       'againstType',
                                                                                       'stt_Paid', 'stt', 'other',
                                                                                       'fno'))
+        for j in range(0, len(sales)):
+            sales[j]['sDate'] = datetime.datetime.strftime(sales[j]['sDate'], '%d/%m/%Y %H:%M:%S')
         purchases[i]['againstType'] = AGAINST_TYPE_MAP_REVERSE[purchase['againstType']]
+        purchases[i]['trDate'] = datetime.datetime.strftime(purchases[i]['trDate'], '%d/%m/%Y %H:%M:%S')
         purchases[i]['sales'] = sales
     abs_path = "/".join(['mos_exports', dir_name, file_name])
+    if default_storage.exists(abs_path):
+        default_storage.delete(abs_path)
     with default_storage.open(abs_path, 'w') as f:
-        json.dump(purchases, f)
+        json.dump(purchases, f, cls=DecimalEncoder)
     return Response({"status": True, "message": "Export file created and stored"})
+
+
+@api_view(['GET'])
+@transaction.atomic()
+def get_export_file(request):
+    req = request.query_params.dict()
+    group = req['group']
+    file_name = req['file_name']
+    customer = CustomerMaster.objects.filter(group=group).first()
+    if customer:
+        dir_name = "_".join([customer.group, customer.username])
+        file_path = "/".join(['mos_exports', dir_name, file_name])
+        if default_storage.exists(file_path):
+            file = default_storage.open(file_path)
+            return FileResponse(file, as_attachment=True, filename=file_name)
+        else:
+            return Response({"status": False, "message": "File does not exist"},
+                            status=200)
 
 
 import pyotp
