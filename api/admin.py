@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import TranSum, CustomerMaster, MemberMaster, MOS_Sales, ReleaseNote, Post, Feedback
+from .stock_exchange_models import Index
 from django.contrib.auth.models import Group, User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
@@ -38,7 +39,7 @@ admin.site.register(ReleaseNote)
 admin.site.register(Post)
 admin.site.register(Feedback)
 admin.site.unregister(Group)
-
+admin.site.register(Index)
 
 # @admin.register(CustomerMaster)
 # class CustomerMaster(admin.ModelAdmin):

@@ -38,7 +38,6 @@ from django.template.loader import render_to_string
 import locale
 from .constants import AGAINST_TYPE_MAP, AGAINST_TYPE_MAP_REVERSE
 
-
 # <-------------------- SavePurch API ---------------------->
 class SavePurch(APIView):
     def post(self, request, format=None):
