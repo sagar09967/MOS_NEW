@@ -3,6 +3,8 @@ from . import views, post_feedback_release_views as pfr_views
 from rest_framework.routers import DefaultRouter
 from django.urls import path, re_path
 
+from .mos_strategy import StockAPI
+
 router = DefaultRouter(trailing_slash=False)
 router.register(r'purchase', views.TranSumViewSet, basename='purchase')
 router.register(r'sale', views.SalesViewSet, basename='sale')
@@ -86,6 +88,9 @@ urlpatterns.append(
 )
 urlpatterns.append(
     re_path('export_file', views.get_export_file)
+)
+urlpatterns.append(
+    re_path('stock-api', StockAPI.as_view())
 )
 
 
