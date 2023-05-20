@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from datetime import datetime
 import datetime as dt
 from rest_framework.response import Response
-from django.http import HttpResponse
+from django.http import HttpResponse, FileResponse
 import csv
 
 
@@ -1454,5 +1454,7 @@ class StockAPI(APIView):
             # print(trans_1)
             # print(trans_2)
             # print(Money_in_Bank)
+        excel_file = open('TRADE_BOOK.xlsx', 'rb')
 
+        return FileResponse(excel_file,filename='TRADE_BOOK.xlsx')
         return Response({'message': 'success'})
