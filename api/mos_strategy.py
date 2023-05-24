@@ -101,17 +101,17 @@ class StockAPI(APIView):
             #         df.to_excel(writer, sheet_name=ticker)
 
         for ticker in dfs:
-            print(f"{ticker}:\n{dfs[ticker]}\n")
+            # print(f"{ticker}:\n{dfs[ticker]}\n")
             df_concat = pd.concat([dfs[ticker]], axis=0, keys=[ticker], names=['Date'])
             df_concat = df_concat.reset_index(level=0, drop=True)
-            print('df_concat:', df_concat)
+            # print('df_concat:', df_concat)
 
         df_concat = pd.concat(dfs, axis=0, keys=tickers, names=['Date'])
         # reset index
         df_concat = df_concat.reset_index(level=0, drop=True)
 
         # print concatenated data frame
-        print(df_concat)
+        # print(df_concat)
 
         dfs = {}
 
@@ -137,7 +137,7 @@ class StockAPI(APIView):
                 # print(data.shape)
                 # print(data.columns)
                 # print(data.head())
-                print('current_date:', current_date)
+                # print('current_date:',current_date)
                 # if current_date == '16-02-22':
                 #     print("breakpoint")
                 #     pass
@@ -354,6 +354,8 @@ class StockAPI(APIView):
                     current_price_FB = stock_data['Low'][f]
                     current_Price_FS = stock_data['High'][f]
                     current_LBP = stock_data['Low_LBP'][f]
+                    data['LBP'] = stock_data['High'].rolling(30).max()
+                    LBP = data['LBP']
                 except Exception:
                     continue
                 # print('current_price_FB:',current_price_FB)
@@ -374,8 +376,8 @@ class StockAPI(APIView):
                 # print('LBP:',LBP,type(LBP))
                 # print('f:',f,type(f))
                 if position_1 == 1 and current_Price_FS > Sale_percentage * New_purchase_price:
-                    print("Firsrt_sell_stock")
-                    print('New_purchase_price:', New_purchase_price, type(New_purchase_price))
+                    # print("Firsrt_sell_stock")
+                    # print('New_purchase_price:',New_purchase_price,type(New_purchase_price))
                     # Sell the stock and update the amount of money available for trading
                     position_1 = 0
                     Sell = ("Sell")
@@ -384,11 +386,11 @@ class StockAPI(APIView):
                     # New_Sale_price = New_Sale_price_1.round(1)
                     # New_Sale_price = round(New_Sale_price, 1)
                     # New_Sale_price = int(New_Sale_price)
-                    print('New_Sale_price:', New_Sale_price, type(New_Sale_price))
+                    # print('New_Sale_price:',New_Sale_price,type(New_Sale_price))
 
                     S_price = New_Sale_price
                     New_Sale_date = current_date
-                    print('New_Sale_date:', New_Sale_date, type(New_Sale_date))
+                    # print('New_Sale_date:',New_Sale_date,type(New_Sale_date))
                     profit = S_price - New_purchase_price
                     Total_Quantity = Lot_size / S_price
                     T_Quantity = T_Quantity_s
@@ -441,28 +443,28 @@ class StockAPI(APIView):
                                           ignore_index=True)
 
                 # print("money_in_bank:",Money_in_Bank,type(Money_in_Bank))
-                print("Buy_percentage:", Buy_percentage, type(Lot_size))
+                # print("Buy_percentage:",Buy_percentage,type(Lot_size))
 
                 # FIRST_BUY_LOOP
                 # Check if the current low price is below the maximum look back period and a previous purchase does not exist
                 if Money_in_Bank < Lot_size:
-                    print("money_in_bank:", Money_in_Bank, type(Money_in_Bank))
-                    print("lot_size:", Lot_size, type(Lot_size))
-                    print("available money end")
+                    # print("money_in_bank:",Money_in_Bank,type(Money_in_Bank))
+                    # print("lot_size:",Lot_size,type(Lot_size))
+                    # print("available money end")
                     pass
 
                 elif position_1 == 0 and current_price_FB < Buy_percentage * LBP[f - int(max_look_back_period):f].max():
-                    print("New_Buy")
+                    # print("New_Buy")
                     # Buy the stock and record the purchase details
                     New_purchase_date = current_date
-                    print('New_purchase_date:', New_purchase_date, type(New_purchase_date))
+                    # print('New_purchase_date:',New_purchase_date,type(New_purchase_date))
                     new_purchase_price_1 = current_LBP
                     new_purchase_price = new_purchase_price_1.round(1)
                     new_purchase_price = round(new_purchase_price, 1)
 
                     position_1 = 1
-                    print('Lot_size:', Lot_size, type(Lot_size))
-                    print('new_purchase_price:', new_purchase_price, type(new_purchase_price))
+                    # print('Lot_size:',Lot_size,type(Lot_size))
+                    # print('new_purchase_price:',new_purchase_price,type(new_purchase_price))
                     Total_Quantity = Lot_size / new_purchase_price
                     T_Quantity = int(Total_Quantity)
                     New_P_Value_B = new_purchase_price * T_Quantity
@@ -511,7 +513,7 @@ class StockAPI(APIView):
 
                 # SECOND_SELL_LOOP
                 if position_2 == 1 and current_Price_FS > Sale_percentage * Second_purchase_price_5:
-                    print("Second_sell_stock")
+                    # print("Second_sell_stock")
                     # Sell the stock and update the amount of money available for trading
                     Sell = ("Sell")
                     position_2 = 0
@@ -581,12 +583,12 @@ class StockAPI(APIView):
                 if current_date == New_purchase_date:
                     pass
                 elif Money_in_Bank < Lot_size:
-                    print("available money end")
+                    # print("available money end")
                     pass
                 elif position_2 == 1:
                     pass
                 elif position_1 == 1 and current_price_FB < Buy_percentage * New_purchase_price:
-                    print("second_Buy")
+                    # print("second_Buy")
                     # Buy more of the stock and update the purchase details
                     Perches = ("Buy")
                     Second_purchase_date = current_date
@@ -644,7 +646,7 @@ class StockAPI(APIView):
 
                 # THERD_SELL_LOOP
                 if position_3 == 1 and current_Price_FS > Sale_percentage * third_purchase_price_5:
-                    print("THERD_sell_stock")
+                    # print("THERD_sell_stock")
                     # Sell the stock and update the amount of money available for trading
                     Sell = ("Sell")
                     position_3 = 0
@@ -709,12 +711,12 @@ class StockAPI(APIView):
                 if current_date == New_purchase_date:
                     pass
                 elif Money_in_Bank < Lot_size:
-                    print("available money end")
+                    # print("available money end")
                     pass
                 elif position_3 == 1:
                     pass
                 elif position_2 == 1 and current_price_FB < Buy_percentage * Second_purchase_price_5:
-                    print("therd_Buy")
+                    # print("therd_Buy")
                     # Buy more of the stock and update the purchase details
                     Perches = ("Buy")
                     third_purchase_date = current_date
@@ -771,7 +773,7 @@ class StockAPI(APIView):
                                           ignore_index=True)
                 # fourth_SELL_LOOP
                 if position_4 == 1 and current_Price_FS > Sale_percentage * fourth_purchase_price_5:
-                    print("fourth_sell_stock")
+                    # print("fourth_sell_stock")
                     # Sell the stock and update the amount of money available for trading
                     Sell = ("Sell")
                     position_4 = 0
@@ -840,12 +842,12 @@ class StockAPI(APIView):
                 if current_date == New_purchase_date:
                     pass
                 elif Money_in_Bank < Lot_size:
-                    print("available money end")
+                    # print("available money end")
                     pass
                 elif position_4 == 1:
                     pass
                 elif position_3 == 1 and current_price_FB < Buy_percentage * third_purchase_price_5:
-                    print("fourth_Buy")
+                    # print("fourth_Buy")
                     # Buy more of the stock and update the purchase details
                     Perches = ("Buy")
                     fourth_purchase_date = current_date
@@ -904,7 +906,7 @@ class StockAPI(APIView):
 
                 # fifth_SELL_LOOP
                 if position_5 == 1 and current_Price_FS > Sale_percentage * fifth_purchase_price_5:
-                    print("fifth_sell_stock")
+                    # print("fifth_sell_stock")
                     # Sell the stock and update the amount of money available for trading
                     Sell = ("Sell")
                     position_5 = 0
@@ -973,12 +975,12 @@ class StockAPI(APIView):
                 if current_date == New_purchase_date:
                     pass
                 elif Money_in_Bank < Lot_size:
-                    print("available money end")
+                    # print("available money end")
                     pass
                 elif position_5 == 1:
                     pass
                 elif position_4 == 1 and current_price_FB < Buy_percentage * fourth_purchase_price_5:
-                    print("fifth_Buy")
+                    # print("fifth_Buy")
                     # Buy more of the stock and update the purchase details
                     Perches = ("Buy")
                     fifth_purchase_date = current_date
@@ -1037,7 +1039,7 @@ class StockAPI(APIView):
 
                 # sixth_SELL_LOOP
                 if position_6 == 1 and current_Price_FS > Sale_percentage * sixth_purchase_price_5:
-                    print("sixth_sell_stock")
+                    # print("sixth_sell_stock")
                     # Sell the stock and update the amount of money available for trading
                     Sell = ("Sell")
                     position_6 = 0
@@ -1106,12 +1108,12 @@ class StockAPI(APIView):
                 if current_date == New_purchase_date:
                     pass
                 elif Money_in_Bank < Lot_size:
-                    print("available money end")
+                    # print("available money end")
                     pass
                 elif position_6 == 1:
                     pass
                 elif position_5 == 1 and current_price_FB < Buy_percentage * fifth_purchase_price_5:
-                    print("sixth_Buy")
+                    # print("sixth_Buy")
                     # Buy more of the stock and update the purchase details
                     Perches = ("Buy")
                     sixth_purchase_date = current_date
@@ -1170,7 +1172,7 @@ class StockAPI(APIView):
 
                 # seventh_SELL_LOOP
                 if position_7 == 1 and current_Price_FS > Sale_percentage * seventh_purchase_price_5:
-                    print("seventh_sell_stock")
+                    # print("seventh_sell_stock")
                     # Sell the stock and update the amount of money available for trading
                     Sell = ("Sell")
                     position_7 = 0
@@ -1239,12 +1241,12 @@ class StockAPI(APIView):
                 if current_date == New_purchase_date:
                     pass
                 elif Money_in_Bank < Lot_size:
-                    print("available money end")
+                    # print("available money end")
                     pass
                 elif position_7 == 1:
                     pass
                 elif position_6 == 1 and current_price_FB < Buy_percentage * sixth_purchase_price_5:
-                    print("seventh_Buy")
+                    # print("seventh_Buy")
                     # Buy more of the stock and update the purchase details
                     Perches = ("Buy")
                     seventh_purchase_date = current_date
@@ -1303,7 +1305,7 @@ class StockAPI(APIView):
 
                 # eighth_SELL_LOOP
                 if position_8 == 1 and current_Price_FS > Sale_percentage * eighth_purchase_price_5:
-                    print("eighth_sell_stock")
+                    # print("eighth_sell_stock")
                     # Sell the stock and update the amount of money available for trading
                     Sell = ("Sell")
                     position_8 = 0
@@ -1372,12 +1374,12 @@ class StockAPI(APIView):
                 if current_date == New_purchase_date:
                     pass
                 elif Money_in_Bank < Lot_size:
-                    print("available money end")
+                    # print("available money end")
                     pass
                 elif position_8 == 1:
                     pass
                 elif position_7 == 1 and current_price_FB < Buy_percentage * seventh_purchase_price_5:
-                    print("eighth_Buy")
+                    # print("eighth_Buy")
                     # Buy more of the stock and update the purchase details
                     Perches = ("Buy")
                     eighth_purchase_date = current_date
@@ -1437,24 +1439,35 @@ class StockAPI(APIView):
                 # print("out_of_loop")
 
             trans_1.drop_duplicates(subset="Price", keep='last', inplace=True)
-            print(trans_1)
-            print(trans_2)
-            for ticker in tickers:
-                with pd.ExcelWriter('TRADE_BOOK.xlsx', engine='openpyxl') as writer:
-                    trans_1.to_excel(writer, sheet_name='TRADE_BOOK', index=False)
-                    trans_2.to_excel(writer, sheet_name='TRANSACTION_REPORT', index=False)
-                    # for date, ticker_data in dfs.items():
-        for ticker, df2 in ticker_data.items():
-            sheet_name = ticker  # Combine date and ticker symbol for the sheet name
-            df1.to_excel(writer, sheet_name=sheet_name)
-
-            # df2.to_excel(writer, sheet_name=ticker)
-            # writer.save()
-
             # print(trans_1)
             # print(trans_2)
-            # print(Money_in_Bank)
+        for ticker in tickers:
+            data = yf.download(ticker, from_date, end, interval='1d')
+            data.reset_index(inplace=True)
+            data['Date'] = pd.to_datetime(data['Date'])
+            data['Date'] = data['Date'].dt.strftime('%d/%m/%Y')
+            # data.set_index("Date", inplace=True)
+            data.drop("Adj Close", axis=1, inplace=True)
+            data.columns = ["Date", "Open", "High", "Low", "Close", "volume"]
+            data.insert(5, "Trade", "")
+            data["Trade"] = ""
+            data['LBP'] = data['High'].rolling(30).max()
+            LBP = data['LBP']
+            data['LBP'] = data['High'].rolling(30).max()
+            data['Low_LBP'] = 0.9 * data['LBP']
+            df = data.dropna()
+            df1 = pd.DataFrame(df)
+            df2 = df1.round(1)
+            dfs[ticker] = df2
+
+        for ticker in tickers:
+            with pd.ExcelWriter('TRADE_BOOK.xlsx', engine='openpyxl') as writer:
+                trans_1.to_excel(writer, sheet_name='TRADE_BOOK', index=False)
+                trans_2.to_excel(writer, sheet_name='TRANSACTION_REPORT', index=False)
+                for ticker, df in dfs.items():
+                    if not df.empty:  # Check if DataFrame is not empty
+                        df.to_excel(writer, sheet_name=ticker, index=False)
+
         excel_file = open('TRADE_BOOK.xlsx', 'rb')
 
-        return FileResponse(excel_file,filename='TRADE_BOOK.xlsx')
-        return Response({'message': 'success'})
+        return FileResponse(excel_file, filename='TRADE_BOOK.xlsx')
